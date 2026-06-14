@@ -1,180 +1,156 @@
-<!-- include icons -->
 <?php require __DIR__ . '/../partials/icons.php'; ?>
 
 <div class="space-y-6 z-10">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="px-1">
+            <h4 class="text-xl font-semibold text-gray-800">Official File Repository</h4>
+            <p class="text-sm text-gray-500">
+                UPLOAD FINAL VERSION OF ALL DOCUMENTS
+            </p>
+        </div>
 
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-    <div class="px-1">
-      <h4 class="text-xl font-semibold text-gray-800">Official File Repository</h4>
-      <p class="text-sm text-gray-500">
-        UPLOAD FINAL VERSION OF ALL DOCUMENTS
-      </p>
+        <?php
+        $isRestricted = ($_SESSION['user_level'] ?? '') === '3';
+        $state    = $isRestricted ? ' opacity-50 cursor-not-allowed' : '';
+        $disabled = $isRestricted ? 'disabled' : '';
+        ?>
+
+        <a <?= $disabled ?> href="index.php?controller=Files&action=create"
+           class="inline-flex items-center gap-2 <?= htmlspecialchars($state) ?>
+                  bg-sky-600 text-white
+                  px-4 py-2.5 rounded-xl
+                  shadow-sm hover:bg-sky-700 border-2 border-dashed
+                  transition">
+            <?= $fileIcon ?? '' ?>
+            Upload New File
+        </a>
     </div>
-     <?php if($_SESSION['user_level'] === '3'): 
-        $state = " opacity-50 cursor-not-allowed";
-        $disabled = "disabled";
-        else:
-        $state = "";
-        $disabled = "";
-      endif;
-      ?>
 
+    <!-- Table Card -->
+    <div class="bg-white rounded-2xl shadow-md border border-gray-200">
+        <div class="overflow-x-auto p-4">
+            <table id="filesTable" class="min-w-full text-sm text-left text-gray-700 py-5">
+                <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+                    <tr>
+                        <th>File Name <span class="text-xxs text-gray-400 italic">(CLICK TO EXPAND)</span></th>
+                        <th>Description <span class="text-xxs text-gray-400 italic">(CLICK TO EXPAND)</span></th>
+                        <th>Category</th>
+                        <th>Direction</th>
+                        <th>Uploader</th>
+                        <th>Uploaded At</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                    <tr>
+                        <th><div class="header-filter"></div></th>
+                        <th><div class="header-filter"></div></th>
+                        <th><div class="header-filter"></div></th>
+                        <th><div class="header-filter"></div></th>
+                        <th><div class="header-filter"></div></th>
+                        <th><div class="header-filter"></div></th>
+                        <th><div class="header-filter"></div></th>
+                    </tr>
+                </thead>
 
-    <a <?= $disabled ?>href="index.php?controller=Files&action=create"
-       class="inline-flex items-center gap-2 <?= $state ?>
-              bg-sky-600 text-white
-              px-4 py-2.5 rounded-xl
-              shadow-sm hover:bg-sky-700 border-2 border-dashed
-              transition">
-      <?=$fileIcon?>
-     
-      Upload New File 
-    </a>
-  </div>
+                <tbody class="divide-y divide-gray-200">
+                    <?php if (!empty($files)){ ?>
+                        <?php foreach ($files as $file){ ?>
+                            <tr class="hover:bg-gray-50 transition">
+                                <!-- File Name -->
+                                <td class="px-4 py-3 font-medium text-gray-800">
+                                    <div class="desc-container text-gray-600" data-id="<?= htmlspecialchars($file['id'] ?? '') ?>">
+                                        <?= htmlspecialchars($file['filename'] ?? '') ?><br>
+                                        <span class="text-xxs text-gray-400">
+                                            Upload # <?= htmlspecialchars($file['id'] ?? '') ?>
+                                        </span>
+                                    </div>
+                                </td>
 
-  <!-- Table Card -->
-  <div class="bg-white rounded-2xl shadow-md border border-gray-200">
+                                <!-- Description -->
+                                <td class="px-4 py-3">
+                                    <div class="desc-container text-gray-600" data-id="<?= htmlspecialchars($file['id'] ?? '') ?>">
+                                        <?= htmlspecialchars($file['desc'] ?? $file['description'] ?? '') ?>
+                                    </div>
+                                </td>
 
-    <div class="overflow-x-auto p-4">
-      <table id="filesTable"
-             class="min-w-full text-sm text-left text-gray-700 py-5">
+                                <!-- Category -->
+                                <td class="px-4 py-3">
+                                    <p class="inline-block bg-green-200 text-green-800 px-2 py-0.5 rounded-full text-sm leading-none">
+                                        <?= htmlspecialchars($file['category'] ?? '') ?>
+                                    </p>
+                                </td>
 
-<thead class="bg-gray-50 text-gray-600 text-xs uppercase">
-  <tr>
-    <th>
-      File Name <span class = 'text-xxs text-gray-400 italic'>(CLICK TO EXPAND)</span></th>
-    <th>
-      Description <span class = 'text-xxs text-gray-400 italic'>(CLICK TO EXPAND)</span></th>
-    <th>
-      Category</th>
-    <th>
-      Direction</th>
-    <th>
-      Uploader</th>
-    <th>
-      Uploaded At
-      
-    </th>
-    <th class="text-center">
-      Action
-    </th>
-  </tr>
+                                <!-- Direction -->
+                                <td class="px-4 py-3">
+                                    <?= htmlspecialchars(
+                                        ($file['directionFrom'] ?? '') . 
+                                        ' ⇄ ' . 
+                                        ($file['directionTo'] ?? 'No Direction')
+                                    ) ?>
+                                </td>
 
-  <tr>
-      <th><div class="header-filter"></div></th>
-      <th><div class="header-filter"></div></th>
-      <th><div class="header-filter"></div></th>
-      <th><div class="header-filter"></div></th>
-      <th><div class="header-filter"></div></th>
-      <th><div class="header-filter"></div></th>
-      <th><div class="header-filter"></div></th>
+                                <!-- Uploader -->
+                                <td class="px-4 py-3 text-right">
+                                    <span class="text-stone-800">
+                                        <?= htmlspecialchars(($file['firstName'] ?? '') . ' ' . ($file['lastName'] ?? '')) ?>
+                                    </span><br>
+                                    <span class="text-stone-400">
+                                        <?= htmlspecialchars($file['position'] ?? '') ?>
+                                    </span>
+                                </td>
 
-  </tr>
-</thead>
+                                <!-- Uploaded At -->
+                                <td class="px-4 py-3 text-gray-500">
+                                    <?php if (!empty($file['uploadedat'])){ ?>
+                                        <p class="text-sm text-gray-500 leading-tight">
+                                            <?= date('M j, Y', strtotime($file['uploadedat'])) ?><br>
+                                            <span class="text-xs text-gray-400">
+                                                <?= date('g:i A', strtotime($file['uploadedat'])) ?>
+                                            </span>
+                                        </p>
+                                    <?php } ?>
+                                </td>
 
+                                <!-- Actions -->
+                                <td class="px-4 py-3">
+                                    <div class="flex justify-center gap-2">
+                                        <a href="index.php?controller=Files&action=download&file=<?= urlencode($file['filename'] ?? '') ?>"
+                                           class="p-2 rounded-lg bg-sky-100 border border-sky-500 text-sky-500 hover:text-white hover:bg-sky-600 transition"
+                                           title="Download">
+                                            <?= $downloadIcon ?? '' ?>
+                                        </a>
 
-        <tbody class="divide-y divide-gray-200">
-          <?php if (!empty($files)): ?>
-            <?php foreach ($files as $file): ?>
-              <tr class="hover:bg-gray-50 transition">
+                                        <?php if (in_array((string)($_SESSION['user_level'] ?? ''), ['0', '1', '2'], true)){ ?>
+                                            <a href="index.php?controller=Files&action=edit&id=<?= htmlspecialchars($file['id'] ?? '') ?>"
+                                               class="p-2 rounded-lg bg-emerald-100 border border-emerald-500 text-emerald-500 hover:text-white hover:bg-emerald-600 transition"
+                                               title="Edit">
+                                                <?= $editIcon ?? '' ?>
+                                            </a>
+                                        <?php } ?>
 
-                <td class="px-4 py-3 font-medium text-gray-800">
-                 
-                   <div class="desc-container text-gray-600"
-                       data-id="<?= $file['id'] ?>">
-                    
-                    <?= htmlspecialchars($file['filename']) ?> <br>
-                        <span class="text-xxs text-gray-400">
-                          Upload # <?= $file['id'] ?>
-                      </span>
-                  </div>
-                </td>
-
-                <td class="px-4 py-3">
-                  <div class="desc-container text-gray-600"
-                       data-id="<?= $file['id'] ?>">
-                    <?= htmlspecialchars($file['desc'] ?? $file['description']) ?><br>
-                  </div>
-                </td>
-
-              <td class="px-4 py-3">
-                  <p class = 'inline-block bg-green-200 text-green-800 
-          px-2 py-0.5 rounded-full text-sm leading-none'><?= htmlspecialchars($file['category']) ?></p>
-                </td>
-
-                <td class="px-4 py-3">
-              
-
-                  <?= htmlspecialchars($file['directionFrom'] . ' ⇄ ' . $file['directionTo'] ?? 'No Direction') ?>
-                </td>
-
-              
-
-                <td class="px-4 py-3 text-right">
-                  <span class = 'text-stone-800'><?= htmlspecialchars($file['firstName'] . ' ' . $file['lastName']) ?></span> <br>
-                  <span class = 'text-stone-400'><?= htmlspecialchars($file['position']) ?></span>
-
-                </td>
-
-                <td class="px-4 py-3 text-gray-500">
-                
-                <p class="text-sm text-gray-500 leading-tight">
-                  <?= date('M j, Y', strtotime($file['uploadedat'])) ?><br>
-                  <span class="text-xs text-gray-400">
-                    <?= date('g:i A', strtotime($file['uploadedat'])) ?>
-                  </span>
-                </p>
-                                
-                </td>
-
-                <td class="px-4 py-3">
-                  <div class="flex justify-center gap-2">
-
-                    <a href="index.php?controller=Files&action=download&file=<?= urlencode($file['filename']) ?>"
-                       class="p-2 rounded-lg bg-sky-100 border border-sky-500 text-sky-500 hover:text-white  hover:bg-sky-600 transition"
-                       title="Download">
-                      <?= $downloadIcon ?>
-                    </a>
-
-                <?php if($_SESSION['user_level'] === '1' || $_SESSION['user_level'] === '2'): ?>
-                    <a href="index.php?controller=Files&action=edit&id=<?= $file['id'] ?>"
-                       class="p-2 rounded-lg bg-emerald-100 border border-emerald-500 text-emerald-500 hover:text-white  hover:bg-emerald-600 transition"
-                       title="Edit"> 
-                       <?= $editIcon ?>
-                      </a>
-                     <?php endif; ?>
-            
-
-                <?php if($_SESSION['user_level'] === '1'): ?>
-
-                    <a href="index.php?controller=Files&action=delete&id=<?= $file['id'] ?>"
-                       onclick="return confirm('Delete this file?')"
-                       class="p-2 rounded-lg bg-red-50 border border-red-500 text-red-600 hover:text-white hover:bg-red-600 transition"
-                       title="Delete">
-                      <?= $deleteIcon ?>
-                    </a>
-                     <?php endif; ?>
-
-   
-                  </div>
-                </td>
-
-              </tr>
-            <?php endforeach; ?>
-          <?php else: ?>
-            <tr>
-              <td colspan="6" class="text-center py-6 text-gray-500">
-                No files found.
-              </td>
-            </tr>
-          <?php endif; ?>
-        </tbody>
-
-      </table>
+                                        <?php if (in_array((string)($_SESSION['user_level'] ?? ''), ['0', '1'], true)){ ?>
+                                            <a href="index.php?controller=Files&action=delete&id=<?= htmlspecialchars($file['id'] ?? '') ?>"
+                                               onclick="return confirm('Delete this file?')"
+                                               class="p-2 rounded-lg bg-red-50 border border-red-500 text-red-600 hover:text-white hover:bg-red-600 transition"
+                                               title="Delete">
+                                                <?= $deleteIcon ?? '' ?>
+                                            </a>
+                                        <?php } ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    <?php }else {?>
+                        <tr>
+                            <td colspan="7" class="text-center py-6 text-gray-500">
+                                No files found.
+                            </td>
+                        </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
     </div>
-  </div>
-
 </div>
 
 <script>

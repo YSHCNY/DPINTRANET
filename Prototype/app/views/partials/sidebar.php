@@ -40,29 +40,48 @@ $currentAction = $_GET['action'] ?? '';
       </a>
     </li>
 
-    <li>
+
+        <li>
+      <a href="index.php?controller=correspondence&action=correspondence"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-xl  
+         <?= ($currentController == 'correspondence' && $currentAction == 'correspondence') ? 'bg-sky-600 text-white' : 'text-gray-700 hover:bg-gray-200 transition' ?>">
+        <?= $correspondenceIcon ?>
+        Correspondence
+      </a>
+    </li>
+
+    <!-- <li>
       <a href="index.php?controller=Contracts&action=contracts"
          class="flex items-center gap-3 px-3 py-2.5 rounded-xl  
          <?= ($currentController == 'Contracts' && $currentAction == 'contracts') ? 'bg-sky-600 text-white' : 'text-gray-700 hover:bg-gray-200 transition' ?>">
         <?= $contractsIcon ?>
         Contracts
       </a>
-    </li>
+    </li> -->
 
-    <?php if($_SESSION['user_level'] === '1'): ?>
+    <?php if(in_array((string)($_SESSION['user_level'] ?? ''), ['0', '1'], true)){ ?>
     <li class="text-xs uppercase text-gray-400 px-3 mt-5 mb-2">More</li>
 
-    <li>
-      <a href="index.php?controller=Auth&action=users"
-         class="flex items-center gap-3 px-3 py-2.5 rounded-xl 
-         <?= ($currentController == 'Auth' && $currentAction == 'users') ? 'bg-sky-600 text-white' : 'text-gray-700 hover:bg-gray-200 transition' ?>">
-        <?= $usersIcon ?>
-        Users
-      </a>
-    </li>
+	    <li>
+	      <a href="index.php?controller=Auth&action=users"
+	         class="flex items-center gap-3 px-3 py-2.5 rounded-xl 
+	         <?= ($currentController == 'Auth' && $currentAction == 'users') ? 'bg-sky-600 text-white' : 'text-gray-700 hover:bg-gray-200 transition' ?>">
+	        <?= $usersIcon ?>
+	        Core Users
+	      </a>
+	    </li>
 
-    <li>
-      <a href="index.php?controller=Syslogs&action=syslogs"
+	    <li>
+	      <a href="index.php?controller=StandardUsers&action=index"
+	         class="flex items-center gap-3 px-3 py-2.5 rounded-xl 
+	         <?= ($currentController == 'StandardUsers') ? 'bg-sky-600 text-white' : 'text-gray-700 hover:bg-gray-200 transition' ?>">
+	        <?= $usersIcon ?>
+	        Standard Users
+	      </a>
+	    </li>
+
+	    <li>
+	      <a href="index.php?controller=Syslogs&action=syslogs"
          class="flex items-center gap-3 px-3 py-2.5 rounded-xl 
          <?= ($currentController == 'Auth' && $currentAction == 'syslogs') ? 'bg-sky-600 text-white' : 'text-gray-700 hover:bg-gray-200 transition' ?>">
         <?= $clipBoardIcon ?>
@@ -72,7 +91,7 @@ $currentAction = $_GET['action'] ?? '';
 
 
     
-    <?php endif; ?>
+    <?php } ?>
 
   </ul>
 
@@ -85,6 +104,4 @@ $currentAction = $_GET['action'] ?? '';
   </div> -->
 
 </nav>
-
-
 

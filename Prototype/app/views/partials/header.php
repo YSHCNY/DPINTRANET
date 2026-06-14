@@ -11,7 +11,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
 } elseif ($currentController == 'Files' && $currentAction == 'files') {
   $pageTitle = 'Files Management';
 } elseif ($currentController == 'Auth' && $currentAction == 'users') {
-  $pageTitle = 'User Management';
+  $pageTitle = 'Core Users';
 } elseif ($currentController == 'Syslogs' && $currentAction == 'syslogs') {
   $pageTitle = 'System Logs';
 } else {
