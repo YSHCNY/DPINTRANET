@@ -2,7 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dalton Bypass</title>
+    <?php
+        $currentController = $_GET['controller'] ?? '';
+        $currentAction = $_GET['action'] ?? '';
+
+        if ($currentController === 'Auth' && $currentAction === 'dashboard') {
+            $documentTitle = 'Dashboard';
+        } elseif ($currentController === 'Files' && $currentAction === 'files') {
+            $documentTitle = 'Files Management';
+        } elseif ($currentController === 'Auth' && $currentAction === 'users') {
+            $documentTitle = 'Core Users';
+        } elseif ($currentController === 'Auth' && $currentAction === 'profile') {
+            $documentTitle = 'Profile & Security';
+        } elseif ($currentController === 'Syslogs' && $currentAction === 'syslogs') {
+            $documentTitle = 'System Logs';
+        } elseif ($currentController === 'correspondence' && $currentAction === 'correspondence') {
+            $documentTitle = 'Correspondence Management';
+        } elseif ($currentController === 'StandardUsers' && $currentAction === 'index') {
+            $documentTitle = 'Standard Users';
+        } else {
+            $documentTitle = 'FMS Portal';
+        }
+    ?>
+    <title><?= htmlspecialchars($documentTitle) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Tailwind CSS CDN -->
@@ -31,7 +53,7 @@
   <?php require __DIR__ . '/../partials/sidebar.php'; ?>
 
   <!-- Page Wrapper -->
-  <div class="ml-0 md:ml-72 min-h-screen flex flex-col transition-all">
+  <div class="ml-0 md:ml-80 min-h-screen flex flex-col transition-all">
 
     <!-- Header -->
     <?php require __DIR__ . '/../partials/header.php'; ?>
@@ -106,8 +128,6 @@
     </main>
 
   </div>
-
-</body>
 
 </body>
 </html>

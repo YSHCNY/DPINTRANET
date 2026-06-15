@@ -16,9 +16,7 @@ class SyslogsController extends Controller {
             }
 
               public function syslogs() {
-                if (!isset($_SESSION['user'])) {
-                    $this->redirect('index.php?controller=Auth&action=login');
-                }
+                $this->requireAnyRole([0], 'Only Super Admin can access System Logs.');
 
 
                 // render syslogs list view

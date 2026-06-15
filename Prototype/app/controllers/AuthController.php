@@ -42,6 +42,99 @@ class AuthController extends Controller {
         $this->view('layout/main', ['content' => $content]);
     }
 
+    public function profile() {
+        $this->requireLogin();
+
+        $userId = (int)($_SESSION['id'] ?? 0);
+        $user = $this->userModel->findUserById($userId);
+
+        if (!$user) {
+            $_SESSION['message'] = 'Profile not found.';
+            $_SESSION['msg_type'] = 'error';
+            $this->redirect('index.php?controller=Auth&action=dashboard');
+        }
+
+        $content = $this->renderView('auth/profile', [
+            'user' => $user,
+        ]);
+
+        $this->view('layout/main', ['content' => $content]);
+    }
+
+    public function updateProfile() {
+        $this->requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?controller=Auth&action=profile');
+        }
+
+        try {
+            $userId = (int)($_SESSION['id'] ?? 0);
+            $existing = $this->userModel->findUserById($userId);
+
+            if (!$existing) {
+                throw new Exception('Profile not found.');
+            }
+
+            $currentPassword = $_POST['current_password'] ?? '';
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+            $changingPassword = ($currentPassword !== '' || $newPassword !== '' || $confirmPassword !== '');
+
+            if ($changingPassword) {
+                if ($currentPassword === '') {
+                    throw new Exception('Current password is required to change your password.');
+                }
+
+                if (!password_verify($currentPassword, $existing['password'])) {
+                    throw new Exception('Current password is incorrect.');
+                }
+
+                if ($newPassword === '' || $confirmPassword === '') {
+                    throw new Exception('Please complete the new password fields.');
+                }
+
+                if ($newPassword !== $confirmPassword) {
+                    throw new Exception('New passwords do not match.');
+                }
+            }
+
+            $uploadedPicture = $this->uploadProfilePicture();
+            $data = [
+                'username' => $existing['username'],
+                'firstName' => $existing['firstName'],
+                'lastName' => $existing['lastName'],
+                'position' => $existing['position'],
+                'userLevel' => $existing['userLevel'],
+                'password' => $changingPassword ? $newPassword : '',
+                'profile_picture' => $uploadedPicture ?: ($existing['profile_picture'] ?? null),
+            ];
+
+            $this->userModel->update($userId, $data);
+
+            if (!empty($uploadedPicture) && !empty($existing['profile_picture']) && $existing['profile_picture'] !== 'default.png') {
+                $oldFile = __DIR__ . '/../assets/profiles/' . $existing['profile_picture'];
+                if (is_file($oldFile)) {
+                    @unlink($oldFile);
+                }
+            }
+
+            $_SESSION['profile_picture'] = $data['profile_picture'] ?? 'default.png';
+
+            $_SESSION['message'] = 'Profile updated successfully.';
+            $_SESSION['msg_type'] = 'success';
+            $this->redirect('index.php?controller=Auth&action=profile');
+        } catch (Exception $e) {
+            $user = $this->userModel->findUserById((int)($_SESSION['id'] ?? 0));
+            $content = $this->renderView('auth/profile', [
+                'user' => $user,
+                'error' => $e->getMessage(),
+            ]);
+
+            $this->view('layout/main', ['content' => $content]);
+        }
+    }
+
     public function users() {
         $this->requireCoreUserAccess();
         $this->renderCoreUsersPage();
@@ -192,25 +285,11 @@ class AuthController extends Controller {
     }
 
     private function requireCoreUserAccess() {
-        $this->requireLogin();
-
-        if ($this->canManageCoreUsers()) {
-            return;
-        }
-
-        $_SESSION['message'] = 'Only Super Admin can access Core Users.';
-        $_SESSION['msg_type'] = 'error';
-        $this->redirect('index.php?controller=Auth&action=dashboard');
+        $this->requireAnyRole([0], 'Only Super Admin can access Core Users.');
     }
 
     private function canManageCoreUsers() {
-        $level = (string)($_SESSION['user_level'] ?? '');
-
-        if ($level === '0') {
-            return true;
-        }
-
-        return $level === '1' && !$this->userModel->hasSuperAdmin();
+        return $this->isSuperAdmin();
     }
 
     private function canCreateSuperAdmin() {

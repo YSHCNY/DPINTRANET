@@ -44,18 +44,43 @@ class StandardPortalController extends Controller {
         $this->requirePortalLogin();
 
         $recipientId = $_SESSION['standard_user_id'];
+        $showRemovedItems = $this->getRemovedItemsPreference();
         $this->view('standard_portal/dashboard', [
-            'stats' => $this->correspondenceModel->getPortalStats($recipientId),
-            'documents' => array_slice($this->correspondenceModel->getPortalDocuments($recipientId), 0, 6),
+            'stats' => $this->correspondenceModel->getPortalStats($recipientId, $showRemovedItems),
+            'documents' => array_slice($this->correspondenceModel->getPortalDocuments($recipientId, $showRemovedItems), 0, 6),
+            'showRemovedItems' => $showRemovedItems,
         ]);
     }
 
     public function inbox() {
         $this->requirePortalLogin();
 
+        $showRemovedItems = $this->getRemovedItemsPreference();
         $this->view('standard_portal/inbox', [
-            'documents' => $this->correspondenceModel->getPortalDocuments($_SESSION['standard_user_id']),
+            'documents' => $this->correspondenceModel->getPortalDocuments($_SESSION['standard_user_id'], $showRemovedItems),
+            'showRemovedItems' => $showRemovedItems,
         ]);
+    }
+
+    public function setRemovedItemsPreference() {
+        $this->requirePortalLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            exit;
+        }
+
+        $enabled = filter_var($_POST['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $this->setRemovedItemsPreferenceValue($enabled);
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'show_removed_items' => $enabled,
+        ]);
+        exit;
     }
 
     public function viewDocument($id) {
@@ -68,9 +93,15 @@ class StandardPortalController extends Controller {
             $this->redirect('index.php?controller=StandardPortal&action=inbox');
         }
 
+        if (!empty($document['is_deleted'])) {
+            $_SESSION['portal_message'] = 'This document was deleted by the sender. View-only access is available.';
+            $_SESSION['portal_msg_type'] = 'error';
+        }
+
         $this->view('standard_portal/details', [
             'document' => $document,
             'attachments' => $this->correspondenceModel->getAttachments($id),
+            'history' => $this->correspondenceModel->getDocumentChangeHistory($id),
         ]);
     }
 
@@ -82,6 +113,12 @@ class StandardPortalController extends Controller {
             $_SESSION['portal_message'] = 'Document not found or not assigned to you.';
             $_SESSION['portal_msg_type'] = 'error';
             $this->redirect('index.php?controller=StandardPortal&action=inbox');
+        }
+
+        if (!empty($document['is_deleted'])) {
+            $_SESSION['portal_message'] = 'This document was deleted by the sender and can no longer be received.';
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->redirect('index.php?controller=StandardPortal&action=viewDocument&id=' . (int)$id);
         }
 
         $pin = trim($_POST['pin_code'] ?? '');
@@ -147,5 +184,24 @@ class StandardPortalController extends Controller {
         if (!isset($_SESSION['standard_user_id'])) {
             $this->redirect('index.php?controller=StandardPortal&action=login');
         }
+    }
+
+    private function getRemovedItemsPreference(): bool {
+        $userId = (int)($_SESSION['standard_user_id'] ?? 0);
+        return (bool)($_SESSION['standard_portal_prefs'][$userId]['show_removed_items'] ?? false);
+    }
+
+    private function setRemovedItemsPreferenceValue(bool $enabled): void {
+        $userId = (int)($_SESSION['standard_user_id'] ?? 0);
+
+        if (!isset($_SESSION['standard_portal_prefs'])) {
+            $_SESSION['standard_portal_prefs'] = [];
+        }
+
+        if (!isset($_SESSION['standard_portal_prefs'][$userId])) {
+            $_SESSION['standard_portal_prefs'][$userId] = [];
+        }
+
+        $_SESSION['standard_portal_prefs'][$userId]['show_removed_items'] = $enabled;
     }
 }

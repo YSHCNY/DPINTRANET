@@ -16,14 +16,13 @@ class FilesController extends Controller {
     }
 
     public function files() {
-        if (!isset($_SESSION['user'])) {
-            $this->redirect('index.php?controller=Auth&action=login');
-        }
+        $this->requireLogin();
 
         // render files list view
         $content = $this->renderView('files/index', [
             'files' => $this->model->getAll(),
-            'filesCateg' => $this->filesCategModel->getAllCateg()
+            'filesCateg' => $this->filesCategModel->getAllCateg(),
+            'canManageFiles' => $this->canManageFiles(),
         ]);
 
         $this->view('layout/main', [
@@ -33,9 +32,7 @@ class FilesController extends Controller {
 
     // Show form
     public function create() {
-        if (!isset($_SESSION['user'])) {
-            $this->redirect('index.php?controller=Auth&action=login');
-        }
+        $this->requireAnyRole([0, 1, 2], 'You do not have permission to upload files.');
 
         // Get categories
         $filesCateg = $this->filesCategModel->getAllCateg();
@@ -46,9 +43,7 @@ class FilesController extends Controller {
 
     // Store new file
     public function store() {
-        if (!isset($_SESSION['user'])) {
-            $this->redirect('index.php?controller=Auth&action=login');
-        }
+        $this->requireAnyRole([0, 1, 2], 'You do not have permission to upload files.');
 
         if (isset($_FILES['file'])) {
             $fileName = $_FILES['file']['name'];
@@ -86,9 +81,7 @@ class FilesController extends Controller {
 
     // Edit form
     public function edit($id) {
-        if (!isset($_SESSION['user'])) {
-            $this->redirect('index.php?controller=Auth&action=login');
-        }
+        $this->requireAnyRole([0, 1, 2], 'You do not have permission to edit files.');
 
         $file = $this->model->getById($id);
         $filesCateg = $this->filesCategModel->getAllCateg();
@@ -99,6 +92,8 @@ class FilesController extends Controller {
 
     // Update file
     public function update($id) {
+        $this->requireAnyRole([0, 1, 2], 'You do not have permission to edit files.');
+
         $file = $this->model->getById($id);
         $filename = $file['filename'];
         $filepath = $file['filepath'];
@@ -132,6 +127,8 @@ class FilesController extends Controller {
 
     // Delete file
     public function delete($id) {
+        $this->requireAnyRole([0, 1, 2], 'You do not have permission to delete files.');
+
         $first = $_SESSION['firstName'] ?? '';
         $last  = $_SESSION['lastName'] ?? '';
         $userID = $_SESSION['id'] ?? 'guest';
@@ -158,9 +155,7 @@ class FilesController extends Controller {
     }
 
     public function download() {
-        if (!isset($_SESSION['user'])) {
-            $this->redirect('index.php?controller=Auth&action=login');
-        }
+        $this->requireLogin();
 
         if (empty($_GET['file'])) {
             die("No file specified.");
@@ -204,5 +199,9 @@ class FilesController extends Controller {
     public function logout() {
         session_destroy();
         $this->redirect('index.php?controller=Auth&action=login');
+    }
+
+    private function canManageFiles(): bool {
+        return $this->hasAnyRole([0, 1, 2]);
     }
 }

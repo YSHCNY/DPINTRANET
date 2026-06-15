@@ -29,7 +29,7 @@ $ccTotal = (int)($stats['cc_total'] ?? 0);
 </div>
 
 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-    <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div class="px-5 py-4 border-b border-gray-200 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
             <p class="text-xs font-semibold uppercase text-blue-600">Recent</p>
             <h2 class="text-xl font-semibold text-gray-900">Latest Correspondence</h2>
