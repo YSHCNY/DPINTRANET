@@ -15,6 +15,20 @@ class Controller {
 
     protected function requireLogin() {
         if (!isset($_SESSION['user'])) {
+            $isAjax = false;
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                $isAjax = true;
+            } elseif (!empty($_SERVER['HTTP_ACCEPT']) && stripos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+                $isAjax = true;
+            }
+
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Authentication required']);
+                exit;
+            }
+
             header("Location: index.php?controller=Auth&action=login");
             exit;
         }

@@ -5,6 +5,12 @@ require_once '../app/models/CarBookings.php';
 require_once '../app/models/CarVehicles.php';
 require_once '../app/models/CarDrivers.php';
 require_once '../app/models/User.php';
+// Load app config if available (try sensible locations)
+if (file_exists(__DIR__ . '/../config.php')) {
+    require_once __DIR__ . '/../config.php';
+} elseif (file_exists(__DIR__ . '/../../app/config.php')) {
+    require_once __DIR__ . '/../../app/config.php';
+}
 
 class CarBookingsController extends Controller {
 
@@ -16,6 +22,9 @@ class CarBookingsController extends Controller {
         $this->bookingsModel = new CarBookings();
         $this->vehiclesModel = new CarVehicles();
         $this->driversModel = new CarDrivers();
+        // Force database-backed storage for bookings (disable JSON fallback)
+        // This ensures the module always uses the database for production usage.
+        $this->useJsonStore = false;
     }
 
     public function calendar() {
@@ -42,9 +51,47 @@ class CarBookingsController extends Controller {
         $end = $_GET['end'] ?? '';
         $vehicleId = isset($_GET['vehicle_id']) && $_GET['vehicle_id'] !== '' ? (int)$_GET['vehicle_id'] : null;
         $driverId = isset($_GET['driver_id']) && $_GET['driver_id'] !== '' ? (int)$_GET['driver_id'] : null;
+        if ($this->useJsonStore) {
+            $bookings = $this->bookingsModel->listBookingsJson();
+            // map JSON bookings to FullCalendar events
+            $events = [];
+            foreach ($bookings as $b) {
+                if ($vehicleId && (int)($b['vehicle_id'] ?? 0) !== (int)$vehicleId) continue;
+                $startVal = $b['start_at'] ?? ($b['departure_expected'] ?? ($b['date_trip'] ?? null));
+                $endVal = $b['end_at'] ?? ($b['return_expected'] ?? null);
+                $events[] = [
+                    'id' => (int)($b['id'] ?? 0),
+                    'title' => $b['purpose'] ?: ($b['vehicle_name'] ?? 'Booking'),
+                    'start' => $startVal,
+                    'end' => $endVal ?? ($b['date_trip'] ?? null),
+                    'allDay' => false,
+                    'extendedProps' => $b,
+                ];
+            }
+            echo json_encode(['success' => true, 'events' => $events]);
+        } else {
+            $events = $this->bookingsModel->getCalendarEvents($start, $end, $vehicleId, $driverId);
+            echo json_encode(['success' => true, 'events' => $events]);
+        }
+        exit;
+    }
 
-        $events = $this->bookingsModel->getCalendarEvents($start, $end, $vehicleId, $driverId);
-        echo json_encode(['success' => true, 'events' => $events]);
+    public function vehicleHistory() {
+        $this->requireLogin();
+        header('Content-Type: application/json');
+
+        try {
+            $vehicleId = isset($_GET['vehicle_id']) ? (int)$_GET['vehicle_id'] : 0;
+            if ($vehicleId < 1) {
+                throw new Exception('Invalid vehicle_id');
+            }
+
+            $history = $this->bookingsModel->getVehicleBookingHistory($vehicleId, 15);
+            echo json_encode(['success' => true, 'bookings' => $history]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
         exit;
     }
 
@@ -65,8 +112,195 @@ class CarBookingsController extends Controller {
 
         try {
             $data = $this->getBookingPostData();
-            $id = $this->bookingsModel->createBooking($data, $actorUserId);
+            if ($this->useJsonStore) {
+                $id = $this->bookingsModel->createBookingJson($data, $actorUserId);
+            } else {
+                $id = $this->bookingsModel->createBooking($data, $actorUserId);
+            }
             echo json_encode(['success' => true, 'booking_id' => $id]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    // JSON file endpoints (fallback) ---------------------------------
+    public function jsonList() {
+        $this->requireLogin();
+        header('Content-Type: application/json');
+        try {
+            $events = $this->bookingsModel->listBookingsJson();
+            echo json_encode(['success' => true, 'bookings' => $events]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    public function jsonCreate() {
+        $this->requireLogin();
+        $level = $this->currentUserLevel();
+        if (!in_array($level, [0,1,2], true)) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'You do not have permission to create bookings.']);
+            exit;
+        }
+        header('Content-Type: application/json');
+        try {
+            $data = $_POST;
+            $id = $this->bookingsModel->createBookingJson($data, (int)($_SESSION['id'] ?? 0));
+            echo json_encode(['success' => true, 'booking_id' => $id]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    public function jsonUpdate() {
+        $this->requireLogin();
+        $level = $this->currentUserLevel();
+        if (!in_array($level, [0,1,2], true)) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'You do not have permission to modify bookings.']);
+            exit;
+        }
+        header('Content-Type: application/json');
+        try {
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            if ($id < 1) throw new Exception('Invalid id');
+            $ok = $this->bookingsModel->updateBookingJson($id, $_POST, (int)($_SESSION['id'] ?? 0));
+            echo json_encode(['success' => $ok]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    public function jsonDelete() {
+        $this->requireLogin();
+        $level = $this->currentUserLevel();
+        if (!in_array($level, [0,1,2], true)) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'You do not have permission to delete bookings.']);
+            exit;
+        }
+        header('Content-Type: application/json');
+        try {
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            if ($id < 1) throw new Exception('Invalid id');
+            $ok = $this->bookingsModel->deleteBookingJson($id, (int)($_SESSION['id'] ?? 0));
+            echo json_encode(['success' => $ok]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    // Get single booking (DB or JSON)
+    public function get() {
+        $this->requireLogin();
+        header('Content-Type: application/json');
+        try {
+            $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+            if ($id < 1) throw new Exception('Invalid id');
+
+            if ($this->useJsonStore) {
+                $bookings = $this->bookingsModel->listBookingsJson();
+                $found = null;
+                foreach ($bookings as $b) {
+                    if ((int)($b['id'] ?? 0) === $id) { $found = $b; break; }
+                }
+                if (!$found) throw new Exception('Booking not found');
+                echo json_encode(['success' => true, 'booking' => $found]);
+            } else {
+                $row = $this->bookingsModel->getBookingById($id);
+                if (!$row) throw new Exception('Booking not found');
+                echo json_encode(['success' => true, 'booking' => $row]);
+            }
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    // DB update booking
+    public function update() {
+        $this->requireLogin();
+        $level = $this->currentUserLevel();
+        if (!in_array($level, [0,1,2], true)) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'You do not have permission to modify bookings.']);
+            exit;
+        }
+
+        header('Content-Type: application/json');
+        try {
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            if ($id < 1) throw new Exception('Invalid id');
+
+            if ($this->useJsonStore) {
+                $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+                if ($id < 1) throw new Exception('Invalid id');
+                $ok = $this->bookingsModel->updateBookingJson($id, $_POST, (int)($_SESSION['id'] ?? 0));
+            } else {
+                $existing = $this->bookingsModel->getBookingById($id);
+                if (!$existing) throw new Exception('Booking not found');
+
+                // Merge existing with provided POST values (support partial updates)
+                $merged = $existing;
+                foreach ($_POST as $k => $v) {
+                    if ($k === 'id') continue;
+                    $merged[$k] = $v;
+                }
+
+                $ok = $this->bookingsModel->updateBooking($id, $merged, (int)($_SESSION['id'] ?? 0));
+
+                // log
+                require_once '../app/models/CarBookingLogs.php';
+                $logs = new CarBookingLogs();
+                $logs->log($id, (int)($_SESSION['id'] ?? 0), 'update', ['before' => $existing, 'after' => $merged]);
+            }
+
+            echo json_encode(['success' => $ok]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+    // DB delete (cancel)
+    public function delete() {
+        $this->requireLogin();
+        $level = $this->currentUserLevel();
+        if (!in_array($level, [0,1,2], true)) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'You do not have permission to delete bookings.']);
+            exit;
+        }
+
+        header('Content-Type: application/json');
+        try {
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            if ($id < 1) throw new Exception('Invalid id');
+
+            if ($this->useJsonStore) {
+                $ok = $this->bookingsModel->deleteBookingJson($id, (int)($_SESSION['id'] ?? 0));
+            } else {
+                $ok = $this->bookingsModel->deleteBooking($id, (int)($_SESSION['id'] ?? 0));
+
+                require_once '../app/models/CarBookingLogs.php';
+                $logs = new CarBookingLogs();
+                $logs->log($id, (int)($_SESSION['id'] ?? 0), 'delete', ['id' => $id]);
+            }
+
+            echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
