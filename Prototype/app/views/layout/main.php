@@ -20,6 +20,8 @@
             $documentTitle = 'Correspondence Management';
         } elseif ($currentController === 'StandardUsers' && $currentAction === 'index') {
             $documentTitle = 'Standard Users';
+        } elseif ($currentController === 'CarBookings' && $currentAction === 'calendar') {
+            $documentTitle = 'Car Bookings';
         } else {
             $documentTitle = 'FMS Portal';
         }

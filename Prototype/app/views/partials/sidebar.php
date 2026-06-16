@@ -77,6 +77,19 @@ function sidebarActiveClass(bool $active): string
           </span>
         </a>
       </li>
+
+      <li>
+        <a href="index.php?controller=CarBookings&action=calendar"
+           class="group flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-medium transition <?= sidebarActiveClass($currentController == 'CarBookings' && $currentAction == 'calendar') ?>">
+          <span class="flex h-11 w-11 items-center justify-center rounded-2xl <?= ($currentController == 'CarBookings' && $currentAction == 'calendar') ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-white' ?>">
+            🚗
+          </span>
+          <span class="min-w-0">
+            <span class="block">Car Bookings</span>
+            <span class="block text-xs font-normal opacity-70">Schedule & history</span>
+          </span>
+        </a>
+      </li>
     </ul>
 
     <?php if ($isSuperAdmin || $isAdmin): ?>
