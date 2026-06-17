@@ -107,7 +107,8 @@
     <!-- Modal Header -->
     <div class="flex items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900">Create New Booking</h2>
+        <h2 class="text-lg font-semibold text-slate-900" id="bookingModalTitle">Create New Booking</h2>
+
         <p class="text-sm text-slate-500 mt-1">Fill in the details below to schedule a vehicle.</p>
       </div>
       <button type="button" id="closeBookingModalBtn" class="rounded-lg p-2 hover:bg-slate-100 transition" aria-label="Close">
@@ -584,13 +585,74 @@
     if (deleteBookingBtn) deleteBookingBtn.classList.add('hidden');
   }
 
-  document.getElementById('closeBookingModalBtn').addEventListener('click', () => { restoreBookingModalEditable(); closeModal(bookingModalEl); });
-  document.getElementById('cancelBookingModalBtn').addEventListener('click', () => { restoreBookingModalEditable(); closeModal(bookingModalEl); });
-  document.getElementById('bookingModalBackdrop').addEventListener('click', () => { restoreBookingModalEditable(); closeModal(bookingModalEl); });
+  function resetBookingModalForm() {
+    // Clear all field values
+    bookingId.value = '';
+
+    // Restore create-mode modal title
+    const titleEl = document.getElementById('bookingModalTitle');
+    if (titleEl) titleEl.textContent = 'Create New Booking';
+
+
+    // Clear schedule status badge (prevents previous-clicked status showing during create)
+    const statusLine = document.getElementById('bookingScheduleStatusLine');
+    if (statusLine) statusLine.remove();
+
+
+    const fields = [
+      'dateTrip',
+      'dateRequested',
+      'destinations',
+      'purpose',
+      'passengers',
+      'departureExpected',
+      'returnExpected',
+      'vehicleId',
+      'driverId',
+      'specialInstructions',
+      'remarks',
+    ];
+
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    // Restore editable state + default button visibility
+    restoreBookingModalEditable();
+
+    const saveBtn = document.getElementById('saveBookingBtn');
+    if (saveBtn) saveBtn.style.display = '';
+
+    // Delete hidden by default
+    const delBtn = document.getElementById('deleteBookingBtn');
+    if (delBtn) delBtn.classList.add('hidden');
+  }
+
+  document.getElementById('closeBookingModalBtn').addEventListener('click', () => {
+    resetBookingModalForm();
+    closeModal(bookingModalEl);
+  });
+  document.getElementById('cancelBookingModalBtn').addEventListener('click', () => {
+    resetBookingModalForm();
+    closeModal(bookingModalEl);
+  });
+  document.getElementById('bookingModalBackdrop').addEventListener('click', () => {
+    resetBookingModalForm();
+    closeModal(bookingModalEl);
+  });
+
+
+  function resetVehicleDetailsModal() {
+    if (vehicleDetailsContentEl) {
+      vehicleDetailsContentEl.innerHTML = '<div class="text-sm text-slate-500">Loading...</div>';
+    }
+  }
 
   // vehicle details modal handlers
-  if (closeVehicleDetailsModalBtn) closeVehicleDetailsModalBtn.addEventListener('click', () => closeModal(vehicleDetailsModalEl));
-  if (vehicleDetailsModalBackdrop) vehicleDetailsModalBackdrop.addEventListener('click', () => closeModal(vehicleDetailsModalEl));
+  if (closeVehicleDetailsModalBtn) closeVehicleDetailsModalBtn.addEventListener('click', () => { resetVehicleDetailsModal(); closeModal(vehicleDetailsModalEl); });
+  if (vehicleDetailsModalBackdrop) vehicleDetailsModalBackdrop.addEventListener('click', () => { resetVehicleDetailsModal(); closeModal(vehicleDetailsModalEl); });
+
 
   bookingForm.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -611,19 +673,21 @@
     })
     .then(resp => {
       if (!resp || !resp.success) {
-        const errorMsg = resp && resp.message ? resp.message : 'Failed to save booking';
-        console.error('Booking save error:', errorMsg, resp);
-        alert(errorMsg);
+        const friendly = friendlyBookingError(resp);
+        console.error('Booking save error:', friendly, resp);
+        showNotification(friendly, 'error');
         return;
       }
+      resetBookingModalForm();
       closeModal(bookingModalEl);
       calendar.refetchEvents();
       loadVehicleCards();
       showNotification(isUpdate ? 'Booking updated successfully!' : 'Booking created successfully!', 'success');
+
     })
     .catch(err => {
       console.error('Network/parsing error:', err);
-      alert('Network error while saving booking: ' + err.message);
+      showNotification('Network error while saving booking. Please try again.', 'error');
     });
   });
 
@@ -639,15 +703,18 @@
       .then(parseJsonResponse)
       .then(resp => {
         if (!resp || !resp.success) {
-          alert(resp && resp.message ? resp.message : 'Failed to delete booking');
+          const msg = resp && resp.message ? resp.message : 'Failed to delete booking';
+          showNotification(msg, 'error');
           return;
         }
+        resetBookingModalForm();
         closeModal(bookingModalEl);
         calendar.refetchEvents();
         loadVehicleCards();
         showNotification('Booking deleted', 'info');
+
       })
-      .catch(err => { console.error(err); alert('Network error while deleting booking'); });
+      .catch(err => { console.error(err); showNotification('Network error while deleting booking', 'error'); });
   });
 
   // ==================== VEHICLE MODAL ====================
@@ -821,12 +888,17 @@
     .catch(err => console.error('Failed to refresh vehicle select:', err));
   }
 
+  function resetVehicleModalForm() {
+    setVehicleModalFormFromRow(null);
+  }
+
   openVehicleModalBtn.addEventListener('click', () => {
     openModal(vehicleModalEl);
     loadVehiclesTable();
   });
-  closeVehicleModalBtn.addEventListener('click', () => closeModal(vehicleModalEl));
-  vehicleModalBackdrop.addEventListener('click', () => closeModal(vehicleModalEl));
+  closeVehicleModalBtn.addEventListener('click', () => { resetVehicleModalForm(); closeModal(vehicleModalEl); });
+  vehicleModalBackdrop.addEventListener('click', () => { resetVehicleModalForm(); closeModal(vehicleModalEl); });
+
   resetVehicleFormBtn.addEventListener('click', () => setVehicleModalFormFromRow(null));
   vehiclesListStatusFilterEl.addEventListener('change', () => loadVehiclesTable());
 
@@ -862,14 +934,15 @@
         return;
       }
 
+      resetVehicleModalForm();
       closeModal(vehicleModalEl);
       loadVehiclesTable();
       refreshVehicleFilterDropdown();
       refreshBookingVehicleSelect();
       loadVehicleCards();
       calendar.refetchEvents();
-      setVehicleModalFormFromRow(null);
       showNotification(id ? 'Vehicle updated successfully' : 'Vehicle created successfully', 'success');
+
     })
     .catch(err => {
       console.error('Network/parsing error:', err);
@@ -1053,7 +1126,11 @@ driversModalBackdrop.addEventListener('click', () => closeModal(driversModalEl))
 resetDriverFormBtn.addEventListener('click', () => setDriversModalFormFromRow(null));
 driversListStatusFilterEl.addEventListener('change', () => loadDriversTable());
 
-// Open drivers modal button
+  function resetDriversModalForm() {
+    setDriversModalFormFromRow(null);
+  }
+
+  // Open drivers modal button
 if (openDriversModalBtn) {
   openDriversModalBtn.addEventListener('click', () => {
     setDriversModalFormFromRow(null);
@@ -1062,7 +1139,12 @@ if (openDriversModalBtn) {
   });
 }
 
+// Close handlers
+if (closeDriversModalBtn) closeDriversModalBtn.addEventListener('click', () => { resetDriversModalForm(); closeModal(driversModalEl); });
+if (driversModalBackdrop) driversModalBackdrop.addEventListener('click', () => { resetDriversModalForm(); closeModal(driversModalEl); });
+
 driverForm.addEventListener('submit', function (e) {
+
   e.preventDefault();
 
   const id = driverIdEl.value ? parseInt(driverIdEl.value, 10) : null;
@@ -1092,12 +1174,13 @@ driverForm.addEventListener('submit', function (e) {
       alert(errorMsg);
       return;
     }
+    resetDriversModalForm();
     closeModal(driversModalEl);
     loadDriversTable();
     refreshDriverFilterDropdown();
     refreshBookingDriverSelect();
-    setDriversModalFormFromRow(null);
     showNotification(id ? 'Driver updated successfully' : 'Driver created successfully', 'success');
+
   })
   .catch(err => {
     console.error('Network/parsing error:', err);
@@ -1334,6 +1417,10 @@ driverForm.addEventListener('submit', function (e) {
         if (saveBtn) saveBtn.style.display = 'none';
         if (delBtn) delBtn.style.display = 'none';
 
+        // Update modal title for read-only details vs create mode
+        const titleEl = document.getElementById('bookingModalTitle');
+        if (titleEl) titleEl.textContent = 'Booking details';
+
         openModal(bookingModalEl);
       })
       .catch(err => { console.error('Failed to load booking:', err); alert('Failed to load booking details'); });
@@ -1369,6 +1456,18 @@ driverForm.addEventListener('submit', function (e) {
     }, 3000);
   }
 
+  function friendlyBookingError(resp) {
+    const code = resp && resp.error_code ? String(resp.error_code) : null;
+
+    if (code === 'vehicle_conflict') return 'This booking can’t be saved: the selected vehicle is already booked for that time period.';
+    if (code === 'driver_conflict') return 'This booking can’t be saved: the selected driver is already booked for that time period.';
+    if (code === 'past_departure') return 'This booking can’t be saved: the departure time is in the past (including today earlier than now).';
+
+    // Fallback: use server message if present
+    if (resp && resp.message) return resp.message;
+    return 'Unable to save booking. Please check your details and try again.';
+  }
+
   // ==================== CALENDAR ====================
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
@@ -1387,8 +1486,7 @@ driverForm.addEventListener('submit', function (e) {
       meridiem: false
     },
     eventDisplay: 'block',
-    eventBackgroundColor: '#0c4a6e',
-    eventBorderColor: '#0c4a6e',
+    // Use per-event colors (provided by extendedProps/backgroundColor/borderColor)
     eventTextColor: '#ffffff',
 
     eventSources: [
@@ -1442,6 +1540,37 @@ driverForm.addEventListener('submit', function (e) {
       const id = event.id;
       if (!id) return;
 
+      // Show status immediately from the event payload
+      const statusFromEvent = event.extendedProps && event.extendedProps.status ? String(event.extendedProps.status) : null;
+      const departureExpected = event.extendedProps ? (event.extendedProps.departure_expected || event.extendedProps.start_at) : null;
+      const returnExpected = event.extendedProps ? (event.extendedProps.return_expected || event.extendedProps.end_at) : null;
+      const computedStatus = statusFromEvent || getBookingStatus(departureExpected, returnExpected);
+
+      // Ensure there is an info line inside the modal header/body
+      let statusLine = document.getElementById('bookingScheduleStatusLine');
+      if (!statusLine) {
+        // Insert right under the modal title area
+        const modalHeader = bookingModalEl.querySelector('h2');
+        if (modalHeader) {
+          statusLine = document.createElement('div');
+          statusLine.id = 'bookingScheduleStatusLine';
+          statusLine.className = 'mt-2 text-xs font-medium';
+          modalHeader.parentElement.appendChild(statusLine);
+        }
+      }
+      if (statusLine) {
+        const badgeClass = (() => {
+          switch (computedStatus) {
+            case 'pending': return 'bg-amber-50 text-amber-700 border-amber-200';
+            case 'ongoing': return 'bg-blue-50 text-blue-700 border-blue-200';
+            case 'finished': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            default: return 'bg-slate-50 text-slate-700 border-slate-200';
+          }
+        })();
+        statusLine.innerHTML = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${badgeClass}">
+          ${getStatusIcon(computedStatus)} ${computedStatus.toUpperCase()}\n        </span>`;
+      }
+
       fetch(getBookingUrl + '&id=' + encodeURIComponent(id), { headers: {'X-Requested-With': 'XMLHttpRequest'} })
         .then(parseJsonResponse)
         .then(data => {
@@ -1466,70 +1595,110 @@ driverForm.addEventListener('submit', function (e) {
 
           const deleteBookingBtn = document.getElementById('deleteBookingBtn');
           if (deleteBookingBtn) deleteBookingBtn.classList.remove('hidden');
+          // Update modal title for read-only details vs create mode
+          const titleEl = document.getElementById('bookingModalTitle');
+          if (titleEl) titleEl.textContent = 'Booking details';
+
           openModal(bookingModalEl);
         })
+
         .catch(err => {
           console.error('Failed to load booking:', err);
           alert('Failed to load booking');
         });
     },
 
-    eventDrop: function (info) {
-      const ev = info.event;
-      const id = ev.id;
-      if (!id) { info.revert(); return; }
-      // prevent moving into the past on client-side
-      if (ev.start && ev.start.getTime() < Date.now()) { alert('Cannot move booking into the past'); info.revert(); return; }
-      const newStart = toISODateTime(ev.start);
-      const newEnd = ev.end ? toISODateTime(ev.end) : toISODateTime(ev.start);
+  eventDrop: function (info) {
+        const ev = info.event;
+        const id = ev.id;
+        if (!id) { info.revert(); return; }
 
-      const fd = new FormData();
-      fd.append('id', id);
-      fd.append('departure_expected', newStart);
-      fd.append('return_expected', newEnd);
-
-      fetch(updateBookingUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
-        .then(parseJsonResponse)
-        .then(resp => {
-          if (!resp || !resp.success) {
-            alert(resp && resp.message ? resp.message : 'Failed to update booking');
+        // Prevent past dates
+        const todayMidnight = new Date();
+        todayMidnight.setHours(0, 0, 0, 0);
+        if (ev.start && ev.start.getTime() < todayMidnight.getTime()) {
+            showNotification('Cannot move booking into the past', 'error');
             info.revert();
             return;
-          }
-          showNotification('Booking rescheduled', 'success');
-          loadVehicleCards();
+        }
+
+        const newStart = toISODateTime(ev.start);
+        const newEnd = ev.end ? toISODateTime(ev.end) : toISODateTime(ev.start);
+
+        const fd = new FormData();
+        fd.append('id', id);
+        fd.append('departure_expected', newStart);
+        fd.append('return_expected', newEnd);
+
+        fetch(updateBookingUrl, { 
+            method: 'POST', 
+            body: fd, 
+            headers: { 'X-Requested-With': 'XMLHttpRequest' } 
         })
-        .catch(err => { console.error('Network/parsing error:', err); alert('Network/parsing error: ' + (err.message || err)); info.revert(); });
+        .then(parseJsonResponse)
+        .then(resp => {
+            if (!resp || !resp.success) {
+                const friendly = friendlyBookingError(resp);
+                console.error('Update error (server):', friendly, resp);
+                showNotification(friendly, 'error');
+                info.revert();
+                return;
+            }
+            showNotification('Booking rescheduled successfully', 'success');
+            loadVehicleCards();
+        })
+        .catch(err => {
+            console.error('Update error (network/parsing):', err);
+            showNotification('Network error while rescheduling booking.', 'error');
+            info.revert();
+        });
     },
 
     eventResize: function (info) {
-      const ev = info.event;
-      const id = ev.id;
-      if (!id) { info.revert(); return; }
-      // prevent resizing into the past on client-side
-      if (ev.start && ev.start.getTime() < Date.now()) { alert('Cannot resize booking into the past'); info.revert(); return; }
-      const newStart = toISODateTime(ev.start);
-      const newEnd = ev.end ? toISODateTime(ev.end) : toISODateTime(ev.start);
+        const ev = info.event;
+        const id = ev.id;
+        if (!id) { info.revert(); return; }
 
-      const fd = new FormData();
-      fd.append('id', id);
-      fd.append('departure_expected', newStart);
-      fd.append('return_expected', newEnd);
-
-      fetch(updateBookingUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
-        .then(parseJsonResponse)
-        .then(resp => {
-          if (!resp || !resp.success) {
-            alert(resp && resp.message ? resp.message : 'Failed to update booking');
+        const todayMidnight = new Date();
+        todayMidnight.setHours(0, 0, 0, 0);
+        if (ev.start && ev.start.getTime() < todayMidnight.getTime()) {
+            showNotification('Cannot resize booking into the past', 'error');
             info.revert();
             return;
-          }
-          showNotification('Booking duration updated', 'success');
-          loadVehicleCards();
+        }
+
+        const newStart = toISODateTime(ev.start);
+        const newEnd = ev.end ? toISODateTime(ev.end) : toISODateTime(ev.start);
+
+        const fd = new FormData();
+        fd.append('id', id);
+        fd.append('departure_expected', newStart);
+        fd.append('return_expected', newEnd);
+
+        fetch(updateBookingUrl, { 
+            method: 'POST', 
+            body: fd, 
+            headers: { 'X-Requested-With': 'XMLHttpRequest' } 
         })
-        .catch(err => { console.error('Network/parsing error:', err); alert('Network/parsing error: ' + (err.message || err)); info.revert(); });
-    },
-  });
+        .then(parseJsonResponse)
+        .then(resp => {
+            if (!resp || !resp.success) {
+                const friendly = friendlyBookingError(resp);
+                console.error('Resize error (server):', friendly, resp);
+                showNotification(friendly, 'error');
+                info.revert();
+                return;
+            }
+            showNotification('Booking duration updated', 'success');
+            loadVehicleCards();
+        })
+        .catch(err => {
+            console.error('Resize error (network/parsing):', err);
+            showNotification('Network error while updating booking.', 'error');
+            info.revert();
+        });
+    }
+});
 
   calendar.render();
 

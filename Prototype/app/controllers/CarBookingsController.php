@@ -14,6 +14,24 @@ if (file_exists(__DIR__ . '/../config.php')) {
 
 class CarBookingsController extends Controller {
 
+    private function classifyBookingError(string $message): string {
+        // Use unique markers from the model first.
+        if (str_contains($message, '[VEHICLE_CONFLICT]')) return 'vehicle_conflict';
+        if (str_contains($message, '[DRIVER_CONFLICT]')) return 'driver_conflict';
+        if (str_contains($message, '[PAST_DEPARTURE]')) return 'past_departure';
+        if (str_contains($message, '[TIME_INVALID]')) return 'time_invalid';
+
+        // Backwards-compatible fallback (loose string matching)
+        $m = strtolower($message);
+        if (str_contains($m, 'vehicle')) return 'vehicle_conflict';
+        if (str_contains($m, 'driver')) return 'driver_conflict';
+        if (str_contains($m, 'past')) return 'past_departure';
+        if (str_contains($m, 'return expected') || str_contains($m, 'after departure') || str_contains($m, 'time')) return 'time_invalid';
+
+        return 'unknown';
+    }
+
+
     private CarBookings $bookingsModel;
     private CarVehicles $vehiclesModel;
     private CarDrivers $driversModel;
@@ -61,7 +79,7 @@ class CarBookingsController extends Controller {
                 $endVal = $b['end_at'] ?? ($b['return_expected'] ?? null);
                 $events[] = [
                     'id' => (int)($b['id'] ?? 0),
-                    'title' => $b['purpose'] ?: ($b['vehicle_name'] ?? 'Booking'),
+                    'title' => ($b['purpose'] ? $b['purpose'] . ' - ' . ($b['vehicle_name'] ?? '') : ($b['vehicle_name'] ?? 'Booking')),
                     'start' => $startVal,
                     'end' => $endVal ?? ($b['date_trip'] ?? null),
                     'allDay' => false,
@@ -90,7 +108,14 @@ class CarBookingsController extends Controller {
             echo json_encode(['success' => true, 'bookings' => $history]);
         } catch (Exception $e) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            $msg = $e->getMessage();
+            $errorCode = match (true) {
+                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
+                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
+                str_contains(strtolower($msg), 'past') => 'past_departure',
+                default => 'unknown',
+            };
+            echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
     }
@@ -99,6 +124,7 @@ class CarBookingsController extends Controller {
     public function create() {
         $this->requireLogin();
         $actorUserId = (int)($_SESSION['id'] ?? 0);
+
 
         // Role gate: allow Admin/Editor/SuperAdmin (levels 0/1/2). Viewers cannot create.
         $level = $this->currentUserLevel();
@@ -120,7 +146,14 @@ class CarBookingsController extends Controller {
             echo json_encode(['success' => true, 'booking_id' => $id]);
         } catch (Exception $e) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            $msg = $e->getMessage();
+            $errorCode = match (true) {
+                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
+                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
+                str_contains(strtolower($msg), 'past') => 'past_departure',
+                default => 'unknown',
+            };
+            echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
     }
@@ -175,7 +208,14 @@ class CarBookingsController extends Controller {
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            $msg = $e->getMessage();
+            $errorCode = match (true) {
+                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
+                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
+                str_contains(strtolower($msg), 'past') => 'past_departure',
+                default => 'unknown',
+            };
+            echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
     }
@@ -196,10 +236,18 @@ class CarBookingsController extends Controller {
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            $msg = $e->getMessage();
+            $errorCode = match (true) {
+                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
+                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
+                str_contains(strtolower($msg), 'past') => 'past_departure',
+                default => 'unknown',
+            };
+            echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
     }
+
 
     // Get single booking (DB or JSON)
     public function get() {
@@ -224,10 +272,18 @@ class CarBookingsController extends Controller {
             }
         } catch (Exception $e) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            $msg = $e->getMessage();
+            $errorCode = match (true) {
+                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
+                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
+                str_contains(strtolower($msg), 'past') => 'past_departure',
+                default => 'unknown',
+            };
+            echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
     }
+
 
     // DB update booking
     public function update() {
@@ -270,7 +326,14 @@ class CarBookingsController extends Controller {
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            $msg = $e->getMessage();
+            $errorCode = match (true) {
+                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
+                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
+                str_contains(strtolower($msg), 'past') => 'past_departure',
+                default => 'unknown',
+            };
+            echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
     }

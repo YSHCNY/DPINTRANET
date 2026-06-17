@@ -43,6 +43,22 @@ class CarBookings extends Model {
         return 'ongoing';
     }
 
+    private function statusToCalendarColor(string $status): array {
+        // Match the vehicle badge mapping:
+        // pending=amber, ongoing=blue, finished=emerald
+        switch ($status) {
+            case 'pending':
+                return ['bg' => '#f59e0b', 'border' => '#d97706']; // amber-500 / amber-600
+            case 'ongoing':
+                return ['bg' => '#2563eb', 'border' => '#1d4ed8']; // blue-600 / blue-700
+            case 'finished':
+                return ['bg' => '#10b981', 'border' => '#059669']; // emerald-500 / emerald-600
+            default:
+                return ['bg' => '#64748b', 'border' => '#475569']; // slate
+        }
+    }
+
+
     public function getCalendarEvents(string $start, string $end, ?int $vehicleId = null, ?int $driverId = null): array {
         // FullCalendar passes ISO strings; use as DATETIME boundaries.
         $startDt = $start ?: date('c');
@@ -92,7 +108,12 @@ class CarBookings extends Model {
         $events = [];
         foreach ($rows as $r) {
             $vehicleLabel = $r['vehicle_name'] . ' (' . $r['plate_number'] . ')';
-            $title = $r['purpose'] ? $r['purpose'] : $vehicleLabel;
+            $title = $r['purpose'] ? $r['purpose'] . ' - ' . $vehicleLabel : $vehicleLabel;
+
+            $departureExpected = $r['departure_expected'] ?? ($r['start_at'] ?? null);
+            $returnExpected = $r['return_expected'] ?? ($r['end_at'] ?? null);
+
+            $status = $this->getBookingStatus((string)$departureExpected, (string)$returnExpected);
 
             $events[] = [
                 'id' => (int)$r['id'],
@@ -107,7 +128,16 @@ class CarBookings extends Model {
                     'driver_name' => $r['driver_name'],
                     'passengers' => (int)$r['passengers'],
                     'remarks' => $r['remarks'],
+
+                    'departure_expected' => $departureExpected,
+                    'return_expected' => $returnExpected,
+                    'status' => $status,
                 ],
+
+                // FullCalendar will use these per-event
+                'backgroundColor' => $this->statusToCalendarColor($status)['bg'],
+                'borderColor' => $this->statusToCalendarColor($status)['border'],
+                'textColor' => '#ffffff',
             ];
         }
 
@@ -131,7 +161,7 @@ class CarBookings extends Model {
         $start = trim((string)($data['departure_expected'] ?? ''));
         $end = trim((string)($data['return_expected'] ?? ''));
 
-        // accept datetime-local 'YYYY-MM-DDTHH:MM' by converting T to space
+        // accept datetime-local 'YYYY-MM-DDTHH:MM'
         $startNorm = str_replace('T', ' ', $start);
         $endNorm = str_replace('T', ' ', $end);
 
@@ -139,11 +169,13 @@ class CarBookings extends Model {
         $endTs = strtotime($endNorm);
 
         if ($startNorm === '' || $endNorm === '' || $startTs === false || $endTs === false || $startTs > $endTs) {
-            throw new Exception('Return expected datetime must be equal to or after departure expected datetime.');
+            throw new Exception('[TIME_INVALID] Return expected datetime must be equal to or after departure expected datetime.');
         }
 
-        if ($startTs < strtotime(date('Y-m-d H:i:s'))) {
-            throw new Exception('Departure datetime cannot be in the past.');
+        // Allow bookings starting today (time-aware)
+        $todayMidnight = strtotime(date('Y-m-d 00:00:00'));
+        if ($startTs < $todayMidnight) {
+            throw new Exception('[PAST_DEPARTURE] Departure datetime cannot be in the past.');
         }
 
         $startAt = date('Y-m-d H:i:s', $startTs);
@@ -151,25 +183,51 @@ class CarBookings extends Model {
 
         $this->db->beginTransaction();
         try {
-            // Check for vehicle conflicts
-                        $conflictCheck = $this->db->prepare(
-                                "SELECT id FROM {$this->table}
-                                 WHERE vehicle_id = :vehicleId
-                                 AND status = 'scheduled'
-                                 AND ((start_at <= :startDt AND end_at > :startDt)
-                                     OR (start_at < :endDt AND end_at >= :endDt)
-                                     OR (start_at >= :startDt AND end_at <= :endDt))
-                                 LIMIT 1"
-                        );
-                        $conflictCheck->execute([
-                                ':vehicleId' => $data['vehicle_id'],
-                                ':startDt' => $startAt,
-                                ':endDt' => $endAt,
-                        ]);
+            // === Vehicle Conflict Check ===
+            $conflictCheck = $this->db->prepare(
+                "SELECT id FROM {$this->table}
+                 WHERE vehicle_id = :vehicleId
+                 AND status = 'scheduled'
+                 AND id <> :excludeId
+                 AND ((start_at <= :startDt AND end_at > :startDt)
+                   OR (start_at < :endDt AND end_at >= :endDt)
+                   OR (start_at >= :startDt AND end_at <= :endDt))
+                 LIMIT 1"
+            );
+            $conflictCheck->execute([
+                ':vehicleId' => $data['vehicle_id'],
+                ':excludeId' => 0,           // not needed for create
+                ':startDt'   => $startAt,
+                ':endDt'     => $endAt,
+            ]);
             if ($conflictCheck->fetchColumn()) {
-                throw new Exception('This vehicle is already booked for the selected dates.');
+                // marker used by controller to classify error
+                throw new Exception('[VEHICLE_CONFLICT] This vehicle is already booked for the selected period.');
             }
 
+            // === Driver Conflict Check ===
+            $driverConflictCheck = $this->db->prepare(
+                "SELECT id FROM {$this->table}
+                 WHERE driver_id = :driverId
+                 AND status = 'scheduled'
+                 AND id <> :excludeId
+                 AND (
+                    (start_at < :endDt AND end_at > :startDt)
+                 )
+                 LIMIT 1"
+            );
+            $driverConflictCheck->execute([
+                ':driverId'  => $data['driver_id'],
+                ':excludeId' => 0,
+                ':startDt'   => $startAt,
+                ':endDt'     => $endAt,
+            ]);
+            if ($driverConflictCheck->fetchColumn()) {
+                // marker used by controller to classify error
+                throw new Exception('[DRIVER_CONFLICT] This driver is already booked for the selected period.');
+            }
+
+            // Insert booking
             $stmt = $this->db->prepare(
                 "INSERT INTO {$this->table}
                 (date_trip, date_requested, destinations, purpose, passengers,
@@ -220,7 +278,7 @@ class CarBookings extends Model {
     }
 
     // Update booking (DB)
-    public function updateBooking(int $id, array $data, int $actorUserId): bool {
+   public function updateBooking(int $id, array $data, int $actorUserId): bool {
         $id = (int)$id;
         if ($id < 1) throw new Exception('Invalid booking id');
 
@@ -230,23 +288,31 @@ class CarBookings extends Model {
         $start = isset($data['departure_expected']) ? trim((string)$data['departure_expected']) : $existing['departure_expected'];
         $end = isset($data['return_expected']) ? trim((string)$data['return_expected']) : $existing['return_expected'];
 
-        // normalize T separators
         $startNorm = str_replace('T', ' ', $start);
         $endNorm = str_replace('T', ' ', $end);
+
         $startTs = strtotime($startNorm);
         $endTs = strtotime($endNorm);
+
         if ($startNorm === '' || $endNorm === '' || $startTs === false || $endTs === false || $startTs > $endTs) {
-            throw new Exception('Return expected datetime must be equal to or after departure expected datetime.');
+            throw new Exception('[TIME_INVALID] Return expected datetime must be equal to or after departure expected datetime.');
         }
-        if ($startTs < strtotime(date('Y-m-d H:i:s'))) {
-            throw new Exception('Departure datetime cannot be in the past.');
+
+        // FIXED: Allow today
+        $todayMidnight = strtotime(date('Y-m-d 00:00:00'));
+        if ($startTs < $todayMidnight) {
+            throw new Exception('[PAST_DEPARTURE] Departure datetime cannot be in the past.');
         }
+
         $startAt = date('Y-m-d H:i:s', $startTs);
         $endAt = date('Y-m-d H:i:s', $endTs);
 
+        $vehicleId = isset($data['vehicle_id']) ? (int)$data['vehicle_id'] : (int)$existing['vehicle_id'];
+        $driverId  = isset($data['driver_id'])  ? (int)$data['driver_id']  : (int)$existing['driver_id'];
+
         $this->db->beginTransaction();
         try {
-            // conflict check excluding current booking
+            // === Vehicle Conflict Check ===
             $conflictCheck = $this->db->prepare(
                 "SELECT id FROM {$this->table}
                  WHERE vehicle_id = :vehicleId
@@ -257,17 +323,40 @@ class CarBookings extends Model {
                    OR (start_at >= :startDt AND end_at <= :endDt))
                  LIMIT 1"
             );
-            $vehicleId = isset($data['vehicle_id']) ? (int)$data['vehicle_id'] : (int)$existing['vehicle_id'];
             $conflictCheck->execute([
                 ':vehicleId' => $vehicleId,
-                ':id' => $id,
-                ':startDt' => $startAt,
-                ':endDt' => $endAt,
+                ':id'        => $id,
+                ':startDt'   => $startAt,
+                ':endDt'     => $endAt,
             ]);
             if ($conflictCheck->fetchColumn()) {
-                throw new Exception('This vehicle is already booked for the selected dates.');
+                // marker used by controller to classify error
+                throw new Exception('[VEHICLE_CONFLICT] This vehicle is already booked for the selected period.');
             }
 
+            // === Driver Conflict Check ===
+            $driverConflictCheck = $this->db->prepare(
+                "SELECT id FROM {$this->table}
+                 WHERE driver_id = :driverId
+                 AND status = 'scheduled'
+                 AND id <> :id
+                 AND (
+                    (start_at < :endDt AND end_at > :startDt)
+                 )
+                 LIMIT 1"
+            );
+            $driverConflictCheck->execute([
+                ':driverId' => $driverId,
+                ':id'       => $id,
+                ':startDt'  => $startAt,
+                ':endDt'    => $endAt,
+            ]);
+            if ($driverConflictCheck->fetchColumn()) {
+                // marker used by controller to classify error
+                throw new Exception('[DRIVER_CONFLICT] This driver is already booked for the selected period.');
+            }
+
+            // Update booking
             $stmt = $this->db->prepare(
                 "UPDATE {$this->table} SET
                    date_trip = :date_trip,
@@ -297,7 +386,7 @@ class CarBookings extends Model {
                 ':return_expected' => $endAt,
                 ':special_instructions' => $data['special_instructions'] ?? $existing['special_instructions'],
                 ':vehicle_id' => $vehicleId,
-                ':driver_id' => isset($data['driver_id']) ? (int)$data['driver_id'] : (int)$existing['driver_id'],
+                ':driver_id' => $driverId,
                 ':remarks' => $data['remarks'] ?? $existing['remarks'],
                 ':start_at' => $startAt,
                 ':end_at' => $endAt,
@@ -443,4 +532,3 @@ class CarBookings extends Model {
         return true;
     }
 }
-
