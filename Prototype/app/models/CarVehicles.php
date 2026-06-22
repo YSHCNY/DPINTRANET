@@ -16,7 +16,7 @@ class CarVehicles extends Model {
 
     public function getActiveVehicles(): array {
         $stmt = $this->db->query(
-            "SELECT id, vehicle_name, plate_number, capacity, status
+            "SELECT id, vehicle_name, plate_number, image_filename, capacity, status
              FROM {$this->table}
              WHERE status = 'active'
              ORDER BY vehicle_name ASC"
@@ -27,7 +27,7 @@ class CarVehicles extends Model {
     // Used by dropdowns/modals
     public function listVehicles(?string $status = null): array {
         $params = [];
-        $sql = "SELECT id, vehicle_name, plate_number, capacity, status FROM {$this->table}";
+        $sql = "SELECT id, vehicle_name, plate_number, image_filename, capacity, status FROM {$this->table}";
 
         if ($status !== null && $status !== '') {
             $statusNorm = $this->normalizeStatus($status);
@@ -63,14 +63,15 @@ class CarVehicles extends Model {
 
             $stmt = $this->db->prepare(
                 "INSERT INTO {$this->table}
-                 (plate_number, vehicle_name, capacity, status, created_by, created_at, updated_at)
+                 (plate_number, vehicle_name, image_filename, capacity, status, created_by, created_at, updated_at)
                  VALUES
-                 (:plate, :name, :capacity, :status, :created_by, NOW(), NOW())"
+                 (:plate, :name, :image_filename, :capacity, :status, :created_by, NOW(), NOW())"
             );
 
             $stmt->execute([
                 ':plate' => $plate,
                 ':name' => $name,
+                ':image_filename' => $data['image_filename'] ?? null,
                 ':capacity' => $capacity,
                 ':status' => $status,
                 ':created_by' => $actorUserId,
@@ -107,43 +108,60 @@ class CarVehicles extends Model {
             throw new Exception('Plate number already exists.');
         }
 
-        $stmt = $this->db->prepare(
-            "UPDATE {$this->table}
-             SET plate_number = :plate,
-                 vehicle_name = :name,
-                 capacity = :capacity,
-                 status = :status,
-                 updated_at = NOW()
-             WHERE id = :id"
-        );
-
-        $stmt->execute([
-            ':plate' => $plate,
-            ':name' => $name,
-            ':capacity' => $capacity,
-            ':status' => $status,
-            ':id' => $id,
-        ]);
+        // If image filename provided, include it in the update
+        if (array_key_exists('image_filename', $data) && $data['image_filename'] !== null) {
+            $stmt = $this->db->prepare(
+                "UPDATE {$this->table}
+                 SET plate_number = :plate,
+                     vehicle_name = :name,
+                     image_filename = :image_filename,
+                     capacity = :capacity,
+                     status = :status,
+                     updated_at = NOW()
+                 WHERE id = :id"
+            );
+            $stmt->execute([
+                ':plate' => $plate,
+                ':name' => $name,
+                ':image_filename' => $data['image_filename'],
+                ':capacity' => $capacity,
+                ':status' => $status,
+                ':id' => $id,
+            ]);
+        } else {
+            $stmt = $this->db->prepare(
+                "UPDATE {$this->table}
+                 SET plate_number = :plate,
+                     vehicle_name = :name,
+                     capacity = :capacity,
+                     status = :status,
+                     updated_at = NOW()
+                 WHERE id = :id"
+            );
+            $stmt->execute([
+                ':plate' => $plate,
+                ':name' => $name,
+                ':capacity' => $capacity,
+                ':status' => $status,
+                ':id' => $id,
+            ]);
+        }
 
         // Might be unchanged values. Treat no rows affected as false.
         return $stmt->rowCount() > 0;
     }
 
-    // Soft delete via status = inactive
-    public function disableVehicle(int $id, int $actorUserId): bool {
-        $id = (int)$id;
-        if ($id < 1) {
-            throw new Exception('Invalid vehicle id');
+        public function disableVehicle(int $id, int $actorUserId): bool {
+            $id = (int)$id;
+            if ($id < 1) throw new Exception('Invalid vehicle id');
+
+            $stmt = $this->db->prepare(
+                "UPDATE {$this->table}
+                 SET status = 'inactive', updated_at = NOW()
+                 WHERE id = :id"
+            );
+            $stmt->execute([':id' => $id]);
+            return $stmt->rowCount() > 0;
         }
 
-        $stmt = $this->db->prepare(
-            "UPDATE {$this->table}
-             SET status = 'inactive', updated_at = NOW()
-             WHERE id = :id AND status <> 'inactive'"
-        );
-        $stmt->execute([':id' => $id]);
-        return $stmt->rowCount() > 0;
-    }
-}
-
-
+   }

@@ -1,7 +1,7 @@
 <?php require __DIR__ . '/../partials/icons.php'; ?>
 <?php $filesCateg = $filesCateg ?? []; $recipientsCateg = $recipientsCateg ?? []; ?>
 
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen theme-palette">
   <div class="max-w-5xl mx-auto px-4 py-8">
     <div class="mb-8 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
       <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-5">

@@ -76,7 +76,7 @@
 
 
       <div class="w-1/3  flex my-8">
-      <img src=".././app/assets/logo/symbol.png" alt="Login Image" class="object-cover h-1/2 w-1/2">
+      <img src=".././app/assets/logo/official.png" alt="Login Image" class="object-cover h-1/2 w-1/2">
     </div>
 
 
@@ -120,8 +120,8 @@
         </div>
 
         <button type="submit"
-          class="w-full rounded-xl bg-sky-700 px-4 py-3 font-medium
-                 text-white hover:bg-sky-800 transition">
+          class="w-full rounded-xl bg-green-800 px-4 py-3 font-medium
+                 text-white hover:bg-green-900 transition">
           Login
         </button>
 

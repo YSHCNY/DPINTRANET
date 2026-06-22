@@ -3,29 +3,37 @@
 // Requires: CarBookingsController@calendar
 ?>
 
-<div class="space-y-6">
-  <!-- Header Section -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <h1 class="text-2xl font-bold text-slate-900">Vehicle Bookings</h1>
-      <p class="text-sm text-slate-500 mt-1">Manage bookings, vehicles, and drivers. Drag events to create new bookings.</p>
-    </div>
-    <div class="flex items-center gap-2 flex-wrap">
-      <button type="button" id="openVehicleModalBtn" class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition shadow-sm">
-        <span>🚗</span>
-        <span>Add Vehicle</span>
-      </button>
-      <button type="button" id="openDriversModalBtn" class="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 hover:bg-sky-100 transition shadow-sm">
-        <span>👤</span>
-        <span>Manage Drivers</span>
-      </button>
-    </div>
-  </div>
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-[1600px] mx-auto px-4 py-8">
+    <div class="mb-8 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+      <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-5">
+        <!-- Page header -->
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-600">Vehicle Bookings</p>
+            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Manage Bookings & Fleet</h1>
+            <p class="mt-2 text-sm text-slate-500">Schedule vehicles, manage drivers, and review booking history.</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" id="openVehicleModalBtn" class="border rounded-md inline-flex items-center gap-2 rounded-2xl  px-4 py-2 text-sm font-medium">
+              <span>🚗</span>
+              <span>Manage Vehicle</span>
+            </button>
+            <button type="button" id="openDriversModalBtn" class="border rounded-md inline-flex items-center gap-2 rounded-2xl  px-4 py-2 text-sm font-medium">
+              <span>👤</span>
+              <span>Manage Drivers</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 lg:p-7">
+        <div class="space-y-6">
+
 
   <!-- Calendar Container -->
   <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
     <!-- Toolbar -->
-    <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4">
+    <div class="border-b border-slate-100 px-6 py-4 card-header">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="inline-block">
@@ -46,7 +54,7 @@
             </select>
           </div>
 
-          <button type="button" id="refreshBtn" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-sm">
+          <button type="button" id="refreshBtn" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
             <span>🔄</span>
             <span>Refresh</span>
           </button>
@@ -100,57 +108,57 @@
 <!-- ============================================
      BOOKING MODAL
      ============================================ -->
-<div id="bookingModal" class="fixed inset-0 z-50 hidden">
+<div id="bookingModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="bookingModalBackdrop"></div>
 
-  <div class="relative mx-auto my-6 w-[95vw] max-w-4xl rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+  <div class="relative mx-auto my-6 w-[95vw] max-w-4xl modal-panel">
     <!-- Modal Header -->
-    <div class="flex items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+    <div class="modal-header card-header">
       <div>
         <h2 class="text-lg font-semibold text-slate-900" id="bookingModalTitle">Create New Booking</h2>
 
         <p class="text-sm text-slate-500 mt-1">Fill in the details below to schedule a vehicle.</p>
       </div>
-      <button type="button" id="closeBookingModalBtn" class="rounded-lg p-2 hover:bg-slate-100 transition" aria-label="Close">
-        <span class="text-xl text-slate-400">✕</span>
+      <button type="button" id="closeBookingModalBtn" class="modal-close" aria-label="Close">
+        <span class="text-lg">✕</span>
       </button>
     </div>
 
     <!-- Modal Content -->
-    <form id="bookingForm" class="px-6 py-6 max-h-[calc(100vh-200px)] overflow-y-auto" method="POST" action="">
+    <form id="bookingForm" class="modal-body" method="POST" action="">
       <input type="hidden" name="id" id="bookingId" value="">
 
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <!-- Date of Trip -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Date of Trip <span class="text-red-500">*</span></label>
-          <input type="datetime-local" name="date_trip" id="dateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required />
+          <input type="datetime-local" name="date_trip" id="dateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
           <p class="text-xs text-slate-500 mt-1">When will the trip occur?</p>
         </div>
 
         <!-- Date Requested -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Date Requested <span class="text-red-500">*</span></label>
-          <input type="datetime-local" name="date_requested" id="dateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required />
+          <input type="datetime-local" name="date_requested" id="dateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
           <p class="text-xs text-slate-500 mt-1">When was this booking requested?</p>
         </div>
 
         <!-- Destinations -->
         <div class="sm:col-span-2">
           <label class="text-sm font-semibold text-slate-700 block mb-2">Destinations <span class="text-red-500">*</span></label>
-          <input type="text" name="destinations" id="destinations" placeholder="e.g., Downtown to Airport via City Hall" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required />
+          <input type="text" name="destinations" id="destinations" placeholder="e.g., Downtown to Airport via City Hall" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
         </div>
 
         <!-- Purpose -->
         <div class="sm:col-span-2">
           <label class="text-sm font-semibold text-slate-700 block mb-2">Purpose <span class="text-red-500">*</span></label>
-          <input type="text" name="purpose" id="purpose" placeholder="e.g., Business meeting, Client transport" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required />
+          <input type="text" name="purpose" id="purpose" placeholder="e.g., Business meeting, Client transport" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
         </div>
 
         <!-- Passengers -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Number of Passengers <span class="text-red-500">*</span></label>
-          <input type="number" name="passengers" id="passengers" min="1" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required />
+          <input type="number" name="passengers" id="passengers" min="1" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
         </div>
 
         <!-- Empty space -->
@@ -159,21 +167,21 @@
         <!-- Departure Expected -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Expected Departure <span class="text-red-500">*</span></label>
-          <input type="datetime-local" name="departure_expected" id="departureExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required />
+          <input type="datetime-local" name="departure_expected" id="departureExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
           <p class="text-xs text-slate-500 mt-1">Cannot be in the past</p>
         </div>
 
         <!-- Return Expected -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Expected Return <span class="text-red-500">*</span></label>
-          <input type="datetime-local" name="return_expected" id="returnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required />
+          <input type="datetime-local" name="return_expected" id="returnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
           <p class="text-xs text-slate-500 mt-1">Must be after departure</p>
         </div>
 
         <!-- Vehicle Selection -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Assigned Vehicle <span class="text-red-500">*</span></label>
-          <select name="vehicle_id" id="vehicleId" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required>
+          <select name="vehicle_id" id="vehicleId" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required>
             <option value="">-- Select a vehicle --</option>
             <?php foreach (($vehicles ?? []) as $v): ?>
               <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
@@ -184,7 +192,7 @@
         <!-- Driver Selection -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Assigned Driver <span class="text-red-500">*</span></label>
-          <select name="driver_id" id="driverId" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required>
+          <select name="driver_id" id="driverId" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required>
             <option value="">-- Select a driver --</option>
             <?php foreach (($drivers ?? []) as $d): ?>
               <option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['driver_name']) ?></option>
@@ -195,22 +203,23 @@
         <!-- Special Instructions -->
         <div class="sm:col-span-2">
           <label class="text-sm font-semibold text-slate-700 block mb-2">Special Instructions</label>
-          <textarea name="special_instructions" id="specialInstructions" rows="3" placeholder="Any special requirements? (e.g., wheelchair accessible, extra luggage space)" class="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition"></textarea>
+          <textarea name="special_instructions" id="specialInstructions" rows="3" placeholder="Any special requirements? (e.g., wheelchair accessible, extra luggage space)" class="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition"></textarea>
         </div>
 
         <!-- Remarks -->
         <div class="sm:col-span-2">
           <label class="text-sm font-semibold text-slate-700 block mb-2">Remarks</label>
-          <textarea name="remarks" id="remarks" rows="3" placeholder="Additional notes about this booking..." class="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition"></textarea>
+          <textarea name="remarks" id="remarks" rows="3" placeholder="Additional notes about this booking..." class="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition"></textarea>
         </div>
       </div>
 
       <!-- Modal Footer -->
-      <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end border-t border-slate-100 pt-6">
-        <button type="button" id="cancelBookingModalBtn" class="rounded-lg border border-slate-200 bg-white px-6 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">Cancel</button>
-        <button type="button" id="deleteBookingBtn" class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 transition hidden">Delete</button>
-        <button type="submit" id="saveBookingBtn" class="rounded-lg bg-gradient-to-r from-sky-600 to-sky-700 px-6 py-2 text-sm font-semibold text-white hover:from-sky-700 hover:to-sky-800 transition shadow-md">
-          <span>✓</span> Save Booking
+      <div class="modal-footer">
+        <button type="button" id="cancelBookingModalBtn" class="btn-ghost">Cancel</button>
+        <button type="button" id="deleteBookingBtn" class="btn-danger hidden">Delete</button>
+        <button type="submit" id="saveBookingBtn" class="btn-primary">
+          <span>✓</span>
+          <span>Save Booking</span>
         </button>
       </div>
     </form>
@@ -220,61 +229,151 @@
 <!-- ============================================
      VEHICLE MODAL
      ============================================ -->
-<div id="vehicleModal" class="fixed inset-0 z-50 hidden">
+  <div id="vehicleModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="vehicleModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="vehicleModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-4xl rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
-    <div class="flex items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+  <div class="relative mx-auto my-6 w-[95vw] max-w-4xl modal-panel">
+    <div class="modal-header card-header">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900">Manage Vehicles</h2>
+        <h2 id="vehicleModalTitle" class="text-lg font-semibold text-slate-900">Manage Vehicles</h2>
         <p class="text-sm text-slate-500 mt-1">Add new vehicles or modify existing ones</p>
       </div>
-      <button type="button" id="closeVehicleModalBtn" class="rounded-lg p-2 hover:bg-slate-100 transition" aria-label="Close">
-        <span class="text-xl text-slate-400">✕</span>
+      <button type="button" id="closeVehicleModalBtn" class="modal-close" aria-label="Close">
+        <span class="text-lg">✕</span>
       </button>
     </div>
 
-    <div class="px-6 py-6">
+    <div class="modal-body">
       <!-- Add Vehicle Form -->
-      <form id="vehicleForm" class="mb-8 p-5 rounded-lg border border-slate-200 bg-gradient-to-br from-emerald-50 to-emerald-100/30">
-        <h3 class="text-sm font-semibold text-slate-900 mb-4">Add / Edit Vehicle</h3>
+      <div class="vehicle-form-card rounded-lg border border-surface-2 p-4 bg-white mb-4">
+        <form id="vehicleForm" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-slate-900">Add / Edit Vehicle</h3>
+            <p class="text-xs text-slate-500">Keep fields concise — plate number and capacity are required.</p>
+          </div>
         <input type="hidden" name="id" id="vehicleIdInput" value="">
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 items-end">
           <div class="sm:col-span-2">
             <label class="text-xs font-semibold text-slate-700 block mb-2">Plate Number <span class="text-red-500">*</span></label>
-            <input type="text" name="plate_number" id="plateNumber" placeholder="e.g., ABC-1234" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 transition" required />
+            <input type="text" name="plate_number" id="plateNumber" placeholder="e.g., ABC-1234" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
           </div>
 
           <div>
             <label class="text-xs font-semibold text-slate-700 block mb-2">Capacity <span class="text-red-500">*</span></label>
-            <input type="number" name="capacity" id="capacity" min="1" placeholder="Seats" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 transition" required />
+            <input type="number" name="capacity" id="capacity" min="1" placeholder="Seats" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
           </div>
 
           <div class="sm:col-span-2">
             <label class="text-xs font-semibold text-slate-700 block mb-2">Vehicle Name <span class="text-red-500">*</span></label>
-            <input type="text" name="vehicle_name" id="vehicleName" placeholder="e.g., Toyota Hiace Van" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 transition" required />
+            <input type="text" name="vehicle_name" id="vehicleName" placeholder="e.g., Toyota Hiace Van" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
           </div>
 
           <div>
             <label class="text-xs font-semibold text-slate-700 block mb-2">Status <span class="text-red-500">*</span></label>
-            <select name="status" id="vehicleStatus" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 transition" required>
+            <select name="status" id="vehicleStatus" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
           </div>
 
           <div class="sm:col-span-3 flex items-center gap-2 justify-end">
-            <button type="button" id="resetVehicleFormBtn" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">Reset</button>
-            <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition">Save Vehicle</button>
+            <button type="button" id="resetVehicleFormBtn" class="btn-ghost">Reset</button>
+            <button type="submit" class="btn-primary">Save Vehicle</button>
           </div>
         </div>
-      </form>
+        </form>
+      </div>
+      <script>
+        (function(){
+          const form = document.getElementById('vehicleForm');
+          if (!form) return;
+
+          // build preview + file input block
+          const block = document.createElement('div');
+          block.className = 'mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4 items-start';
+
+          const previewWrap = document.createElement('div');
+          previewWrap.className = 'sm:col-span-1 flex items-center';
+          previewWrap.innerHTML = `
+            <div class="w-28 h-20 rounded-md border border-slate-200 overflow-hidden bg-surface-1 flex items-center justify-center">
+              <img id="vehicleImagePreview" src="" alt="" class="w-full h-full object-cover hidden" />
+              <div id="vehicleImagePlaceholder" class="text-xs text-slate-400">No image</div>
+            </div>
+          `;
+
+          const inputWrap = document.createElement('div');
+          inputWrap.className = 'sm:col-span-2';
+          inputWrap.innerHTML = `
+            <label class="text-xs font-semibold text-slate-700 block mb-2">Vehicle Image</label>
+            <div class="flex items-center gap-3">
+              <input type="file" name="vehicle_image" id="vehicleImage" accept="image/*" class="text-sm" />
+              <button type="button" id="vehicleImageClear" class="rounded border border-slate-200 bg-white px-3 py-1 text-xs text-slate-700">Clear</button>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Optional: upload a photo (jpg, png, gif, webp). Max 2MB.</p>
+          `;
+
+          block.appendChild(previewWrap);
+          block.appendChild(inputWrap);
+          form.insertBefore(block, form.firstChild);
+
+          const fileInput = document.getElementById('vehicleImage');
+          const previewImg = document.getElementById('vehicleImagePreview');
+          const placeholder = document.getElementById('vehicleImagePlaceholder');
+          const clearBtn = document.getElementById('vehicleImageClear');
+
+          function showPreviewFile(file) {
+            if (!file) { previewImg.src = ''; previewImg.classList.add('hidden'); placeholder.classList.remove('hidden'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              previewImg.src = e.target.result;
+              previewImg.classList.remove('hidden');
+              placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+          }
+
+          fileInput.addEventListener('change', function () {
+            const f = this.files && this.files[0] ? this.files[0] : null;
+            if (f) {
+              // basic client-side checks
+              const allowed = ['image/jpeg','image/png','image/gif','image/webp'];
+              if (!allowed.includes(f.type)) {
+                alert('Unsupported image type. Allowed: jpg, png, gif, webp');
+                this.value = '';
+                showPreviewFile(null);
+                return;
+              }
+              if (f.size > 2 * 1024 * 1024) {
+                alert('Image too large (max 2MB)');
+                this.value = '';
+                showPreviewFile(null);
+                return;
+              }
+            }
+            showPreviewFile(f);
+          });
+
+          clearBtn.addEventListener('click', function () {
+            fileInput.value = '';
+            showPreviewFile(null);
+          });
+
+          // expose a helper for the edit flow
+          window._setVehicleImagePreview = function (url) {
+            if (!url) { showPreviewFile(null); return; }
+            previewImg.src = url; previewImg.classList.remove('hidden'); placeholder.classList.add('hidden');
+          };
+        })();
+      </script>
 
       <!-- Vehicles Table -->
-      <div class="rounded-lg border border-slate-200 overflow-hidden">
-        <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-5 py-3 flex items-center justify-between gap-3">
-          <h3 class="text-sm font-semibold text-slate-900">Active Vehicles</h3>
-          <select id="vehiclesListStatusFilter" class="bg-white text-xs text-slate-700 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 transition">
+      <div class="rounded-lg border border-slate-200 overflow-hidden vehicles-table">
+        <div class="px-5 py-3 flex items-center justify-between gap-3 card-header">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-900">Vehicles</h3>
+            <p class="text-xs text-slate-500">Manage fleet — edit details or toggle availability.</p>
+          </div>
+          <select id="vehiclesListStatusFilter" class="bg-white text-xs text-slate-700 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none transition">
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -282,7 +381,7 @@
         </div>
         <div class="max-h-[320px] overflow-auto">
           <table class="w-full text-left text-sm">
-            <thead class="sticky top-0 bg-white border-b border-slate-200">
+            <thead class="sticky top-0 bg-surface-1 border-b border-slate-200">
               <tr>
                 <th class="px-5 py-3 font-semibold text-slate-700">Vehicle</th>
                 <th class="px-5 py-3 font-semibold text-slate-700">Plate</th>
@@ -306,51 +405,59 @@
 <!-- ============================================
      DRIVERS MODAL
      ============================================ -->
-<div id="driversModal" class="fixed inset-0 z-50 hidden">
+  <div id="driversModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="driversModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="driversModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-4xl rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
-    <div class="flex items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+  <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
+    <div class="modal-header card-header">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900">Manage Drivers</h2>
+        <h2 id="driversModalTitle" class="text-lg font-semibold text-slate-900">Manage Drivers</h2>
         <p class="text-sm text-slate-500 mt-1">Add new drivers or modify existing ones</p>
       </div>
-      <button type="button" id="closeDriversModalBtn" class="rounded-lg p-2 hover:bg-slate-100 transition" aria-label="Close">
-        <span class="text-xl text-slate-400">✕</span>
-      </button>
+        <button type="button" id="closeDriversModalBtn" class="modal-close" aria-label="Close">
+          <span class="text-lg">✕</span>
+        </button>
     </div>
 
-    <div class="px-6 py-6">
+    <div class="modal-body">
       <!-- Add Driver Form -->
-      <form id="driverForm" class="mb-8 p-5 rounded-lg border border-slate-200 bg-gradient-to-br from-sky-50 to-sky-100/30">
-        <h3 class="text-sm font-semibold text-slate-900 mb-4">Add / Edit Driver</h3>
-        <input type="hidden" name="id" id="driverModalId">
-
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 items-end">
-          <div class="sm:col-span-2">
-            <label class="text-xs font-semibold text-slate-700 block mb-2">Driver Name <span class="text-red-500">*</span></label>
-            <input type="text" name="driver_name" id="driverNameInput" placeholder="e.g., John Doe" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required />
+      <div class="driver-form-card rounded-lg border border-surface-2 p-4 bg-white mb-4">
+        <form id="driverForm" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-slate-900">Add / Edit Driver</h3>
+            <p class="text-xs text-slate-500">Provide the driver's full name and status.</p>
           </div>
+          <input type="hidden" name="id" id="driverModalId">
 
-          <div>
-            <label class="text-xs font-semibold text-slate-700 block mb-2">Status <span class="text-red-500">*</span></label>
-            <select name="status" id="driverStatusInput" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 transition" required>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 items-end">
+            <div class="sm:col-span-2">
+              <label class="text-xs font-semibold text-slate-700 block mb-2">Driver Name <span class="text-red-500">*</span></label>
+              <input type="text" name="driver_name" id="driverNameInput" placeholder="e.g., John Doe" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+            </div>
 
-          <div class="sm:col-span-3 flex items-center gap-2 justify-end">
-            <button type="button" id="resetDriverFormBtn" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">Reset</button>
-            <button type="submit" class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 transition">Save Driver</button>
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">Status <span class="text-red-500">*</span></label>
+              <select name="status" id="driverStatusInput" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+
+            <div class="sm:col-span-3 flex items-center gap-2 justify-end">
+              <button type="button" id="resetDriverFormBtn" class="btn-ghost">Reset</button>
+              <button type="submit" class="btn-primary">Save Driver</button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
 
       <!-- Drivers Table -->
-      <div class="rounded-lg border border-slate-200 overflow-hidden">
-        <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-5 py-3 flex items-center justify-between gap-3">
-          <h3 class="text-sm font-semibold text-slate-900">Active Drivers</h3>
-          <select id="driversListStatusFilter" class="bg-white text-xs text-slate-700 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-300 transition">
+      <div class="rounded-lg border border-slate-200 overflow-hidden drivers-table">
+        <div class="px-5 py-3 flex items-center justify-between gap-3 card-header">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-900">Drivers</h3>
+            <p class="text-xs text-slate-500">Manage driver records and availability.</p>
+          </div>
+          <select id="driversListStatusFilter" class="bg-white text-xs text-slate-700 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none transition">
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -358,7 +465,7 @@
         </div>
         <div class="max-h-[320px] overflow-auto">
           <table class="w-full text-left text-sm">
-            <thead class="sticky top-0 bg-white border-b border-slate-200">
+            <thead class="sticky top-0 bg-surface-1 border-b border-slate-200">
               <tr>
                 <th class="px-5 py-3 font-semibold text-slate-700">Name</th>
                 <th class="px-5 py-3 font-semibold text-slate-700">Status</th>
@@ -381,21 +488,131 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
+<!-- UI tweaks for cleaner, ultra-minimal monochrome look -->
+<style>
+  :root{
+    --text: #040316; /* primary text */
+    --bg-page: #fbfbfe; /* overall page background */
+    --bg-card: #ffffff;
+    --surface-1: #f6f7f8; /* very light */
+    --surface-2: #eef0f2;
+    --primary: #467c4d;
+    --secondary: #22242a;
+    --accent: #70933d; /* complementary accent */
+    --muted: #6b7280;
+    --shadow-1: 0 8px 24px rgba(4,3,22,0.06);
+    --shadow-2: 0 12px 36px rgba(4,3,22,0.08);
+  }
+
+  .card-header { background: var(--surface-1); border-bottom: 1px solid var(--surface-2); }
+
+
+  /* FullCalendar toolbar buttons: flat, refined, monochrome */
+  .fc .fc-toolbar-chunk .fc-button {
+    background: var(--bg-card);
+    border: 1px solid var(--surface-2);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-1);
+    font-weight: 600;
+    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease, color .12s ease;
+  }
+  .fc .fc-toolbar-chunk .fc-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+  }
+  .fc .fc-toolbar-chunk .fc-button-primary {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: rgba(17,24,39,0.95);
+  }
+  .fc .fc-button:focus { outline: none; box-shadow: 0 0 0 6px rgba(17,24,39,0.06); }
+
+  /* Toast styles — type-aware colors for intuitive UX */
+  .app-toast { display:flex; gap:12px; align-items:center; min-width:220px; max-width:520px; padding:12px 14px; border-radius:12px; color:var(--text); box-shadow:var(--shadow-2); font-weight:700; background:var(--bg-card); border:1px solid var(--surface-2); }
+  .app-toast .toast-icon { width:20px; height:20px; flex:0 0 20px; opacity:0.95; }
+  .app-toast .toast-message { flex:1; font-size:13px; line-height:1.15; color:var(--text); }
+  .app-toast .toast-close { margin-left:8px; background:transparent; border:none; color:var(--muted); cursor:pointer; padding:6px; border-radius:8px; font-weight:700; }
+
+  /* Per-type accents: left border + subtle background tint */
+  .app-toast-success { border-left:4px solid var(--success); background: linear-gradient(90deg, rgba(5,150,105,0.06), var(--bg-card)); }
+  .app-toast-error { border-left:4px solid var(--danger); background: linear-gradient(90deg, rgba(220,38,38,0.06), var(--bg-card)); }
+  .app-toast-info { border-left:4px solid #2563eb; background: linear-gradient(90deg, rgba(37,99,235,0.06), var(--bg-card)); }
+  .app-toast-warning { border-left:4px solid #f59e0b; background: linear-gradient(90deg, rgba(245,158,11,0.06), var(--bg-card)); }
+
+  .app-toast-progress { height:3px; background:var(--surface-2); border-radius:4px; overflow:hidden; margin-top:8px; }
+  .app-toast-success .app-toast-progress > i { background:var(--success); }
+  .app-toast-error .app-toast-progress > i { background:var(--danger); }
+  .app-toast-info .app-toast-progress > i { background:#2563eb; }
+  .app-toast-warning .app-toast-progress > i { background:#f59e0b; }
+
+  /* Modal/card refinements */
+  :root {
+    --primary: #0ea5a4;
+    --primary-600: #059669;
+    --bg-card: #ffffff;
+    --muted: #64748b;
+    --surface-2: rgba(15,23,42,0.06);
+  }
+
+  /* General modal refinements */
+  .modal-panel { border-radius:16px; overflow:hidden; background:var(--bg-card); box-shadow: 0 20px 60px rgba(2,6,23,0.12); }
+  .modal-header { padding:20px; border-bottom:1px solid #eef2f7; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+  .modal-body { padding:20px; max-height: calc(100vh - 240px); overflow:auto; }
+  .modal-footer { padding:18px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px; justify-content:flex-end; align-items:center; }
+
+  .modal-close {
+    display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:10px; background:transparent; color:#475569; border:none; cursor:pointer;
+  }
+  .modal-close:hover { background:rgba(15,23,42,0.04); color:#0f172a; }
+
+  .btn-primary { background: var(--primary); color: #fff; padding:10px 16px; border-radius:12px; border:none; font-weight:600; box-shadow: var(--shadow-1); display:inline-flex; gap:8px; align-items:center; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); background: var(--accent); }
+  .btn-ghost { background:transparent; border-radius:10px; padding:8px 12px; border:1px solid transparent; color:var(--muted); }
+  .btn-danger { background:#fff; border:1px solid rgba(239,68,68,0.12); color:#dc2626; border-radius:10px; padding:8px 12px; }
+
+  /* Subtle icon-like action buttons used in tables */
+  .btn-icon { background: transparent; border: 1px solid var(--surface-2); color: var(--text); padding:6px 8px; border-radius:8px; font-size:12px; }
+  .btn-icon:hover { background: var(--surface-1); }
+  .btn-icon-danger { color: #b91c1c; border-color: rgba(185,28,28,0.06); }
+
+  /* Form field subtle focus */
+  select:focus, input:focus, textarea:focus { box-shadow: 0 8px 30px rgba(2,6,23,0.08); border-color: var(--surface-2); outline: none; }
+
+  /* Vehicles table refinements */
+  .vehicles-table thead th { background: transparent; color: var(--muted); font-weight:700; text-transform:none; }
+  .vehicles-table tbody tr { transition: background .12s ease, transform .08s ease; }
+  .vehicles-table tbody tr:hover { background: #fbfcfd; transform: translateY(-1px); }
+  .vehicle-badge { display:inline-block; padding:6px 8px; border-radius:999px; font-size:12px; color:var(--text); background: rgba(15,23,39,0.03); border:1px solid rgba(15,23,39,0.04); }
+  .vehicle-badge.inactive { color: #475569; background: rgba(99,102,241,0.03); }
+
+  /* Tighter table row spacing and subtle separators */
+  table.w-full td, table.w-full th { border-bottom: 1px solid rgba(15,23,42,0.03); }
+  .vehicle-form-card input, .vehicle-form-card select, .vehicle-form-card textarea { background: #ffffff; }
+
+  /* Drivers table refinements (share same visual language as vehicles) */
+  .drivers-table thead th { background: transparent; color: var(--muted); font-weight:700; text-transform:none; }
+  .drivers-table tbody tr { transition: background .12s ease, transform .08s ease; }
+  .drivers-table tbody tr:hover { background: #fbfcfd; transform: translateY(-1px); }
+  .driver-badge { display:inline-block; padding:6px 8px; border-radius:999px; font-size:12px; color:var(--text); background: rgba(15,23,39,0.03); border:1px solid rgba(15,23,39,0.04); }
+</style>
+
   <!-- Vehicle Details Modal (shows history and clickable bookings) -->
-  <div id="vehicleDetailsModal" class="fixed inset-0 z-50 hidden">
+  <div id="vehicleDetailsModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="vehicleDetailsModalTitle">
     <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="vehicleDetailsModalBackdrop"></div>
-    <div class="relative mx-auto my-6 w-[95vw] max-w-3xl rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
-      <div class="flex items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4">
+    <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
+      <div class="modal-header card-header">
         <div>
-          <h2 class="text-lg font-semibold text-slate-900">Vehicle Details</h2>
+          <h2 id="vehicleDetailsModalTitle" class="text-lg font-semibold text-slate-900">Vehicle Details</h2>
           <p class="text-sm text-slate-500 mt-1">Recent bookings — click an item to view full booking details</p>
         </div>
-        <button type="button" id="closeVehicleDetailsModalBtn" class="rounded-lg p-2 hover:bg-slate-100 transition" aria-label="Close">
-          <span class="text-xl text-slate-400">✕</span>
+        <button type="button" id="closeVehicleDetailsModalBtn" class="modal-close" aria-label="Close">
+          <span class="text-lg">✕</span>
         </button>
       </div>
 
-      <div class="px-6 py-4 max-h-[70vh] overflow-auto" id="vehicleDetailsContent">
+      <div class="modal-body" id="vehicleDetailsContent">
         <div class="text-sm text-slate-500">Loading...</div>
       </div>
     </div>
@@ -660,21 +877,52 @@
     const isUpdate = bookingId && bookingId.value;
     const url = isUpdate ? updateBookingUrl : createBookingUrl;
 
+    // Client-side conflict check to provide immediate, actionable feedback
+    try {
+      const vehicle_id = document.getElementById('vehicleId') ? document.getElementById('vehicleId').value : formData.get('vehicle_id');
+      const driver_id = document.getElementById('driverId') ? document.getElementById('driverId').value : formData.get('driver_id');
+      const start = document.getElementById('departureExpected') ? document.getElementById('departureExpected').value : formData.get('departure_expected');
+      const end = document.getElementById('returnExpected') ? document.getElementById('returnExpected').value : formData.get('return_expected');
+      const excludeId = isUpdate ? bookingId.value : null;
+      const bufferMinutes = bookingForm.dataset.bufferMinutes ? parseInt(bookingForm.dataset.bufferMinutes, 10) : 15;
+      const requesterEl = bookingForm.querySelector('[name="requester_id"]');
+      const requesterId = requesterEl ? requesterEl.value : (window.currentUserId || null);
+      const statusEl = bookingForm.querySelector('[name="status"]');
+      const status = statusEl ? statusEl.value : 'pending';
+
+      const conflicts = checkBookingConflicts({ vehicle_id, driver_id, start, end, excludeId, bufferMinutes, requesterId, status, isResize: false });
+      if (conflicts && conflicts.length > 0) {
+        const types = Array.from(new Set(conflicts.map(c => c.type)));
+        showNotification(buildConflictMessage(types), 'error');
+        highlightConflictFields(types);
+        return;
+      }
+    } catch (err) {
+      console.error('Conflict check failed:', err);
+    }
+
     fetch(url, {
       method: 'POST',
       body: formData,
       headers: {'X-Requested-With': 'XMLHttpRequest'}
     })
     .then(r => {
-      if (!r.ok) {
-        throw new Error(`HTTP ${r.status}: ${r.statusText}`);
-      }
-      return r.json();
+      // Try to parse JSON body when present, regardless of status code
+      const ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (ct.includes('application/json')) return r.json();
+      return r.text().then(t => { throw new Error('Server returned non-JSON response: ' + String(t).slice(0,200)); });
     })
     .then(resp => {
       if (!resp || !resp.success) {
+        // server returned a JSON error payload
         const friendly = friendlyBookingError(resp);
         console.error('Booking save error:', friendly, resp);
+        // highlight fields when server indicates specific conflict
+        if (resp && resp.error_code) {
+          if (resp.error_code === 'vehicle_conflict') highlightConflictFields(['vehicle']);
+          if (resp.error_code === 'driver_conflict') highlightConflictFields(['driver']);
+          if (resp.error_code === 'vehicle_driver_conflict' || resp.error_code === 'vehicle_and_driver_conflict') highlightConflictFields(['vehicle_driver']);
+        }
         showNotification(friendly, 'error');
         return;
       }
@@ -683,10 +931,21 @@
       calendar.refetchEvents();
       loadVehicleCards();
       showNotification(isUpdate ? 'Booking updated successfully!' : 'Booking created successfully!', 'success');
-
     })
     .catch(err => {
       console.error('Network/parsing error:', err);
+      // If the error message contains a known server error_code string, try to show friendly message
+      const msg = (err && err.message) ? String(err.message) : '';
+      if (msg.includes('vehicle_conflict')) {
+        highlightConflictFields(['vehicle']);
+        showNotification('Vehicle conflict', 'error');
+        return;
+      }
+      if (msg.includes('driver_conflict')) {
+        highlightConflictFields(['driver']);
+        showNotification('Driver conflict', 'error');
+        return;
+      }
       showNotification('Network error while saving booking. Please try again.', 'error');
     });
   });
@@ -737,6 +996,17 @@
     vehicleNameInputEl.value = row ? row.vehicle_name : '';
     capacityInputEl.value = row ? row.capacity : '';
     vehicleStatusInputEl.value = row ? row.status : 'active';
+    // Reset file input and preview
+    const fileInput = document.getElementById('vehicleImage');
+    if (fileInput) fileInput.value = '';
+    if (row) {
+      // prefer server-provided full URL when available, otherwise build from baseUrl
+      const fname = row.image_filename || row.image || null;
+      const url = row.image_url ? row.image_url : (fname ? (baseUrl + 'uploads/vehicle/' + fname) : null);
+      if (window._setVehicleImagePreview) window._setVehicleImagePreview(url);
+    } else {
+      if (window._setVehicleImagePreview) window._setVehicleImagePreview(null);
+    }
   }
 
   function renderVehiclesTable(rows) {
@@ -749,9 +1019,12 @@
     rows.forEach(row => {
       const tr = document.createElement('tr');
       tr.className = 'border-b border-slate-100 hover:bg-slate-50 transition';
-      const statusBadge = row.status === 'active' 
-        ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>'
-        : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">Inactive</span>';
+      const statusBadge = row.status === 'active'
+        ? `<span class="vehicle-badge">Active</span>`
+        : `<span class="vehicle-badge inactive">Inactive</span>`;
+
+      const actionLabel = row.status === 'active' ? 'Disable' : 'Enable';
+      const actionClass = row.status === 'active' ? 'btn-icon btn-icon-danger' : 'btn-icon';
 
       tr.innerHTML = `
         <td class="px-5 py-3">
@@ -762,8 +1035,8 @@
         <td class="px-5 py-3">${statusBadge}</td>
         <td class="px-5 py-3 text-right">
           <div class="inline-flex items-center gap-2">
-            <button type="button" class="vehicle-edit-btn rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100 transition" data-id="${row.id}">Edit</button>
-            <button type="button" class="vehicle-delete-btn rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition" data-id="${row.id}">Disable</button>
+            <button type="button" class="vehicle-edit-btn btn-icon" data-id="${row.id}">Edit</button>
+            <button type="button" class="vehicle-delete-btn ${actionClass}" data-id="${row.id}">${actionLabel}</button>
           </div>
         </td>
       `;
@@ -783,32 +1056,39 @@
         const id = parseInt(btn.getAttribute('data-id'), 10);
         const row = rows.find(r => Number(r.id) === id);
         const label = row ? `${row.vehicle_name} (${row.plate_number})` : 'this vehicle';
-        if (!confirm(`Disable vehicle '${label}'? It will not be available for new bookings.`)) return;
+        const isActive = row && row.status === 'active';
 
-        const fd = new FormData();
-        fd.append('id', id);
+        if (isActive) {
+          // disable flow (existing endpoint)
+          if (!confirm(`Disable vehicle '${label}'? It will not be available for new bookings.`)) return;
+          const fd = new FormData(); fd.append('id', id);
+          fetch(deleteVehicleUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(resp => {
+              if (!resp || !resp.success) { alert(resp && resp.message ? resp.message : 'Failed to disable vehicle'); return; }
+              loadVehiclesTable(); refreshVehicleFilterDropdown(); refreshBookingVehicleSelect(); setVehicleModalFormFromRow(null);
+              showNotification('Vehicle disabled', 'info');
+            })
+            .catch(() => alert('Network error while disabling vehicle'));
+        } else {
+          // enable flow: use update endpoint (requires full payload)
+          if (!confirm(`Enable vehicle '${label}'? It will be available for new bookings.`)) return;
+          const fd = new FormData();
+          fd.append('id', id);
+          fd.append('plate_number', row.plate_number || '');
+          fd.append('vehicle_name', row.vehicle_name || '');
+          fd.append('capacity', row.capacity || 1);
+          fd.append('status', 'active');
 
-        fetch(deleteVehicleUrl, {
-          method: 'POST',
-          body: fd,
-          headers: {'X-Requested-With': 'XMLHttpRequest'}
-        })
-        .then(r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return r.json();
-        })
-        .then(resp => {
-          if (!resp || !resp.success) {
-            alert(resp && resp.message ? resp.message : 'Failed to disable vehicle');
-            return;
-          }
-          loadVehiclesTable();
-          refreshVehicleFilterDropdown();
-          refreshBookingVehicleSelect();
-          setVehicleModalFormFromRow(null);
-          showNotification('Vehicle disabled successfully', 'info');
-        })
-        .catch(() => alert('Network error while disabling vehicle'));
+          fetch(updateVehicleUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(resp => {
+              if (!resp || !resp.success) { alert(resp && resp.message ? resp.message : 'Failed to enable vehicle'); return; }
+              loadVehiclesTable(); refreshVehicleFilterDropdown(); refreshBookingVehicleSelect(); setVehicleModalFormFromRow(null);
+              showNotification('Vehicle enabled', 'success');
+            })
+            .catch(() => alert('Network error while enabling vehicle'));
+        }
       });
     });
   }
@@ -911,6 +1191,11 @@
     fd.append('vehicle_name', vehicleNameInputEl.value);
     fd.append('capacity', capacityInputEl.value);
     fd.append('status', vehicleStatusInputEl.value);
+    // attach selected image if present
+    const imageEl = document.getElementById('vehicleImage');
+    if (imageEl && imageEl.files && imageEl.files[0]) {
+      fd.append('vehicle_image', imageEl.files[0]);
+    }
     if (id) fd.append('id', id);
 
     const url = id ? updateVehicleUrl : createVehicleUrl;
@@ -979,8 +1264,8 @@
       const tr = document.createElement('tr');
       tr.className = 'border-b border-slate-100 hover:bg-slate-50 transition';
       const statusBadge = row.status === 'active'
-        ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>'
-        : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">Inactive</span>';
+        ? `<span class="driver-badge">Active</span>`
+        : `<span class="driver-badge inactive">Inactive</span>`;
 
       tr.innerHTML = `
         <td class="px-5 py-3">
@@ -989,8 +1274,8 @@
         <td class="px-5 py-3">${statusBadge}</td>
         <td class="px-5 py-3 text-right">
           <div class="inline-flex items-center gap-2">
-            <button type="button" class="driver-edit-btn rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 hover:bg-sky-100 transition" data-id="${row.id}">Edit</button>
-            <button type="button" class="driver-delete-btn rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition" data-id="${row.id}">Disable</button>
+            <button type="button" class="driver-edit-btn btn-icon" data-id="${row.id}">Edit</button>
+            <button type="button" class="driver-delete-btn ${row.status === 'active' ? 'btn-icon btn-icon-danger' : 'btn-icon'}" data-id="${row.id}">${row.status === 'active' ? 'Disable' : 'Enable'}</button>
           </div>
         </td>
       `;
@@ -1010,32 +1295,34 @@
         const id = parseInt(btn.getAttribute('data-id'), 10);
         const row = rows.find(r => Number(r.id) === id);
         const name = row ? row.driver_name : 'this driver';
-        if (!confirm(`Disable driver '${name}'? They will not be available for new bookings.`)) return;
+        const isActive = row && row.status === 'active';
 
-        const fd = new FormData();
-        fd.append('id', id);
-
-        fetch(deleteDriverUrl, {
-          method: 'POST',
-          body: fd,
-          headers: {'X-Requested-With': 'XMLHttpRequest'}
-        })
-        .then(r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return r.json();
-        })
-        .then(resp => {
-          if (!resp || !resp.success) {
-            alert(resp && resp.message ? resp.message : 'Failed to disable driver');
-            return;
-          }
-          loadDriversTable();
-          refreshDriverFilterDropdown();
-          refreshBookingDriverSelect();
-          setDriversModalFormFromRow(null);
-          showNotification('Driver disabled successfully', 'info');
-        })
-        .catch(() => alert('Network error while disabling driver'));
+        if (isActive) {
+          if (!confirm(`Disable driver '${name}'? They will not be available for new bookings.`)) return;
+          const fd = new FormData(); fd.append('id', id);
+          fetch(deleteDriverUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(resp => {
+              if (!resp || !resp.success) { alert(resp && resp.message ? resp.message : 'Failed to disable driver'); return; }
+              loadDriversTable(); refreshDriverFilterDropdown(); refreshBookingDriverSelect(); setDriversModalFormFromRow(null);
+              showNotification('Driver disabled', 'info');
+            })
+            .catch(() => alert('Network error while disabling driver'));
+        } else {
+          if (!confirm(`Enable driver '${name}'? They will be available for new bookings.`)) return;
+          const fd = new FormData();
+          fd.append('id', id);
+          fd.append('driver_name', row.driver_name || '');
+          fd.append('status', 'active');
+          fetch(updateDriverUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(resp => {
+              if (!resp || !resp.success) { alert(resp && resp.message ? resp.message : 'Failed to enable driver'); return; }
+              loadDriversTable(); refreshDriverFilterDropdown(); refreshBookingDriverSelect(); setDriversModalFormFromRow(null);
+              showNotification('Driver enabled', 'success');
+            })
+            .catch(() => alert('Network error while enabling driver'));
+        }
       });
     });
   }
@@ -1194,7 +1481,8 @@ driverForm.addEventListener('submit', function (e) {
 
     vehicleCardsContainer.innerHTML = '';
 
-    fetch(vehicleListAllUrl + '&status=active&t=' + Date.now(), {
+    // request all vehicles (we'll show inactive ones as greyed/flagged)
+    fetch(vehicleListAllUrl + '&t=' + Date.now(), {
       method: 'GET',
       headers: {'X-Requested-With': 'XMLHttpRequest'}
     })
@@ -1210,14 +1498,15 @@ driverForm.addEventListener('submit', function (e) {
       return r.json();
     })
     .then(data => {
-      const activeVehicles = (data && Array.isArray(data.vehicles) ? data.vehicles : []).filter(v => v.status === 'active');
-      
-      if (activeVehicles.length === 0) {
-        vehicleCardsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-slate-500">No active vehicles available</div>';
+      const vehicles = (data && Array.isArray(data.vehicles) ? data.vehicles : []);
+
+      if (vehicles.length === 0) {
+        vehicleCardsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-slate-500">No vehicles available</div>';
         return;
       }
 
-      activeVehicles.slice(0, 6).forEach(vehicle => {
+      // display up to 6 vehicles; inactive vehicles will be shown but visually de-emphasized
+      vehicles.slice(0, 6).forEach(vehicle => {
         const card = createVehicleCard(vehicle);
         vehicleCardsContainer.appendChild(card);
       });
@@ -1231,28 +1520,77 @@ driverForm.addEventListener('submit', function (e) {
   function createVehicleCard(vehicle) {
     const card = document.createElement('div');
     card.className = 'rounded-lg border border-slate-200 bg-white shadow-sm hover:shadow-md transition overflow-hidden hover:border-slate-300';
+    // Map status to color/shape following human-intuitive mapping
+    const rawStatus = (vehicle.status || 'info').toString().toLowerCase();
+    let badgeClasses = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold';
+    let badgeLabel = rawStatus.toUpperCase();
+    if (rawStatus === 'active' || rawStatus === 'finished') {
+      badgeClasses += ' text-emerald-700 bg-emerald-50 border border-emerald-100';
+    } else if (rawStatus === 'cancelled' || rawStatus === 'canceled' || rawStatus === 'disabled') {
+      badgeClasses += ' text-rose-700 bg-rose-50 border border-rose-100';
+    } else if (rawStatus === 'warning' || rawStatus === 'pending') {
+      badgeClasses += ' text-amber-800 bg-amber-100 border border-amber-200';
+    } else if (rawStatus === 'info' || rawStatus === 'overall' || rawStatus === 'available') {
+      badgeClasses += ' text-sky-700 bg-sky-50 border border-sky-100';
+      badgeLabel = 'INFO';
+    } else {
+      // default to info/blue
+      badgeClasses += ' text-sky-700 bg-sky-50 border border-sky-100';
+    }
+
+    const badgeHtml = `<span class="${badgeClasses}">${escapeHtml(badgeLabel)}</span>`;
+
+    // Prefer full URL returned by server (image_url). Fall back to building URL from baseUrl.
+    const filename = vehicle.image_filename || vehicle.image || null;
+    const imgSrc = vehicle.image_url ? vehicle.image_url : (filename ? (baseUrl + 'uploads/vehicle/' + filename) : (baseUrl + 'app/assets/img/vehicle-placeholder.jpg'));
+
+    const isDisabled = rawStatus !== 'active';
+    if (isDisabled) {
+      card.className += ' opacity-60 filter grayscale';
+    }
+
     card.innerHTML = `
-      <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-4 py-3 border-b border-slate-200">
-        <h3 class="text-sm font-semibold text-slate-900">${escapeHtml(vehicle.vehicle_name)}</h3>
-        <p class="text-xs text-slate-600 mt-0.5">🏷️ ${escapeHtml(vehicle.plate_number)}</p>
+      <div class="relative h-36 bg-slate-100">
+        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(vehicle.vehicle_name)}" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+        <div class="absolute left-4 bottom-3 text-white">
+          <h3 class="text-sm font-semibold">${escapeHtml(vehicle.vehicle_name)}</h3>
+          <p class="text-xs opacity-80">${escapeHtml(vehicle.plate_number)}</p>
+        </div>
+        <div class="absolute right-3 top-3">
+          ${badgeHtml}
+        </div>
       </div>
-      
+
       <div class="px-4 py-4">
         <div class="flex items-center justify-between mb-4">
-          <span class="text-xs font-medium text-slate-600">Capacity</span>
-          <span class="text-sm font-semibold text-sky-600">${vehicle.capacity} seats</span>
+          <div>
+            <span class="text-xs font-medium text-slate-600">Capacity</span>
+            <div class="text-sm font-semibold text-slate-800">${vehicle.capacity || '—'} seats</div>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-slate-500">Plate</span>
+            <div class="text-sm font-medium text-slate-900">${escapeHtml(vehicle.plate_number || '—')}</div>
+          </div>
         </div>
-        
+
         <div class="mb-4" id="loading-${vehicle.id}">
           <p class="text-xs text-slate-500 text-center py-2">Loading bookings...</p>
         </div>
-        <div id="bookings-${vehicle.id}" class="space-y-2" style="display:none;"></div>
-        
-        <button type="button" class="w-full mt-4 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-medium text-sky-700 hover:bg-sky-100 transition view-vehicle-btn" data-vehicle-id="${vehicle.id}">
+        <div id="bookings-${vehicle.id}" class="space-y-2 hidden"></div>
+
+        <button type="button" class="w-full mt-4 rounded-2xl border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-white px-3 py-2 text-sm font-semibold text-slate-700 hover:from-slate-50 hover:to-white transition view-vehicle-btn" data-vehicle-id="${vehicle.id}">
           View Details
         </button>
       </div>
     `;
+
+    if (isDisabled) {
+      const flag = document.createElement('div');
+      flag.className = 'absolute right-3 top-3';
+      flag.innerHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100">Disabled</span>';
+      card.appendChild(flag);
+    }
 
     // initially load upcoming bookings only
     loadVehicleUpcoming(vehicle.id, card);
@@ -1357,7 +1695,17 @@ driverForm.addEventListener('submit', function (e) {
         items.forEach(it => {
           const item = document.createElement('div');
           item.className = 'p-2 rounded border mb-2 bg-white hover:bg-slate-50 cursor-pointer';
-          item.innerHTML = `<div class="flex items-center justify-between"><div class="flex-1"><div class="font-medium">${escapeHtml(it.purpose || 'Trip')}</div><div class="text-xs text-slate-500">${escapeHtml(formatLocalDisplay(it.departure_expected || it.start_at || ''))} → ${escapeHtml(formatLocalDisplay(it.return_expected || it.end_at || ''))}</div></div><div class="text-xs text-slate-400">View</div></div>`;
+
+          const computedStatus = getBookingStatus(it.departure_expected || it.start_at, it.return_expected || it.end_at);
+          const serverStatus = (it.status || it.booking_status || '').toLowerCase();
+          let badgeHtml = '';
+          if (serverStatus === 'cancelled' || serverStatus === 'canceled') {
+            badgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold text-rose-700 bg-rose-50">CANCELLED</span>';
+          } else if (computedStatus === 'finished') {
+            badgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold text-emerald-700 bg-emerald-50">FINISHED</span>';
+          }
+
+          item.innerHTML = `<div class="flex items-center justify-between"><div class="flex-1"><div class="font-medium">${escapeHtml(it.purpose || 'Trip')}</div><div class="text-xs text-slate-500">${escapeHtml(formatLocalDisplay(it.departure_expected || it.start_at || ''))} → ${escapeHtml(formatLocalDisplay(it.return_expected || it.end_at || ''))}</div></div><div class="flex flex-col items-end gap-1"><div class="text-xs text-slate-400">View</div>${badgeHtml}</div></div>`;
           item.addEventListener('click', () => {
             // open booking in read-only mode
             loadBookingReadOnly(it.id);
@@ -1442,18 +1790,50 @@ driverForm.addEventListener('submit', function (e) {
 
   // ==================== NOTIFICATION ====================
   function showNotification(message, type = 'info') {
-    const notif = document.createElement('div');
-    notif.className = `fixed bottom-6 right-6 px-4 py-3 rounded-lg text-sm font-medium text-white shadow-lg z-[9999] ${
-      type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-sky-600'
-    }`;
-    notif.textContent = message;
-    document.body.appendChild(notif);
+    // Modern toast with icon, close button and progress bar
+    const container = document.createElement('div');
+    container.setAttribute('role','status');
+    let toastClass = 'app-toast-info';
+    if (type === 'success') toastClass = 'app-toast-success';
+    else if (type === 'error') toastClass = 'app-toast-error';
+    else if (type === 'warning') toastClass = 'app-toast-warning';
+    container.className = `app-toast fixed bottom-6 right-6 z-[9999] ${toastClass}`;
 
-    setTimeout(() => {
-      notif.style.opacity = '0';
-      notif.style.transition = 'opacity 0.3s ease';
-      setTimeout(() => notif.remove(), 300);
-    }, 3000);
+    const icon = document.createElement('div'); icon.className = 'toast-icon';
+    if (type === 'success') {
+      icon.innerHTML = '<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 10l3 3 9-9" stroke="rgba(255,255,255,0.95)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    } else if (type === 'error') {
+      icon.innerHTML = '<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6l8 8M14 6l-8 8" stroke="rgba(255,255,255,0.95)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    } else if (type === 'warning') {
+      icon.innerHTML = '<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3.5v6" stroke="rgba(255,255,255,0.95)" stroke-width="2" stroke-linecap="round"/><path d="M10 15.2a.8.8 0 100-1.6.8.8 0 000 1.6z" fill="rgba(255,255,255,0.95)"/></svg>';
+    } else {
+      icon.innerHTML = '<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3v8" stroke="rgba(255,255,255,0.95)" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="15" r="1" fill="rgba(255,255,255,0.95)"/></svg>';
+    }
+
+    const msg = document.createElement('div'); msg.className = 'toast-message'; msg.textContent = message;
+    const closeBtn = document.createElement('button'); closeBtn.className = 'toast-close'; closeBtn.setAttribute('aria-label','Dismiss'); closeBtn.innerHTML = '✕';
+
+    const progressWrap = document.createElement('div'); progressWrap.className = 'app-toast-progress';
+    const progressBar = document.createElement('i'); progressBar.style.width = '100%'; progressWrap.appendChild(progressBar);
+
+    container.appendChild(icon); container.appendChild(msg); container.appendChild(closeBtn);
+    container.appendChild(progressWrap);
+    document.body.appendChild(container);
+
+    let duration = 3500;
+    let start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const pct = Math.max(0, 1 - elapsed / duration);
+      progressBar.style.width = (pct * 100) + '%';
+      if (pct <= 0) { container.remove(); clearInterval(iv); }
+    };
+    const iv = setInterval(tick, 50);
+    closeBtn.addEventListener('click', () => { clearInterval(iv); container.remove(); });
+    // remove tab focus outline but keep accessible focus
+    closeBtn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') closeBtn.click(); });
+    // initial tick
+    tick();
   }
 
   function friendlyBookingError(resp) {
@@ -1466,6 +1846,152 @@ driverForm.addEventListener('submit', function (e) {
     // Fallback: use server message if present
     if (resp && resp.message) return resp.message;
     return 'Unable to save booking. Please check your details and try again.';
+  }
+
+  // Build a short, user-friendly conflict message from detected types
+  function buildConflictMessage(types) {
+    if (!types || types.length === 0) return 'Scheduling conflict';
+    const t = Array.from(new Set(types));
+    if (t.length === 1) {
+      switch (t[0]) {
+        case 'vehicle': return 'Vehicle conflict';
+        case 'driver': return 'Driver conflict';
+        case 'vehicle_driver': return 'Vehicle+Driver conflict';
+        case 'duplicate': return 'Duplicate booking';
+        case 'requester_duplicate': return 'Duplicate requester booking';
+        case 'start_end_invalid': return 'Invalid times';
+        case 'past': return 'Past date';
+        case 'buffer': return 'Buffer time conflict';
+        case 'status': return 'Status conflict';
+        case 'extension': return 'Extension conflict';
+        case 'recurring': return 'Recurring booking conflict';
+        case 'time': return 'Time conflict';
+        default: return 'Scheduling conflict';
+      }
+    }
+    // multiple types -> short combined label
+    const mapping = { vehicle: 'Vehicle', driver: 'Driver', vehicle_driver: 'Vehicle+Driver', time: 'Time' };
+    const label = t.map(x => mapping[x] || x).join(' & ');
+    return `${label} conflict`;
+  }
+
+  // Briefly highlight vehicle/driver form fields when conflicts occur
+  function highlightConflictFields(types) {
+    if (!types || types.length === 0) return;
+    const elVehicle = document.getElementById('vehicleId');
+    const elDriver = document.getElementById('driverId');
+    const tset = new Set(types);
+
+    const apply = (el) => {
+      if (!el) return;
+      const prevBorder = el.style.border;
+      const prevBox = el.style.boxShadow;
+      el.style.border = '2px solid rgba(220,38,38,1)';
+      el.style.boxShadow = '0 0 0 4px rgba(254,226,226,0.6)';
+      setTimeout(() => { el.style.border = prevBorder || ''; el.style.boxShadow = prevBox || ''; }, 2500);
+    };
+
+    if (tset.has('vehicle') || tset.has('vehicle_driver')) apply(elVehicle);
+    if (tset.has('driver') || tset.has('vehicle_driver')) apply(elDriver);
+    if (tset.has('requester_duplicate') && elVehicle) apply(elVehicle);
+  }
+
+  // Check for local conflicts using events already loaded in the calendar
+  // Accepts options: {vehicle_id, driver_id, start, end, excludeId, bufferMinutes, requesterId, status, isResize}
+  // Returns an array of conflict objects {type: 'vehicle'|'driver'|'vehicle_driver'|'time'|'duplicate'|'buffer'|'status'|'recurring'|'requester_duplicate', event}
+  function checkBookingConflicts(opts) {
+    const { vehicle_id, driver_id, start, end, excludeId, bufferMinutes = 15, requesterId = null, status = 'pending', isResize = false } = (opts || {});
+    const conflicts = [];
+    if (!calendar) return conflicts;
+    const s = new Date(start);
+    const e = new Date(end);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) return conflicts;
+
+    // simple validations
+    const now = new Date();
+    if (s >= e) {
+      conflicts.push({ type: 'start_end_invalid' });
+      return conflicts;
+    }
+    if (s.getTime() < now.getTime()) {
+      conflicts.push({ type: 'past' });
+      // continue to find other conflicts as well
+    }
+
+    const bufMs = Number(bufferMinutes) * 60000;
+    const events = calendar.getEvents();
+    for (let i = 0; i < events.length; i++) {
+      const ev = events[i];
+      // skip the event being edited/moved
+      if (excludeId && String(ev.id) === String(excludeId)) continue;
+
+      const evStart = ev.start ? new Date(ev.start) : null;
+      const evEnd = ev.end ? new Date(ev.end) : (evStart ? new Date(evStart) : null);
+      if (!evStart || !evEnd) continue;
+
+      // consider buffer: expand existing event by buffer on both ends
+      const evStartAdj = new Date(evStart.getTime() - bufMs);
+      const evEndAdj = new Date(evEnd.getTime() + bufMs);
+
+      // overlap test with buffer: start < evEndAdj && end > evStartAdj
+      if (!(s < evEndAdj && e > evStartAdj)) continue;
+
+      // extendedProps may use different keys
+      const evVehicle = ev.extendedProps ? (ev.extendedProps.vehicle_id ?? ev.extendedProps.vehicleId ?? null) : null;
+      const evDriver = ev.extendedProps ? (ev.extendedProps.driver_id ?? ev.extendedProps.driverId ?? null) : null;
+      const evStatus = ev.extendedProps ? (ev.extendedProps.status ?? ev.extendedProps.booking_status ?? null) : null;
+      const evRequester = ev.extendedProps ? (ev.extendedProps.requester_id ?? ev.extendedProps.requesterId ?? null) : null;
+      const isRecurring = ev.extendedProps && (ev.extendedProps.rrule || ev.extendedProps.recurring || ev.extendedProps.recurrence);
+
+      const vehicleMatch = vehicle_id && evVehicle && String(evVehicle) === String(vehicle_id);
+      const driverMatch = driver_id && evDriver && String(evDriver) === String(driver_id);
+
+      // recurring event conflict
+      if (isRecurring) {
+        conflicts.push({ type: 'recurring', event: ev });
+        continue;
+      }
+
+      // exact duplicate detection
+      if (vehicleMatch && driverMatch && evStart.getTime() === s.getTime() && evEnd.getTime() === e.getTime()) {
+        // same vehicle, driver and same times
+        // requester check if available
+        if (requesterId && evRequester && String(evRequester) === String(requesterId)) {
+          conflicts.push({ type: 'requester_duplicate', event: ev });
+        } else {
+          conflicts.push({ type: 'duplicate', event: ev });
+        }
+        continue;
+      }
+
+      // vehicle + driver both busy
+      if (vehicleMatch && driverMatch) {
+        conflicts.push({ type: 'vehicle_driver', event: ev });
+        continue;
+      }
+
+      // vehicle busy
+      if (vehicleMatch) {
+        conflicts.push({ type: 'vehicle', event: ev });
+        continue;
+      }
+
+      // driver busy
+      if (driverMatch) {
+        conflicts.push({ type: 'driver', event: ev });
+        continue;
+      }
+
+      // pending/approved conflict: if existing booking is 'approved' and new booking is pending, it's a stronger conflict
+      if (evStatus && status && evStatus !== status) {
+        conflicts.push({ type: 'status', event: ev });
+        continue;
+      }
+
+      // Note: do not treat generic time overlap as a conflict when vehicle and driver differ.
+      // Only vehicle/driver/combined/status/duplicate/recurring conflicts are reported.
+    }
+    return conflicts;
   }
 
   // ==================== CALENDAR ====================
@@ -1625,6 +2151,24 @@ driverForm.addEventListener('submit', function (e) {
         const newStart = toISODateTime(ev.start);
         const newEnd = ev.end ? toISODateTime(ev.end) : toISODateTime(ev.start);
 
+        // Run client-side conflict check before sending update
+        try {
+          const vehicle_id = ev.extendedProps ? (ev.extendedProps.vehicle_id || ev.extendedProps.vehicleId) : null;
+          const driver_id = ev.extendedProps ? (ev.extendedProps.driver_id || ev.extendedProps.driverId) : null;
+          const status = ev.extendedProps ? (ev.extendedProps.status || 'pending') : 'pending';
+          const bufferMinutes = bookingForm && bookingForm.dataset && bookingForm.dataset.bufferMinutes ? parseInt(bookingForm.dataset.bufferMinutes, 10) : 15;
+          const conflicts = checkBookingConflicts({ vehicle_id, driver_id, start: newStart, end: newEnd, excludeId: id, bufferMinutes, status });
+          if (conflicts && conflicts.length > 0) {
+            const types = Array.from(new Set(conflicts.map(c => c.type)));
+            showNotification(buildConflictMessage(types), 'error');
+            highlightConflictFields(types);
+            info.revert();
+            return;
+          }
+        } catch (err) {
+          console.error('Conflict check failed (drop):', err);
+        }
+
         const fd = new FormData();
         fd.append('id', id);
         fd.append('departure_expected', newStart);
@@ -1669,6 +2213,26 @@ driverForm.addEventListener('submit', function (e) {
 
         const newStart = toISODateTime(ev.start);
         const newEnd = ev.end ? toISODateTime(ev.end) : toISODateTime(ev.start);
+
+        // Client-side conflict check before update
+        try {
+          const vehicle_id = ev.extendedProps ? (ev.extendedProps.vehicle_id || ev.extendedProps.vehicleId) : null;
+          const driver_id = ev.extendedProps ? (ev.extendedProps.driver_id || ev.extendedProps.driverId) : null;
+          const status = ev.extendedProps ? (ev.extendedProps.status || 'pending') : 'pending';
+          const bufferMinutes = bookingForm && bookingForm.dataset && bookingForm.dataset.bufferMinutes ? parseInt(bookingForm.dataset.bufferMinutes, 10) : 15;
+          const conflicts = checkBookingConflicts({ vehicle_id, driver_id, start: newStart, end: newEnd, excludeId: id, bufferMinutes, status, isResize: true });
+          if (conflicts && conflicts.length > 0) {
+            // for resize operations treat conflicts as extension conflicts for clarity
+            showNotification(buildConflictMessage(['extension']), 'error');
+            // highlight vehicle/driver if applicable (map extension to existing conflict types)
+            const types = Array.from(new Set(conflicts.map(c => c.type)));
+            highlightConflictFields(types);
+            info.revert();
+            return;
+          }
+        } catch (err) {
+          console.error('Conflict check failed (resize):', err);
+        }
 
         const fd = new FormData();
         fd.append('id', id);
@@ -1735,3 +2299,6 @@ driverForm.addEventListener('submit', function (e) {
   loadVehicleCards();
 })();
 </script>
+    </div>
+  </div>
+</div>

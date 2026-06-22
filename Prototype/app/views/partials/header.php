@@ -32,12 +32,12 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
 }
 ?>
 
-<nav class="sticky top-0 z-40 flex items-center justify-between bg-sky-700 px-6 py-3 backdrop-blur-xl">
+<nav class="sticky top-0 z-40 flex items-center justify-between header-bg bg-green-700 px-6 py-3 backdrop-blur-xl">
   <div class="flex min-w-0 items-center gap-4">
-    <button id="sidebarToggle" class="md:hidden text-2xl text-stone-100 focus:outline-none" type="button">
+    <button id="sidebarToggle" class="md:hidden text-2xl header-text text-slate-950 focus:outline-none" type="button">
       &#9776;
     </button>
-    <span class="max-w-[52vw] truncate text-base font-semibold text-stone-100 sm:max-w-[56vw] lg:max-w-[32rem]"><?= htmlspecialchars($pageTitle) ?></span>
+    <span class="max-w-[52vw] truncate text-base font-semibold header-text text-slate-50 sm:max-w-[56vw] lg:max-w-[32rem]"><?= htmlspecialchars($pageTitle) ?></span>
   </div>
 
   <div class="flex items-center gap-3">
@@ -47,8 +47,8 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
     </div> -->
 
     <div class="relative ml-2">
-      <button id="profileMenuButton" type="button"
-              class="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-2 py-1.5 text-left shadow-sm transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/40">
+                  <button id="profileMenuButton" type="button"
+                    class="flex items-center gap-2 rounded-full profile-btn bg-green-700 hover:bg-green-800 text-white px-2 py-1.5 text-left shadow-sm transition focus:outline-none border border-white/20">
         <img src="<?= htmlspecialchars($avatarSrc) ?>"
              class="size-9 rounded-full object-cover ring-2 ring-white/35"
              alt="User avatar">
@@ -58,41 +58,41 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
         </div>
       </button>
 
-      <div id="profileMenu"
-           class="absolute right-0 mt-3 hidden w-72 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
-        <div class="border-b border-slate-100 bg-gradient-to-r from-sky-50 to-white px-4 py-4">
+          <div id="profileMenu"
+            class="absolute right-0 mt-3 hidden w-72 overflow-hidden rounded-[22px] profile-menu">
+          <div class="profile-menu-header px-4 py-4 bg-zinc-800 text-white">
           <div class="flex items-center gap-3">
             <img src="<?= htmlspecialchars($avatarSrc) ?>" class="size-12 rounded-full object-cover ring-2 ring-sky-100" alt="User avatar">
             <div class="min-w-0">
-              <p class="truncate text-sm font-semibold text-slate-900"><?= htmlspecialchars($fullName) ?></p>
-              <p class="truncate text-xs text-slate-500"><?= htmlspecialchars($position) ?></p>
-              <span class="mt-1 inline-flex rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+              <p class="truncate text-sm font-semibold profile-heading"><?= htmlspecialchars($fullName) ?></p>
+              <p class="truncate text-xs profile-muted"><?= htmlspecialchars($position) ?></p>
+              <span class="mt-1 inline-flex rounded-full role-badge bg-lime-700 hover:bg-lime-800 text-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em]">
                 <?= htmlspecialchars($roleLabels[$currentLevel] ?? 'Viewer') ?>
               </span>
             </div>
           </div>
         </div>
 
-        <div class="p-2">
+        <div class="p-2 bg-slate-50 border rounded-md">
           <a href="index.php?controller=Auth&action=profile"
-             class="flex items-start gap-3 rounded-2xl px-3 py-3 text-sm text-slate-700 transition hover:bg-slate-50">
-            <span class="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+             class="flex items-start gap-3 rounded-2xl px-3 py-3 text-sm transition profile-link">
+            <span class="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-2xl role-icon bg-slate-50 text-slate-950">
               <?= $profileIcon ?? '◌' ?>
             </span>
             <span>
-              <span class="block font-semibold text-slate-900">Profile & Security</span>
-              <span class="block text-xs leading-5 text-slate-500">Update avatar, password, and account details.</span>
+              <span class="block font-semibold profile-heading">Profile & Security</span>
+              <span class="block text-xs leading-5 profile-muted">Update avatar, password, and account details.</span>
             </span>
           </a>
 
           <a href="index.php?controller=Auth&action=logout&wc=signedOut"
-             class="mt-1 flex items-start gap-3 rounded-2xl px-3 py-3 text-sm text-slate-700 transition hover:bg-rose-50">
-            <span class="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-rose-50 text-rose-700">
+             class="mt-1 flex items-start gap-3 rounded-2xl px-3 py-3 text-sm transition profile-link">
+            <span class="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-2xl role-icon signout-icon bg-zinc-800 text-white">
               <?= $signOutIcon ?? '↩' ?>
             </span>
             <span>
-              <span class="block font-semibold text-slate-900">Sign out</span>
-              <span class="block text-xs leading-5 text-slate-500">End your session securely.</span>
+              <span class="block font-semibold profile-heading">Sign out</span>
+              <span class="block text-xs leading-5 profile-muted">End your session securely.</span>
             </span>
           </a>
         </div>

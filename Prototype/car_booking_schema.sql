@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS car_vehicles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   plate_number VARCHAR(32) NOT NULL,
   vehicle_name VARCHAR(120) NOT NULL,
+  image_filename VARCHAR(255) DEFAULT NULL,
   capacity INT NOT NULL DEFAULT 1,
   status ENUM('active','inactive') NOT NULL DEFAULT 'active',
   created_by INT NULL,
@@ -74,4 +75,8 @@ CREATE TABLE IF NOT EXISTS car_booking_logs (
 -- Optional: seed sample drivers (uncomment if you want)
 -- INSERT INTO car_drivers (driver_name, status, created_at, updated_at) VALUES
 -- ('Default Driver', 'active', NOW(), NOW());
+
+-- Migration note: to add image support to an existing DB, run:
+-- ALTER TABLE car_vehicles ADD COLUMN image_filename VARCHAR(255) DEFAULT NULL AFTER vehicle_name;
+
 

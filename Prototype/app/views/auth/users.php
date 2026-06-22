@@ -222,7 +222,7 @@ function coreUserLevelClass($level) {
     #coreUsersTable_wrapper .dataTables_length select {
         border: 1px solid #d1d5db;
         border-radius: 0.5rem;
-        color: #111827;
+        color: var(--secondary);
         font-size: 0.875rem;
         min-height: 2.5rem;
         outline: none;

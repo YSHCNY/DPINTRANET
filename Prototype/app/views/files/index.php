@@ -31,7 +31,7 @@
     sort($directionOptions);
 ?>
 
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen theme-palette">
     <div class="max-w-[1600px] mx-auto px-4 py-8">
         <div class="mb-8 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
             <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-5">
@@ -214,51 +214,7 @@
     </div>
 </div>
 
-<style>
-    #filesTable_wrapper .dataTables_length label,
-    #filesTable_wrapper .dataTables_filter label,
-    #filesTable_wrapper .dataTables_info {
-        color: #475569;
-        font-size: 0.875rem;
-    }
-
-    #filesTable_wrapper .dataTables_filter input,
-    #filesTable_wrapper .dataTables_length select {
-        border: 1px solid #dbe3ee;
-        border-radius: 0.9rem;
-        color: #0f172a;
-        font-size: 0.875rem;
-        min-height: 2.75rem;
-        outline: none;
-        background: #fff;
-    }
-
-    #filesTable_wrapper .dataTables_filter input {
-        margin-left: 0;
-        padding: 0 0.875rem;
-        width: min(100%, 280px);
-    }
-
-    #filesTable_wrapper .dataTables_paginate .paginate_button {
-        border: 1px solid transparent !important;
-        border-radius: 0.75rem !important;
-        color: #475569 !important;
-        margin-left: 0.25rem;
-    }
-
-    #filesTable_wrapper .dataTables_paginate .paginate_button.current,
-    #filesTable_wrapper .dataTables_paginate .paginate_button.current:hover {
-        background: #0284c7 !important;
-        border-color: #0284c7 !important;
-        color: #ffffff !important;
-    }
-
-    #filesTable_wrapper .dataTables_paginate .paginate_button:hover {
-        background: #eff6ff !important;
-        border-color: #dbeafe !important;
-        color: #0369a1 !important;
-    }
-</style>
+<!-- Module-specific CSS removed: replaced by global Tailwind utilities and shared DataTables tailwind stylesheet -->
 
 <script>
 $(document).ready(function () {
