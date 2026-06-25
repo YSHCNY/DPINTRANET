@@ -102,7 +102,102 @@ class StandardPortalController extends Controller {
             'document' => $document,
             'attachments' => $this->correspondenceModel->getAttachments($id),
             'history' => $this->correspondenceModel->getDocumentChangeHistory($id),
+            'thread' => $this->correspondenceModel->getThreadEntries($id),
         ]);
+    }
+
+    /**
+     * Endpoint for portal users to post a thread entry
+     */
+    public function postThreadEntry($id) {
+        $this->requirePortalLogin();
+
+        $documentId = (int)$id;
+        $document = $this->correspondenceModel->getPortalDocument($documentId, $_SESSION['standard_user_id']);
+        if (!$document) {
+            $_SESSION['portal_message'] = 'Document not found or not assigned to you.';
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->redirect('index.php?controller=StandardPortal&action=inbox');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $_SESSION['portal_message'] = 'Invalid request.';
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->redirect('index.php?controller=StandardPortal&action=viewDocument&id=' . $documentId);
+        }
+
+        $entryKind = trim($_POST['entry_kind'] ?? 'feedback');
+        $content = trim($_POST['content'] ?? '');
+        $cycleRef = trim($_POST['cycle_reference'] ?? '');
+
+        $actorType = 'standard_user';
+        $actorUserId = (int)($_SESSION['standard_user_id'] ?? 0) ?: null;
+        $actorName = trim($_SESSION['standard_user_name'] ?? 'Recipient');
+        $roleLabel = $_SESSION['department'] ?? 'Recipient';
+
+        // handle files (max 4, max 40MB total)
+        $uploaded = [];
+        $maxFiles = 4;
+        $maxBytes = 41943040; // 40MB
+
+        if (!empty($_FILES['thread_files'])) {
+            $files = $_FILES['thread_files'];
+            $count = min((int)count($files['name']), $maxFiles);
+
+            $totalSize = 0;
+            for ($i = 0; $i < $count; $i++) {
+                $totalSize += (int)($files['size'][$i] ?? 0);
+            }
+
+            if ($totalSize > $maxBytes) {
+                $_SESSION['portal_message'] = 'Thread upload exceeds the 40MB total limit.';
+                $_SESSION['portal_msg_type'] = 'error';
+                $this->redirect('index.php?controller=StandardPortal&action=viewDocument&id=' . (int)$documentId);
+            }
+
+            $targetDir = __DIR__ . '/../../uploads/thread/' . $documentId;
+            if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+
+            for ($i = 0; $i < $count; $i++) {
+                if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
+                $name = basename((string)($files['name'][$i] ?? ''));
+                if ($name === '') continue;
+
+                $uniq = time() . '_' . bin2hex(random_bytes(6)) . '_' . $name;
+                $path = $targetDir . '/' . $uniq;
+
+                if (move_uploaded_file($files['tmp_name'][$i], $path)) {
+                    $uploaded[] = [
+                        'file_name' => $name,
+                        'file_path' => $path,
+                        'file_size' => (int)($files['size'][$i] ?? 0)
+                    ];
+                }
+            }
+        }
+
+
+        $entryId = $this->correspondenceModel->addThreadEntry(
+            $documentId,
+            $actorType,
+            $actorUserId,
+            $actorName,
+            $roleLabel,
+            $entryKind,
+            $content,
+            $cycleRef,
+            $uploaded
+        );
+
+        if ($entryId) {
+            $_SESSION['portal_message'] = 'Posted.';
+            $_SESSION['portal_msg_type'] = 'success';
+        } else {
+            $_SESSION['portal_message'] = 'Failed to post entry.';
+            $_SESSION['portal_msg_type'] = 'error';
+        }
+
+        $this->redirect('index.php?controller=StandardPortal&action=viewDocument&id=' . $documentId);
     }
 
     public function receive($id) {

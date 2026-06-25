@@ -46,6 +46,85 @@ class CorrespondenceController extends Controller {
         $this->view('layout/main', ['content' => $content]);
     }
 
+    /**
+     * New circulation page (form moved off index)
+     */
+    public function newCirculation() {
+        if (!isset($_SESSION['user'])) {
+            $this->redirect('index.php?controller=Auth&action=login');
+        }
+
+        $userModel = new UserModel();
+        $nextTrackingId = $this->model->getNextTrackingId();
+        $users     = $userModel->getAllUsers();
+
+        $draftDocument = null;
+        $draftRecipients = [];
+        $draftCc = [];
+        $draftAttachments = [];
+
+        // If a draftId is provided, load the draft and prepare recipient/cc lists
+        $draftId = (int)($_GET['draftId'] ?? 0);
+        if ($draftId > 0) {
+            $doc = $this->model->getById($draftId);
+            if ($doc) {
+                $draftDocument = $doc;
+                try {
+                    require_once __DIR__ . '/../models/UserModel.php';
+                    $userModel = new UserModel();
+                    $draftRecipientsRaw = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
+                    $draftCcRaw = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+
+                    foreach ($draftRecipientsRaw as $rid) {
+                        $user = $userModel->getUserById((int)$rid);
+                        $draftRecipients[] = [
+                            'id' => (int)$rid,
+                            'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$rid),
+                            'email' => $user['email'] ?? null,
+                        ];
+                    }
+
+                    foreach ($draftCcRaw as $rid) {
+                        $user = $userModel->getUserById((int)$rid);
+                        $draftCc[] = [
+                            'id' => (int)$rid,
+                            'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$rid),
+                            'email' => $user['email'] ?? null,
+                        ];
+                    }
+                } catch (Throwable $e) {
+                    // ignore
+                }
+
+                // attachments
+                $attachments = $this->model->getAttachments($draftId);
+                foreach ($attachments as $a) {
+                    $draftAttachments[] = [
+                        'id' => (int)($a['id'] ?? 0),
+                        'file_name' => $a['file_name'] ?? ($a['file'] ?? 'file'),
+                        'download_url' => "index.php?controller=correspondence&action=download&attachment_id=" . (int)($a['id'] ?? 0)
+                    ];
+                }
+            }
+        }
+
+        $isFinalizeMode = !empty($_GET['fromFinalize']);
+
+        $content = $this->renderView('correspondence/new', [
+            'users' => $users,
+            'nextTrackingId' => $nextTrackingId,
+            'canCreateCorrespondence' => $this->canCreateCorrespondence(),
+            'canEditCorrespondence' => $this->canEditCorrespondence(),
+            'isFinalizeMode' => $isFinalizeMode,
+            'draftDocument' => $draftDocument,
+            'draftRecipients' => $draftRecipients,
+            'draftCc' => $draftCc,
+            'draftAttachments' => $draftAttachments,
+        ]);
+
+        $this->view('layout/main', ['content' => $content]);
+    }
+
     private function getRemovedItemsPreference(): bool {
         $userId = (int)($_SESSION['id'] ?? 0);
         return (bool)($_SESSION['correspondence_prefs'][$userId]['show_removed_items'] ?? false);
@@ -100,11 +179,72 @@ class CorrespondenceController extends Controller {
             exit;
         }
 
+        if (ob_get_level()) ob_end_clean();
+
         $id = $_GET['id'] ?? 0;
         $doc = $this->model->getDocumentWithDetails($id);
-        $circulations = $this->model->getCirculationDetails($id);
+            $circulations = $this->model->getCirculationDetails($id);
+
+            // If this is a draft with no circulations, expose draft recipients/cc for display
+            if (empty($circulations) && !empty($doc['is_draft'])) {
+                $circulations = [];
+                try {
+                    require_once __DIR__ . '/../models/UserModel.php';
+                    $userModel = new UserModel();
+                    $draftRecipients = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
+                    $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+
+                    foreach ($draftRecipients as $rid) {
+                        $user = $userModel->getUserById((int)$rid);
+                        $circulations[] = [
+                            'recipient_id' => (int)$rid,
+                            'cc' => 0,
+                            'status' => 'Pending',
+                            'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: null,
+                            'position' => $user['position'] ?? null,
+                            'department' => $user['department'] ?? null,
+                            'email' => $user['email'] ?? null,
+                        ];
+                    }
+
+                    foreach ($draftCc as $rid) {
+                        $user = $userModel->getUserById((int)$rid);
+                        $circulations[] = [
+                            'recipient_id' => (int)$rid,
+                            'cc' => 1,
+                            'status' => 'Pending',
+                            'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: null,
+                            'position' => $user['position'] ?? null,
+                            'department' => $user['department'] ?? null,
+                            'email' => $user['email'] ?? null,
+                        ];
+                    }
+                } catch (Throwable $e) {
+                    // ignore - gracefully degrade to showing no recipients
+                }
+            }
         $attachments = $this->model->getAttachments($id);
+        // Add download URLs for attachments
+        foreach ($attachments as &$att) {
+            $att['download_url'] = "index.php?controller=correspondence&action=download&attachment_id=" . (int)($att['id'] ?? 0);
+        }
+        unset($att);
         $history = $this->model->getDocumentChangeHistory($id);
+        $threadEntries = $this->model->getThreadEntries($id);
+
+        // Resolve creator name so views show a human-friendly name instead of numeric id
+        $createdByName = null;
+        try {
+            require_once __DIR__ . '/../models/UserModel.php';
+            $userModel = new UserModel();
+            $creator = $userModel->getUserById((int)($doc['created_by'] ?? 0));
+            if ($creator) {
+                $createdByName = trim(($creator['firstName'] ?? '') . ' ' . ($creator['lastName'] ?? '')) ?: ($creator['email'] ?? null);
+            }
+        } catch (Throwable $e) {
+            // ignore
+        }
+        if ($createdByName) $doc['created_by_name'] = $createdByName;
 
         if (!$doc) {
             echo "<p class='text-red-600 p-8'>Document not found.</p>";
@@ -113,7 +253,7 @@ class CorrespondenceController extends Controller {
 
         $receivedCount = (int)($doc['received_count'] ?? 0);
         $totalRecipients = (int)($doc['total_recipients'] ?? 0);
-        $status = ($totalRecipients > 0 && $receivedCount >= $totalRecipients) ? 'Completed' : 'Pending';
+        // $status = ($totalRecipients > 0 && $receivedCount >= $totalRecipients) ? 'Completed' : 'Pending';
         $isDeleted = !empty($doc['is_deleted']);
         $isEdited = !empty($doc['is_edited']);
         $canManage = $this->model->canManageDocument($doc);
@@ -121,9 +261,9 @@ class CorrespondenceController extends Controller {
         $isSuperAdmin = $this->isSuperAdmin();
         $canEditDocument = $this->canEditCorrespondence() && !$isDeleted;
         $canDeleteDocument = $this->canDeleteCorrespondence() && !$isDeleted;
-        $statusClass = $status === 'Completed'
-            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-            : 'bg-amber-50 text-amber-700 border-amber-100';
+        // $statusClass = $status === 'Completed'
+        //     ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+        //     : 'bg-amber-50 text-amber-700 border-amber-100';
         $priorityClass = match ($doc['priority'] ?? 'Medium') {
             'Urgent' => 'bg-red-50 text-red-700 border-red-100',
             'High' => 'bg-orange-50 text-orange-700 border-orange-100',
@@ -160,9 +300,7 @@ class CorrespondenceController extends Controller {
                         </div>
 
                         <div class="flex flex-wrap gap-2">
-                            <span class="inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold <?= $statusClass ?>">
-                                <?= htmlspecialchars($status) ?>
-                            </span>
+                          
                             <span class="inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold <?= $priorityClass ?>">
                                 <?= htmlspecialchars($doc['priority'] ?? 'Medium') ?>
                             </span>
@@ -475,6 +613,464 @@ class CorrespondenceController extends Controller {
         exit;
     }
 
+    /**
+     * Full-page document view for admin and above
+     */
+    public function show() {
+        if (!isset($_SESSION['user'])) {
+            $this->redirect('index.php?controller=Auth&action=login');
+        }
+
+        $userLevel = (int)($_SESSION['user_level'] ?? 3);
+        if ($userLevel > 1) {
+            // non-admins should not access the full page
+            $_SESSION['message'] = 'You do not have permission to view this page.';
+            $_SESSION['msg_type'] = 'error';
+            $this->redirect('index.php?controller=correspondence&action=correspondence');
+        }
+
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            $this->redirect('index.php?controller=correspondence&action=correspondence');
+        }
+
+        $doc = $this->model->getById($id);
+        if (!$doc) {
+            $_SESSION['message'] = 'Document not found.';
+            $_SESSION['msg_type'] = 'error';
+            $this->redirect('index.php?controller=correspondence&action=correspondence');
+        }
+
+        $circulations = $this->model->getCirculationDetails($id);
+        $attachments = $this->model->getAttachments($id);
+        $history = $this->model->getDocumentChangeHistory($id);
+        $threadEntries = $this->model->getThreadEntries($id);
+
+        $canEditCorrespondence = $this->canEditCorrespondence();
+
+        // Build grouped recipients (TO / CC) using latest circulation per recipient when available
+        $recipientIndex = [];
+        foreach ($circulations as $c) {
+            $key = isset($c['recipient_id']) && $c['recipient_id'] !== null && $c['recipient_id'] !== '' ? 'id_' . (int)$c['recipient_id'] : 'email_' . ($c['email'] ?? uniqid());
+            // keep the latest entry by circulation id (assume higher id is later)
+            $existing = $recipientIndex[$key] ?? null;
+            if ($existing === null || (isset($c['id']) && $c['id'] > ($existing['id'] ?? 0))) {
+                $recipientIndex[$key] = [
+                    'id' => $c['id'] ?? 0,
+                    'recipient_id' => $c['recipient_id'] ?? null,
+                    'name' => $c['recipient_name'] ?? ($c['email'] ?? '—'),
+                    'office' => trim((($c['position'] ?? '') . ' ' . ($c['department'] ?? ''))),
+                    'status' => strtolower($c['status'] ?? 'pending'),
+                    'cc' => (int)($c['cc'] ?? 0),
+                ];
+            }
+        }
+
+        // If no circulations but document has draft recipients/cc, include them as pending
+        if (empty($recipientIndex) && !empty($doc)) {
+            try {
+                require_once __DIR__ . '/../models/UserModel.php';
+                $userModel = new UserModel();
+                $draftTo = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
+                $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+
+                foreach ($draftTo as $rid) {
+                    $key = 'id_' . (int)$rid;
+                    $user = $userModel->getUserById((int)$rid);
+                    $recipientIndex[$key] = [
+                        'id' => 0,
+                        'recipient_id' => (int)$rid,
+                        'name' => $user ? trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) : $rid,
+                        'office' => $user ? trim(($user['position'] ?? '') . ' ' . ($user['department'] ?? '')) : '',
+                        'status' => 'pending',
+                        'cc' => 0,
+                    ];
+                }
+
+                foreach ($draftCc as $rid) {
+                    $key = 'id_' . (int)$rid;
+                    $user = $userModel->getUserById((int)$rid);
+                    $recipientIndex[$key] = [
+                        'id' => 0,
+                        'recipient_id' => (int)$rid,
+                        'name' => $user ? trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) : $rid,
+                        'office' => $user ? trim(($user['position'] ?? '') . ' ' . ($user['department'] ?? '')) : '',
+                        'status' => 'pending',
+                        'cc' => 1,
+                    ];
+                }
+            } catch (Throwable $e) {
+                // ignore
+            }
+        }
+
+        $recipientsTo = [];
+        $recipientsCc = [];
+        foreach ($recipientIndex as $r) {
+            if (!empty($r['cc'])) $recipientsCc[] = $r; else $recipientsTo[] = $r;
+        }
+
+        // For PM/DM (admin and above), only show history starting from finalization.
+        // Encoders (user_level > 1) already don't get access to full page.
+        if ($userLevel <= 1 && !empty($history)) {
+            $chrono = array_reverse($history); // oldest -> newest
+            $startIndex = null;
+            foreach ($chrono as $idx => $entry) {
+                $desc = (string)($entry['logDesc'] ?? '');
+                if (stripos($desc, 'finaliz') !== false) { // finaliz(e|ed|ation)
+                    $startIndex = $idx;
+                    break;
+                }
+            }
+
+            if ($startIndex !== null) {
+                $slice = array_slice($chrono, $startIndex);
+                $history = array_reverse($slice); // back to newest->oldest order
+            } else {
+                // If no explicit finalization entry found, remove draft-related logs
+                $filtered = array_filter($history, function($e) {
+                    $d = (string)($e['logDesc'] ?? '');
+                    return stripos($d, 'draft') === false && stripos($d, 'saved as draft') === false;
+                });
+                if (!empty($filtered)) {
+                    $history = array_values($filtered);
+                }
+                // else keep original history as fallback
+            }
+        }
+
+        // Compute recipient counts from circulations
+        $totalRecipients = 0;
+        $receivedCount = 0;
+        $openCloseState = 'inprogress'; // desired UI state: inprogress | suspended | done
+
+        foreach ($circulations as $c) {
+            $totalRecipients++;
+            $st = strtolower((string)($c['status'] ?? ''));
+            if ($st === 'received') {
+                $receivedCount++;
+            }
+            // infer open/close state from admin toggle
+            // NOTE: mapping: 'open' in DB => UI 'done'; 'close' in DB => UI 'suspended'
+            if ($st === 'done' || $st === 'completed' || $st === 'open') {
+                $openCloseState = 'done';
+            } elseif ($st === 'suspended' || $st === 'close') {
+                // only override if we haven't seen done yet
+                if ($openCloseState !== 'done') $openCloseState = 'suspended';
+            }
+        }
+
+        // Resolve creator name
+        $createdByName = null;
+        try {
+            require_once __DIR__ . '/../models/UserModel.php';
+            $userModel = new UserModel();
+            $creator = $userModel->getUserById((int)($doc['created_by'] ?? 0));
+            if ($creator) {
+                $createdByName = trim(($creator['firstName'] ?? '') . ' ' . ($creator['lastName'] ?? '')) ?: ($creator['email'] ?? null);
+            }
+        } catch (Throwable $e) {
+            // ignore
+        }
+        if ($createdByName) $doc['created_by_name'] = $createdByName;
+
+        // UI / overall status badge requirements:
+        // OPEN    => document_circulations.status = open
+        //           UI shows "done" and recipients table shows "done"
+        //           document details shows "completed"
+        // CLOSE   => document_circulations.status = close
+        //           UI shows "suspended" and recipients table shows "suspended"
+        //           document details shows "rejected"
+        //
+        // IMPORTANT: this page uses $status for the header badge.
+        $status = match ($openCloseState) {
+            'done' => 'done',
+            'suspended' => 'suspended',
+            default => 'inprogress',
+        };
+
+        // Separate document-details status used by the "document details" section (mapper requested in ticket).
+        $documentDetailsStatus = match ($openCloseState) {
+            'done' => 'completed',
+            'suspended' => 'rejected',
+            default => 'inprogress',
+        };
+
+        $content = $this->renderView('correspondence/show', [
+            'document' => $doc,
+            'circulations' => $circulations,
+            'attachments' => $attachments,
+            'history' => $history,
+            'threadEntries' => $threadEntries,
+            'canEditCorrespondence' => $canEditCorrespondence,
+            'recipientsTo' => $recipientsTo,
+            'recipientsCc' => $recipientsCc,
+            'status' => $status,
+            'documentDetailsStatus' => $documentDetailsStatus,
+            'receivedCount' => $receivedCount,
+            'totalRecipients' => $totalRecipients,
+        ]);
+
+        $this->view('layout/main', ['content' => $content]);
+    }
+
+    /**
+     * POST endpoint for admin/PM/DM to add a thread entry
+     */
+    public function postThreadEntry() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo 'Method not allowed';
+            exit;
+        }
+
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['message'] = 'Unauthorized';
+            $_SESSION['msg_type'] = 'error';
+            $this->redirect('index.php?controller=Auth&action=login');
+        }
+
+        $userLevel = (int)($_SESSION['user_level'] ?? 3);
+        if ($userLevel > 1) {
+            $_SESSION['message'] = 'You do not have permission to perform this action.';
+            $_SESSION['msg_type'] = 'error';
+            $this->redirect('index.php?controller=correspondence&action=correspondence');
+        }
+
+        $documentId = (int)($_POST['document_id'] ?? 0);
+        if ($documentId <= 0) {
+            $_SESSION['message'] = 'Invalid document.';
+            $_SESSION['msg_type'] = 'error';
+            $this->redirect('index.php?controller=correspondence&action=correspondence');
+        }
+
+        $entryKind = trim($_POST['entry_kind'] ?? 'comment');
+        $content = trim($_POST['content'] ?? '');
+        $cycleRef = trim($_POST['cycle_reference'] ?? '');
+
+        $actorType = 'admin';
+        $actorUserId = (int)($_SESSION['id'] ?? 0) ?: null;
+        $actorName = trim(($_SESSION['firstName'] ?? '') . ' ' . ($_SESSION['lastName'] ?? '')) ?: ($_SESSION['user'] ?? 'Admin');
+        $roleLabel = $_SESSION['position'] ?? 'Admin';
+
+        // Handle uploaded files (max 4, max 40MB total)
+        $uploaded = [];
+        $maxFiles = 4;
+        $maxBytes = 41943040; // 40MB
+
+        if (!empty($_FILES['thread_files'])) {
+            $files = $_FILES['thread_files'];
+            $count = min((int)count($files['name']), $maxFiles);
+
+            $totalSize = 0;
+            for ($i = 0; $i < $count; $i++) {
+                $totalSize += (int)($files['size'][$i] ?? 0);
+            }
+            if ($totalSize > $maxBytes) {
+                $_SESSION['message'] = 'Thread upload exceeds the 40MB total limit.';
+                $_SESSION['msg_type'] = 'error';
+                $this->redirect('index.php?controller=correspondence&action=show&id=' . (int)$documentId);
+            }
+
+            $targetDir = __DIR__ . '/../../uploads/thread/' . $documentId;
+            if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+
+            for ($i = 0; $i < $count; $i++) {
+                if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
+
+                $name = basename((string)($files['name'][$i] ?? ''));
+                if ($name === '') continue;
+
+                $uniq = time() . '_' . bin2hex(random_bytes(6)) . '_' . $name;
+                $path = $targetDir . '/' . $uniq;
+
+                if (move_uploaded_file($files['tmp_name'][$i], $path)) {
+                    $uploaded[] = [
+                        'file_name' => $name,
+                        'file_path' => $path,
+                        'file_size' => (int)($files['size'][$i] ?? 0)
+                    ];
+                }
+            }
+        }
+
+
+        $entryId = $this->model->addThreadEntry(
+            $documentId,
+            $actorType,
+            $actorUserId,
+            $actorName,
+            $roleLabel,
+            $entryKind,
+            $content,
+            $cycleRef,
+            $uploaded
+        );
+
+        if ($entryId) {
+            $_SESSION['message'] = 'Posted.';
+            $_SESSION['msg_type'] = 'success';
+        } else {
+            $_SESSION['message'] = 'Failed to post entry.';
+            $_SESSION['msg_type'] = 'error';
+        }
+
+        $this->redirect('index.php?controller=correspondence&action=show&id=' . (int)$documentId);
+    }
+
+    /**
+     * Toggle open/close status for a document's circulations (admin only)
+     * Expects POST: document_id, toggle_action (open|close)
+     */
+public function toggleOpenClose()
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        return $this->redirect('index.php?controller=correspondence&action=correspondence');
+    }
+
+    if (!isset($_SESSION['user'])) {
+        $_SESSION['message'] = 'Unauthorized';
+        $_SESSION['msg_type'] = 'error';
+        return $this->redirect('index.php?controller=Auth&action=login');
+    }
+
+    if ((int)($_SESSION['user_level'] ?? 3) > 1) {
+        $_SESSION['message'] = 'Insufficient permissions';
+        $_SESSION['msg_type'] = 'error';
+        return $this->redirect('index.php?controller=correspondence&action=correspondence');
+    }
+
+    $documentId = (int)($_POST['document_id'] ?? 0);
+    $action     = strtolower(trim($_POST['toggle_action'] ?? ''));
+
+    $statusMap = [
+        'close' => 'Done',
+        'open'  => 'Suspended',
+    ];
+
+    if ($documentId <= 0 || !isset($statusMap[$action])) {
+        $_SESSION['message'] = 'Invalid request.';
+        $_SESSION['msg_type'] = 'error';
+        return $this->redirect('index.php?controller=correspondence&action=correspondence');
+    }
+
+    $result = $this->model->updateAllCirculationsStatus($documentId, $statusMap[$action]);
+
+    $_SESSION['message']  = $result['message'];
+    $_SESSION['msg_type'] = $result['success'] ? 'success' : 'error';
+
+    return $this->redirect('index.php?controller=correspondence&action=show&id=' . $documentId);
+}
+
+    // AJAX - get raw document data (JSON) for populating the main form
+public function getDocumentData() {
+    // Force clean JSON output
+    header('Content-Type: application/json; charset=utf-8');
+    if (ob_get_level()) ob_end_clean();
+
+    if (!isset($_SESSION['user'])) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        exit;
+    }
+
+    try {
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            throw new Exception('Invalid document ID');
+        }
+
+        $doc = $this->model->getById($id);
+        if (!$doc) {
+            echo json_encode(['success' => false, 'message' => 'Document not found']);
+            exit;
+        }
+
+        $circulations = $this->model->getCirculationDetails($id);
+
+        $recipients = [];
+        $cc = [];
+
+        if (empty($circulations) && !empty($doc['is_draft'])) {
+            // For drafts, return the saved draft_recipients/draft_cc values so the edit form can show them
+            try {
+                require_once __DIR__ . '/../models/UserModel.php';
+                $userModel = new UserModel();
+                $draftRecipients = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
+                $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+
+                foreach ($draftRecipients as $rid) {
+                    $user = $userModel->getUserById((int)$rid);
+                    $recipients[] = [
+                        'id' => (int)$rid,
+                        'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$rid),
+                        'email' => $user['email'] ?? null,
+                    ];
+                }
+
+                foreach ($draftCc as $rid) {
+                    $user = $userModel->getUserById((int)$rid);
+                    $cc[] = [
+                        'id' => (int)$rid,
+                        'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$rid),
+                        'email' => $user['email'] ?? null,
+                    ];
+                }
+            } catch (Throwable $e) {
+                // ignore and fallthrough to empty lists
+            }
+        } else {
+            foreach ($circulations as $c) {
+                $item = [
+                    'id' => (int)($c['recipient_id'] ?? 0),
+                    'name' => trim(($c['recipient_name'] ?? '') ?: ($c['email'] ?? '')),
+                    'email' => $c['email'] ?? null,
+                    'cc' => !empty($c['cc']) ? 1 : 0,
+                ];
+                if (!empty($item['cc'])) {
+                    $cc[] = $item;
+                } else {
+                    $recipients[] = $item;
+                }
+            }
+        }
+
+        // attachments
+        $attachments = $this->model->getAttachments($id);
+        $attList = [];
+        foreach ($attachments as $a) {
+            $attList[] = [
+                'id' => (int)($a['id'] ?? 0),
+                'file_name' => $a['file_name'] ?? ($a['file'] ?? 'file'),
+                'download_url' => "index.php?controller=correspondence&action=download&attachment_id=" . (int)($a['id'] ?? 0)
+            ];
+        }
+
+        $payload = [
+            'success' => true,
+            'document' => $doc,
+            'recipients' => $recipients,
+            'cc' => $cc,
+            'attachments' => $attList,
+        ];
+
+        echo json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        exit;
+
+    } catch (Throwable $e) {
+        error_log('getDocumentData error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+        
+        echo json_encode([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage(),
+            'debug' => $e->getMessage()
+        ]);
+        exit;
+    }
+}
+
+
+
+
     public function getEditDocumentForm() {
         if (!isset($_SESSION['user'])) {
             echo "<p class='text-red-600 p-6'>Unauthorized</p>";
@@ -501,7 +1097,69 @@ class CorrespondenceController extends Controller {
         ?>
         <form id="editDocumentForm" method="POST" action="index.php?controller=correspondence&action=update&id=<?= (int)$doc['id'] ?>" class="space-y-6">
             <input type="hidden" name="id" value="<?= (int)$doc['id'] ?>">
+                <?php
+                    // Render recipients/CC for edit form: prefer existing circulations, fall back to draft fields
+                    $circs = $this->model->getCirculationDetails($doc['id']);
+                    $editRecipients = [];
+                    $editCc = [];
+                    if (!empty($circs)) {
+                        foreach ($circs as $c) {
+                            if (!empty($c['cc'])) $editCc[] = $c;
+                            else $editRecipients[] = $c;
+                        }
+                    } elseif (!empty($doc['is_draft'])) {
+                        try {
+                            require_once __DIR__ . '/../models/UserModel.php';
+                            $userModel = new UserModel();
+                            $draftRecipients = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
+                            $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+                            foreach ($draftRecipients as $rid) {
+                                $user = $userModel->getUserById((int)$rid);
+                                $editRecipients[] = [ 'recipient_id' => (int)$rid, 'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? null), 'email' => $user['email'] ?? null ];
+                            }
+                            foreach ($draftCc as $rid) {
+                                $user = $userModel->getUserById((int)$rid);
+                                $editCc[] = [ 'recipient_id' => (int)$rid, 'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? null), 'email' => $user['email'] ?? null ];
+                            }
+                        } catch (Throwable $e) {
+                            // ignore
+                        }
+                    }
+                ?>
 
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-1.5">Recipients</label>
+                    <div id="recipients-chips-edit" class="min-h-[48px] flex flex-wrap gap-2 items-center">
+                        <?php if (empty($editRecipients)): ?>
+                            <span class="text-sm text-slate-500">No recipients selected</span>
+                        <?php else: ?>
+                            <?php foreach ($editRecipients as $r): ?>
+                                <input type="hidden" name="recipients[]" value="<?= (int)$r['recipient_id'] ?>">
+                                <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"><?= htmlspecialchars($r['recipient_name'] ?? ($r['email'] ?? '')) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" onclick="openRecipientDrawer('recipients')" class="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-slate-700">Edit recipients</button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-1.5">CC</label>
+                    <div id="cc-chips-edit" class="min-h-[48px] flex flex-wrap gap-2 items-center">
+                        <?php if (empty($editCc)): ?>
+                            <span class="text-sm text-slate-500">No CC selected</span>
+                        <?php else: ?>
+                            <?php foreach ($editCc as $c): ?>
+                                <input type="hidden" name="cc[]" value="<?= (int)$c['recipient_id'] ?>">
+                                <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"><?= htmlspecialchars($c['recipient_name'] ?? ($c['email'] ?? '')) ?></span>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" onclick="openRecipientDrawer('cc')" class="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-slate-700">Edit CC</button>
+                    </div>
+                </div>
             <div class="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
                 <section class="space-y-4">
                     <?php if ($isDeleted): ?>
@@ -648,16 +1306,94 @@ class CorrespondenceController extends Controller {
             }
 
             $data = $this->normalizeDocumentPayload($_POST);
+            // Gather recipients/cc from POST (string or array)
+            $recipientsRaw = $_POST['recipients'] ?? '';
+            $ccRaw = $_POST['cc'] ?? '';
+            if (is_array($recipientsRaw)) $recipientsRaw = implode(',', array_filter($recipientsRaw)); else $recipientsRaw = trim($recipientsRaw);
+            if (is_array($ccRaw)) $ccRaw = implode(',', array_filter($ccRaw)); else $ccRaw = trim($ccRaw);
             if (empty($data['title'])) {
                 throw new Exception('Document title is required.');
             }
 
-            if (!$this->model->updateDocument($id, $data)) {
+            $updated = $this->model->updateDocument($id, $data);
+            if (!$updated) {
+                // attempt best-effort draft recipients save even if metadata update failed
+                try {
+                    $this->model->updateDraftRecipients($id, $recipientsRaw !== '' ? $recipientsRaw : null, $ccRaw !== '' ? $ccRaw : null);
+                } catch (Throwable $e) {
+                    // ignore
+                }
+
                 throw new Exception('Unable to update the document.');
             }
 
-            $_SESSION['message'] = 'Document updated successfully.';
-            $_SESSION['msg_type'] = 'success';
+            // If admin finalized the draft, convert to circulated document
+            if (!empty($_POST['finalize'])) {
+                // permission: only admin (1) or super-admin (0) can finalize
+                $userLevel = (int)($_SESSION['user_level'] ?? 3);
+                if ($userLevel > 1) {
+                    $_SESSION['message'] = 'You do not have permission to finalize drafts.';
+                    $_SESSION['msg_type'] = 'error';
+                    header("Location: index.php?controller=correspondence&action=correspondence");
+                    exit;
+                }
+
+                // mark draft as finalized and record finalizer
+                $finalizerId = (int)($_SESSION['id'] ?? 0);
+                $this->model->finalizeDraft($id, $finalizerId);
+
+                // notify creator and recipients
+                try {
+                    require_once __DIR__ . "/../models/Notification.php";
+                    $notif = new NotificationModel();
+                    $doc = $this->model->getById($id);
+                    $creatorId = (int)($doc['created_by'] ?? $_SESSION['id'] ?? 0);
+                    $tracking = $doc['tracking_id'] ?? '';
+                    $docUrl = "index.php?controller=correspondence&action=correspondence&doc_id={$id}";
+
+                    if ($creatorId > 0) {
+                        $notif->create($creatorId, "Your draft has been finalized and circulated • {$tracking}", $docUrl);
+                    }
+
+                    $circs = $this->model->getCirculationDetails($id);
+                    $recipientIds = [];
+                    foreach ($circs as $c) {
+                        if (!empty($c['recipient_id'])) $recipientIds[] = (int)$c['recipient_id'];
+                    }
+                    $recipientIds = array_values(array_unique(array_filter($recipientIds)));
+                    if (!empty($recipientIds)) {
+                        $notif->createForMany($recipientIds, "A document has been circulated to you • {$tracking}", $docUrl);
+                    }
+                } catch (Throwable $e) {
+                    error_log('Finalize notifications failed: ' . $e->getMessage());
+                }
+
+                $_SESSION['message'] = 'Draft finalized and circulated.';
+                $_SESSION['msg_type'] = 'success';
+            } elseif (!empty($_POST['save_draft'])) {
+                // Ensure draft recipients/cc are stored
+                try {
+                    $this->model->updateDraftRecipients($id, $recipientsRaw !== '' ? $recipientsRaw : null, $ccRaw !== '' ? $ccRaw : null);
+                } catch (Throwable $e) {
+                    error_log('Draft recipients save failed: ' . $e->getMessage());
+                }
+
+                // Save the existing document state as draft (do not circulate)
+                $this->model->markAsDraft($id);
+
+                // Notify admins that a draft was saved (reuse model helper)
+                try {
+                    $this->model->notifyAdminsOfDraft($id);
+                } catch (Throwable $e) {
+                    error_log('Draft notify (save_draft) failed: ' . $e->getMessage());
+                }
+
+                $_SESSION['message'] = 'Draft saved.';
+                $_SESSION['msg_type'] = 'success';
+            } else {
+                $_SESSION['message'] = 'Document updated successfully.';
+                $_SESSION['msg_type'] = 'success';
+            }
         } catch (Exception $e) {
             $_SESSION['message'] = $e->getMessage();
             $_SESSION['msg_type'] = 'error';
@@ -822,6 +1558,8 @@ class CorrespondenceController extends Controller {
             $ccRaw = trim($ccRaw);
         }
 
+        $userLevel = (int)($_SESSION['user_level'] ?? 3);
+
         $data = [
             'tracking_id'     => $this->generateTrackingId(),
             'title'           => trim($_POST['title'] ?? ''),
@@ -832,6 +1570,7 @@ class CorrespondenceController extends Controller {
             'due_date'        => trim($_POST['due_date'] ?? '') !== '' ? $_POST['due_date'] : null,
             'is_confidential' => isset($_POST['is_confidential']) ? 1 : 0,
             'notes'           => trim($_POST['notes'] ?? ''),
+            'is_draft'        => ($userLevel === 2) ? 1 : 0,
             'recipients'      => $recipientsRaw,
             'cc'              => $ccRaw
         ];
@@ -840,24 +1579,85 @@ class CorrespondenceController extends Controller {
             throw new Exception("Document title is required.");
         }
 
+        // Start DB transaction so document, attachments and circulations are atomic
+        $this->model->beginTransaction();
         $documentId = $this->model->createDocument($data);
 
         if (!$documentId) {
             throw new Exception("Failed to create document.");
         }
 
-        $this->handleFileUploads($documentId, $attachments);
+        $movedFiles = $this->handleFileUploads($documentId, $attachments);
 
-        // Process into document_circulations
-        if (!$this->processRecipients($documentId, $data['recipients'], $data['cc'])) {
-            throw new Exception("Document was created, but recipients/CC could not be saved.");
+        // If user is encoder (level 2) treat as draft: persist recipients/cc on document record and notify admins
+        if ($userLevel === 2) {
+            // Do NOT insert into document_circulations to prevent circulation to recipients.
+            // Recipients/CC are stored in the documents.draft_recipients and draft_cc columns by createDocument().
+            $this->model->notifyAdminsOfDraft($documentId);
+            $_SESSION['message'] = "Draft saved and admin(s) notified. Tracking ID: " . $data['tracking_id'];
+            $_SESSION['msg_type'] = "success";
+        } else {
+            // Process into document_circulations for normal users
+            if (!$this->processRecipients($documentId, $data['recipients'], $data['cc'])) {
+                throw new Exception("Document was created, but recipients/CC could not be saved.");
+            }
+
+            if (!$this->model->setDocumentStatus($documentId, 'Inprogress')) {
+                throw new Exception('Unable to set document status to Inprogress.');
+            }
+            if (!$this->model->setCirculationsStatus($documentId, 'Inprogress')) {
+                throw new Exception('Unable to set circulation status to Inprogress.');
+            }
+
+            // notify creator and recipients via internal notifications
+            try {
+                require_once __DIR__ . "/../models/Notification.php";
+                $notif = new NotificationModel();
+
+                // notify creator
+                $doc = $this->model->getById($documentId);
+                $creatorId = (int)($doc['created_by'] ?? $_SESSION['id'] ?? 0);
+                $tracking = $doc['tracking_id'] ?? $data['tracking_id'];
+                $docUrl = "index.php?controller=correspondence&action=correspondence&doc_id={$documentId}";
+
+                if ($creatorId > 0) {
+                    $notif->create($creatorId, "Your document has been circulated • {$tracking}", $docUrl);
+                }
+
+                // notify recipients (standard users) parsed from recipients / cc
+                $recipientIds = [];
+                if (!empty($data['recipients'])) {
+                    $recipientIds = array_merge($recipientIds, array_map('intval', array_filter(array_map('trim', explode(',', $data['recipients'])))));
+                }
+                if (!empty($data['cc'])) {
+                    $recipientIds = array_merge($recipientIds, array_map('intval', array_filter(array_map('trim', explode(',', $data['cc'])))));
+                }
+                $recipientIds = array_values(array_unique(array_filter($recipientIds)));
+                if (!empty($recipientIds)) {
+                    $notif->createForMany($recipientIds, "A document has been circulated to you • {$tracking}", $docUrl);
+                }
+            } catch (Throwable $e) {
+                error_log('Post-circulation notification failed: ' . $e->getMessage());
+            }
+
+            $_SESSION['message'] = "Document circulated successfully! Tracking ID: " . $data['tracking_id'];
+            $_SESSION['msg_type'] = "success";
         }
 
-
-        $_SESSION['message'] = "Document circulated successfully! Tracking ID: " . $data['tracking_id'];
-        $_SESSION['msg_type'] = "success";
+        // commit DB transaction after all operations
+        try { $this->model->commit(); } catch (Throwable $ex) { error_log('Commit failed: ' . $ex->getMessage()); }
 
     } catch (Exception $e) {
+        // rollback DB and remove any moved files
+        try { $this->model->rollBack(); } catch (Throwable $ex) { error_log('Rollback failed: ' . $ex->getMessage()); }
+        if (!empty($movedFiles) && is_array($movedFiles)) {
+            foreach ($movedFiles as $f) {
+                if (is_string($f) && file_exists($f)) {
+                    @unlink($f);
+                }
+            }
+        }
+
         $_SESSION['message'] = $e->getMessage();
         $_SESSION['msg_type'] = "error";
     }
@@ -951,7 +1751,7 @@ class CorrespondenceController extends Controller {
 
             if (move_uploaded_file($tmpName, $destination)) {
                 $this->model->addAttachment($documentId, $name, $destination, $fileSize);
-                $uploaded[] = $name;
+                $uploaded[] = $destination;
             }
         }
 

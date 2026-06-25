@@ -1,7 +1,7 @@
 <?php require __DIR__ . '/../partials/icons.php'; ?>
 
 <div class="min-h-screen theme-palette">
-    <div class="max-w-[1600px] mx-auto px-4 py-8 text-xs sm:text-sm md:text-base correspondence-ui">
+    <div class="max-w-[1400px] mx-auto px-3 py-6 text-xs sm:text-xs md:text-sm correspondence-ui">
         <?php
             $currentUserLevel = (int)($_SESSION['user_level'] ?? 3);
             $isSuperAdmin = $currentUserLevel === 0;
@@ -9,6 +9,8 @@
             $canEditCorrespondence = !empty($canEditCorrespondence) || in_array($currentUserLevel, [0, 1, 2], true);
             $canDeleteCorrespondence = !empty($canDeleteCorrespondence) || in_array($currentUserLevel, [0, 1], true);
             $canHardDeleteCorrespondence = !empty($canHardDeleteCorrespondence) || $isSuperAdmin;
+            // Only admin (1) and super-admin (0) may finalize drafts
+            $canFinalize = in_array($currentUserLevel, [0,1], true);
             $selectableUsers = $users ?? [];
 
             usort($selectableUsers, function ($left, $right) {
@@ -28,218 +30,26 @@
             <?php unset($_SESSION['message'], $_SESSION['msg_type']); ?>
         <?php endif; ?>
 
-        <!-- ====================== NEW CIRCULATION FORM ====================== -->
+        <!-- ====================== NEW CIRCULATION CTA (moved to separate page) ====================== -->
         <?php if ($canCreateCorrespondence): ?>
-            <div class="mb-8 overflow-hidden rounded-[32px] border border-slate-300 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-                <div class="border-b border-slate-300 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-5">
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div class="max-w-3xl">
-                            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-600">Digital Correspondence</p>
-                            <h2 class="mt-1 text-xl font-semibold tracking-tight text-slate-900">New Circulation</h2>
-                            <p class="mt-2 max-w-2xl text-sm leading-7 text-slate-500">
-                                Keep the entry focused: capture the document details first, then assign recipients and CC with the least friction.
-                            </p>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <div class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm">
-                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                <span>Role-enabled workflow</span>
-                            </div>
-                            <div class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm">
-                                <span class="h-2 w-2 rounded-full bg-blue-500"></span>
-                                <span>Live recipient filters</span>
-                            </div>
-                        </div>
+            <div class="mb-6 overflow-hidden rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase text-blue-600">New Circulation</p>
+                        <h2 class="text-base font-semibold text-slate-900 mt-1">Create a new circulation</h2>
+                        <p class="mt-1 text-xs text-slate-500">Open the dedicated form to create a circulation entry.</p>
+                    </div>
+                    <div>
+                                <a href="index.php?controller=correspondence&action=newCirculation" class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">New Circulation</a>
                     </div>
                 </div>
-
-                <form id="circulationForm" action="index.php?controller=correspondence&action=store" method="POST" enctype="multipart/form-data" class="p-6 lg:p-7">
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-6">
-                        <!-- Left column: main document content -->
-                        <div class="md:col-span-2 space-y-6">
-                            <!-- Recipients & CC moved to top for email-like flow -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                                <section class="rounded-3xl border border-slate-300 bg-gradient-to-b from-slate-50 to-white p-4 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div>
-                                            <div class="flex items-center gap-2">
-                                                <label class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Recipients</label>
-                                                <span id="recipients-count-badge" class="hidden inline-flex items-center justify-center rounded-full bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white">0</span>
-                                            </div>
-                                            <p class="mt-1 text-sm text-slate-500">Recipients — select people who should receive this digital circulation.</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-3">
-                                        <div id="recipients-chips" class="min-h-[48px] flex flex-wrap gap-2 items-center">
-                                            <span id="recipients-placeholder" class="text-sm text-slate-500">No recipients selected</span>
-                                        </div>
-                                        <div class="mt-3">
-                                            <button type="button" onclick="openRecipientDrawer('recipients')" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-green-50 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition">Add recipients</button>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section class="rounded-3xl border border-slate-300 bg-gradient-to-b from-white to-slate-50 p-4 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div>
-                                            <label class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">CC</label>
-                                            <p class="mt-1 text-sm text-slate-500">Carbon-copy recipients stay separate from the main recipient list.</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-3">
-                                        <div id="cc-chips" class="min-h-[48px] flex flex-wrap gap-2 items-center">
-                                            <span id="cc-placeholder" class="text-sm text-slate-500">No CC selected</span>
-                                        </div>
-                                        <div class="mt-3">
-                                            <button type="button" onclick="openRecipientDrawer('cc')" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-green-50 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition">Add CC</button>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-
-                            <!-- Document Identity -->
-                            <section class="rounded-3xl border border-slate-300 bg-slate-50/70 p-5 shadow-sm">
-                                <div class="flex items-center justify-between gap-4">
-                                    <div>
-                                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Document Identity</p>
-                                        <h3 class="mt-1 text-xs sm:text-sm md:text-base font-semibold text-slate-900">Core details</h3>
-                                    </div>
-                                    <span class="rounded-full border border-slate-300 bg-red-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Required</span>
-                                </div>
-
-                                <div class="mt-4 grid grid-cols-1 md:grid-cols-[190px_minmax(0,1fr)] gap-4">
-                                    <div>
-                                        <label class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-1.5">Tracking ID</label>
-                                        <input type="text" id="tracking_id" name="tracking_id"
-                                            value="<?= htmlspecialchars($nextTrackingId) ?>"
-                                            class="w-full h-11 rounded-2xl border border-slate-400 bg-slate-50 px-3 font-mono text-sm font-semibold text-slate-700" readonly>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-1.5">Document Title <span class="text-red-500">*</span></label>
-                                        <input type="text" class = 'text-sm' name="title" required placeholder="Subject of the document"
-                                            class="w-full h-12 rounded-2xl border border-slate-400 px-4 text-lg text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                                    </div>
-                                </div>
-                            </section>
-
-                            <!-- Document Body -->
-                            <section class="rounded-3xl border border-slate-300 bg-white p-5 shadow-sm">
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Document Body</p>
-                                    <h3 class="mt-1 text-xs sm:text-sm md:text-base font-semibold text-slate-900">Description</h3>
-                                </div>
-                                <div class="mt-4">
-                                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Body</label>
-                                    <div id="description" contenteditable="true"
-                                        class="min-h-[220px] sm:min-h-[300px] md:min-h-[540px] rounded-3xl border border-slate-400 bg-slate-50 p-4 text-sm leading-7 text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 prose max-w-none" ></div>
-                                    <input type="hidden" name="description" id="description-hidden">
-                                </div>
-                            </section>
-
-                            <!-- Attachments -->
-                            <section class="rounded-3xl border border-slate-300 bg-slate-50/70 p-4 shadow-sm">
-                                <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Attachments</label>
-                                <p class="mb-3 text-sm text-slate-500">Add up to 4 files, 40MB total.</p>
-                                <input type="file" name="attachments[]" multiple data-max-files="4" data-max-total="41943040"
-                                    class="w-full rounded-2xl border border-dashed border-slate-400 bg-white px-3 py-3 text-sm file:mr-3 file:border-0 file:bg-slate-100 file:text-slate-700 file:rounded-lg file:px-3 file:py-1.5 hover:file:bg-slate-400">
-                                <p id="attachment-feedback" class="mt-2 text-xs font-medium text-slate-500">No files selected.</p>
-                            </section>
-                        </div>
-
-                        <!-- Right column: sidebar settings and actions -->
-                        <aside class="md:col-span-1 space-y-6">
-                            <section class="rounded-3xl border border-slate-300 bg-white p-5 shadow-sm">
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Document Settings</p>
-                                    <h3 class="mt-1 text-xs sm:text-sm md:text-base font-semibold text-slate-900">Operational fields</h3>
-                                </div>
-
-                                <div class="mt-4 grid grid-cols-1 gap-3">
-                                    <div>
-                                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Type</label>
-                                        <select name="type" class="w-full h-11 rounded-2xl border border-slate-400 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100">
-                                            <option value="Memo">Memo</option>
-                                            <option value="Letter">Letter</option>
-                                            <option value="Report">Report</option>
-                                            <option value="Circular">Circular</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Priority</label>
-                                        <select name="priority" class="w-full h-11 rounded-2xl border border-slate-400 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100">
-                                            <option value="Low">Low</option>
-                                            <option value="Medium" selected>Medium</option>
-                                            <option value="High">High</option>
-                                            <option value="Urgent">Urgent</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Due Date</label>
-                                        <input type="date" name="due_date" class="w-full h-11 rounded-2xl border border-slate-400 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100">
-                                    </div>
-
-                                    <div>
-                                        <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Sender</label>
-                                        <input type="email" name="sender_email" value="noreply@dalton.com.ph"
-                                            class="w-full h-11 rounded-2xl border border-slate-400 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100">
-                                    </div>
-
-                                    <label for="confidential" class="flex items-start gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3 shadow-sm transition hover:border-blue-200">
-                                        <input type="checkbox" name="is_confidential" id="confidential" class="mt-1 h-4 w-4 rounded border-slate-400 text-blue-600 focus:ring-blue-500">
-                                        <div>
-                                            <span class="block text-sm font-semibold text-slate-800">Confidential</span>
-                                            <span class="mt-1 block text-sm leading-6 text-slate-500">Limit visibility for sensitive circulations.</span>
-                                        </div>
-                                    </label>
-                                </div>
-                            </section>
-
-                            <section class="rounded-3xl border border-slate-300 bg-white p-5 shadow-sm">
-                                <div>
-                                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Internal Notes</p>
-                                    <h3 class="mt-1 text-xs sm:text-sm md:text-base font-semibold text-slate-900">Remarks</h3>
-                                </div>
-                                <div class="mt-4">
-                                    <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Notes / Remarks</label>
-                                    <textarea name="notes" rows="3" placeholder="Optional internal notes"
-                                        class="w-full rounded-3xl border border-slate-400 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"></textarea>
-                                </div>
-                            </section>
-
-                            <section class="rounded-3xl border border-slate-300 bg-slate-50 p-4 shadow-sm">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs font-semibold uppercase text-slate-500">Summary</p>
-                                        <p class="mt-1 text-sm text-slate-700">Recipient count: <span id="summary-recipient-count">0</span></p>
-                                        <p class="mt-1 text-sm text-slate-700">CC count: <span id="summary-cc-count">0</span></p>
-                                    </div>
-                                    <div class="text-right text-sm text-slate-500">
-                                        <p id="summary-attachment-count">0 files</p>
-                                        <p id="summary-due-date" class="mt-1">—</p>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <div id="formActions" class="flex flex-col-reverse sm:flex-row xl:flex-col-reverse gap-3 pt-1">
-                                <button type="button" onclick="resetForm()"
-                                    class="h-11 px-4 rounded-2xl border border-slate-300 bg-white text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Reset</button>
-                                <button type="submit"
-                                    class="h-11 px-5 rounded-2xl bg-blue-600 text-white text-sm font-semibold shadow-sm transition hover:bg-blue-700">Circulate Document</button>
-                            </div>
-                        </aside>
-                    </div>
-                </form>
             </div>
         <?php else: ?>
-            <div class="mb-8 rounded-3xl border border-slate-300 bg-white p-6 shadow-sm">
-                <div class="rounded-3xl border border-slate-300 bg-slate-50 px-5 py-6">
-                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">View Only</p>
-                    <h2 class="mt-1 text-xl font-semibold text-slate-900">New Circulation is disabled for your account</h2>
-                    <p class="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+            <div class="mb-6 rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
+                <div class="rounded-lg border border-slate-300 bg-slate-50 px-3 py-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">View Only</p>
+                    <h2 class="mt-1 text-lg font-semibold text-slate-900">New Circulation is disabled for your account</h2>
+                    <p class="mt-2 max-w-3xl text-xs leading-6 text-slate-600">
                         You can review correspondence history and repository records, but creating, editing, and deleting circulation entries are restricted by your role.
                     </p>
                 </div>
@@ -247,8 +57,9 @@
         <?php endif; ?>
 
         <!-- ====================== DOCUMENT REPOSITORY ====================== -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-5 py-4 border-b border-gray-200 bg-white">
+        <?php require __DIR__ . '/_shared.php'; ?>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-3 py-3 border-b border-gray-200 bg-white">
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
                         <p class="text-xs font-semibold uppercase text-blue-600">Repository</p>
@@ -259,12 +70,12 @@
                     </span>
                 </div>
 
-                <div class="mt-4 rounded-2xl border border-slate-300 bg-slate-50/80 p-4 shadow-sm shadow-slate-100">
+                <div class="mt-4 rounded-md border border-slate-300 bg-slate-50/80 p-3 shadow-sm shadow-slate-100">
                     <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[200px_200px_minmax(0,1fr)] gap-3 flex-1">
                             <div>
-                                <label for="priorityFilter" class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Priority</label>
-                                <select id="priorityFilter" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                                <label for="priorityFilter" class="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Priority</label>
+                                <select id="priorityFilter" class="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-100">
                                     <option value="">All priorities</option>
                                     <option value="Low">Low</option>
                                     <option value="Medium">Medium</option>
@@ -273,11 +84,14 @@
                                 </select>
                             </div>
                             <div>
-                                <label for="statusFilter" class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Status</label>
-                                <select id="statusFilter" class="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                                    <option value="">All statuses</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Completed">Completed</option>
+                                <label for="statusFilter" class="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Status</label>
+                                <select id="statusFilter" class="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-100">
+                                <option value="">All status</option>
+                                <option value="Suspended">Suspended</option>
+                                <option value="Inprogress">Inprogress</option>
+                                <option value="Done">Done</option>
+                                <option value="draft">draft</option>
+
                                 </select>
                             </div>
                             <div class="flex items-end">
@@ -301,7 +115,7 @@
 
             <div class="p-5">
                 <!-- Top bar: title, search, filters, compact toggle -->
-                <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="mb-4 flex flex-col gap-3 sm:flex-row lg:hidden sm:block  sm:items-center sm:justify-between">
                     <div>
                         <p class="text-xs font-semibold uppercase text-blue-600">Repository</p>
                         <h2 class="text-sm sm:text-base font-semibold text-gray-900">Document Repository</h2>
@@ -315,8 +129,11 @@
                         <div>
                             <select id="statusFilter" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none">
                                 <option value="">All status</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Pending">Pending</option>
+                                <option value="Suspended">Suspended</option>
+                                <option value="Inprogress">Inprogress</option>
+                                <option value="Done">Done</option>
+                                <option value="draft">draft</option>
+
                             </select>
                         </div>
 
@@ -342,7 +159,7 @@
 
                 <!-- Desktop: table view -->
                 <div class="hidden md:block overflow-x-auto">
-                    <table id="documentTable" class="w-full text-sm">
+                    <table id="documentTable" class="w-full text-sm compact">
                     <thead class="bg-gray-50 border-y border-gray-200">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Tracking ID</th>
@@ -362,7 +179,9 @@
                         <?php
                             $receivedCount = (int)($doc['received_count'] ?? 0);
                             $totalRecipients = (int)($doc['total_recipients'] ?? 0);
-                            $status = ($totalRecipients > 0 && $receivedCount >= $totalRecipients) ? 'Completed' : 'Pending';
+                            $doneCount = (int)($doc['done_count'] ?? 0);
+                            // Status is driven by Open/Close which marks circulations as 'Done'
+                            $status =  $doc['status'];
                             $isDeleted = !empty($doc['is_deleted']);
                             $isEdited = !empty($doc['is_edited']);
                             $canManage = false;
@@ -371,15 +190,40 @@
                                 $canManage = $deadline !== false && time() <= $deadline;
                             }
                             $manageUntil = !empty($doc['created_at']) ? date('M d, Y g:i A', strtotime($doc['created_at'] . ' +7 days')) : null;
-                            $statusClass = $status === 'Completed'
-                                ? 'bg-green-50 text-green-700 border-green-100'
-                                : 'bg-amber-50 text-amber-700 border-amber-100';
-                            $priorityClass = match ($doc['priority']) {
-                                'Urgent' => 'bg-red-50 text-red-700 border-red-100',
-                                'High' => 'bg-orange-50 text-orange-700 border-orange-100',
-                                'Medium' => 'bg-blue-50 text-blue-700 border-blue-100',
-                                default => 'bg-gray-50 text-gray-700 border-gray-100',
-                            };
+                            $st = strtolower(trim((string)($status ?? 'inprogress')));
+                   // STATUS COLORS = document state
+                    switch ($st) {
+                        case 'done':
+                        case 'completed':
+                            $statusClass = 'border border-emerald-200 bg-emerald-50 text-emerald-700';
+                            break;
+
+                        case 'suspended':
+                            $statusClass = 'border border-rose-200 bg-rose-50 text-rose-700';
+                            break;
+
+                        case 'draft':
+                            $statusClass = 'border border-sky-200 bg-sky-50 text-sky-700';
+                            break;
+
+                        case 'pending':
+                        case 'in progress':
+                        case 'in_progress':
+                        default:
+                            $statusClass = 'border border-slate-200 bg-slate-50 text-slate-700';
+                            break;
+                    }
+
+                    // PRIORITY COLORS = urgency
+                    $priority = strtolower(trim((string)($doc['priority'] ?? '')));
+
+                    $priorityClass = match ($priority) {
+                        'urgent' => 'border border-red-200 bg-red-50 text-red-700',
+                        'high'   => 'border border-amber-200 bg-amber-50 text-amber-700',
+                        'medium' => 'border border-violet-200 bg-violet-50 text-violet-700',
+                        'low'    => 'border border-zinc-200 bg-zinc-50 text-zinc-700',
+                        default  => 'border border-slate-200 bg-slate-50 text-slate-700',
+                    };
                         ?>
                         <tr onclick="viewDocument(<?= $doc['id'] ?>)"
                             class="<?= $isDeleted ? 'bg-slate-50 text-slate-500' : '' ?> hover:bg-slate-50 cursor-pointer transition-colors">
@@ -420,19 +264,26 @@
                                         title="Edit document">
                                        Edit
                                     </button>
+                                    <?php if (!empty($doc['is_draft']) && $canEditCorrespondence && !$isDeleted && $canFinalize): ?>
+                                        <button type="button" onclick='openFinalizeDraft(<?= $doc["id"] ?>)'
+                                            class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition"
+                                            title="Finalize draft">
+                                           Finalize
+                                        </button>
+                                    <?php endif; ?>
                                     <button type="button" onclick='openDeleteConfirm(<?= $doc["id"] ?>, <?= json_encode($doc["title"], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
                                         <?= (!$canDeleteCorrespondence || $isDeleted) ? 'disabled' : '' ?>
                                         class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition "
                                         title="Delete document">
                                         Delete
                                     </button>
-                                    <!-- <?php if ($canHardDeleteCorrespondence): ?>
+                                    <?php if ($canHardDeleteCorrespondence): ?>
                                         <button type="button" onclick='openHardDeleteConfirm(<?= $doc["id"] ?>, <?= json_encode($doc["title"], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
                                             class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-rose-300 bg-rose-100 px-3 text-xs font-semibold text-rose-800 hover:bg-rose-200 transition"
                                             title="Permanently remove document">
                                             Hard Delete
                                         </button>
-                                    <?php endif; ?> -->
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td class="hidden"><?= $isDeleted ? 'Removed' : 'Active' ?></td>
@@ -447,10 +298,19 @@
                     <?php foreach ($documents as $doc):
                         $receivedCount = (int)($doc['received_count'] ?? 0);
                         $totalRecipients = (int)($doc['total_recipients'] ?? 0);
-                        $status = ($totalRecipients > 0 && $receivedCount >= $totalRecipients) ? 'Completed' : 'Pending';
+                        $status =  $doc['status'];
                         $isDeleted = !empty($doc['is_deleted']);
                         $cardState = $isDeleted ? 'Removed' : 'Active';
-                        $statusClass = $status === 'Completed' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700';
+                        $st = strtolower(trim((string)($status ?? 'inprogress')));
+                        if ($st === 'done' || $st === 'completed') {
+                            $statusClass = 'bg-emerald-50 text-emerald-700';
+                        } elseif ($st === 'suspended') {
+                            $statusClass = 'bg-rose-50 text-rose-700';
+                        } elseif ($st === 'draft') {
+                            $statusClass = 'bg-sky-50 text-sky-700';
+                        } else {
+                            $statusClass = 'bg-slate-50 text-slate-700';
+                        }
                         $priorityClass = match ($doc['priority']) {
                             'Urgent' => 'bg-red-50 text-red-700',
                             'High' => 'bg-orange-50 text-orange-700',
@@ -496,122 +356,7 @@
         </div>
 
 
-<!-- Enhanced Modal -->
-<div id="documentModal" class="hidden fixed inset-0 z-50 p-4 sm:p-6">
-    <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onclick="closeModal()"></div>
-    <div class="relative mx-auto flex h-full w-full max-w-7xl items-center justify-center">
-        <div class="modal-panel w-full max-h-[94vh] overflow-hidden rounded-3xl border border-white/10 bg-white shadow-[0_30px_120px_rgba(15,23,42,0.35)]">
-            <div class="flex items-start justify-between gap-4 border-b border-slate-300 bg-white/90 px-5 py-4 sm:px-6">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-600">Document Preview</p>
-                    <h3 id="modalTitle" class="mt-1 text-lg font-semibold text-slate-900 sm:text-2xl"></h3>
-                </div>
-                <button onclick="closeModal()" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-500 transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close modal">
-                    <span class="text-2xl leading-none">×</span>
-                </button>
-            </div>
-            <div id="modalBody" class="max-h-[calc(94vh-72px)] overflow-auto px-4 py-4 sm:px-6 sm:py-6"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Recipient / CC Drawer (side modal) -->
-<div id="recipientDrawerOverlay" class="hidden fixed inset-0 bg-slate-950/50 z-[99998]" onclick="closeRecipientDrawer()"></div>
-<aside id="recipientDrawer" class="hidden fixed inset-y-0 right-0 w-full sm:w-96 bg-white shadow-2xl z-[99999] transform translate-x-full transition-transform">
-    <div class="flex h-full flex-col">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <div>
-                <p id="drawerTitleSmall" class="text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">Add Recipients</p>
-                <h4 id="drawerTitle" class="mt-1 text-lg font-semibold text-slate-900">Select people</h4>
-            </div>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="closeRecipientDrawer()" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50">×</button>
-            </div>
-        </div>
-        <div class="p-4 flex-1 overflow-auto">
-            <div class="mb-3">
-                <input id="drawer-search" type="search" placeholder="Filter by department, name, or email" class="w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-            </div>
-            <div id="drawerList" class="space-y-2">
-                <?php foreach ($selectableUsers as $user):
-                    $department = trim($user['department'] ?? '') !== '' ? trim($user['department']) : 'Unassigned';
-                    $fullName = trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? ''));
-                    $email = trim($user['email'] ?? '');
-                    $userId = (int)$user['id'];
-                    $filterText = htmlspecialchars(strtolower(trim($department . ' ' . $fullName . ' ' . $email)));
-                ?>
-                <label data-drawer-filter="<?= $filterText ?>" class="group flex items-start gap-3 rounded-2xl px-3 py-2 transition hover:bg-slate-50">
-                    <input type="checkbox" data-drawer-id="<?= $userId ?>" data-drawer-name="<?= htmlspecialchars($fullName ?: $department) ?>" data-drawer-email="<?= htmlspecialchars($email) ?>" class="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600">
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-semibold text-slate-900"><?= htmlspecialchars($department) ?></span>
-                            <?php if ($fullName !== ''): ?>
-                                <span class="user-fullname rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600"><?= htmlspecialchars($fullName) ?></span>
-                            <?php endif; ?>
-                        </div>
-                        <p class="mt-1 text-sm text-slate-500"><?= htmlspecialchars($email !== '' ? $email : 'No email on file') ?></p>
-                    </div>
-                </label>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <div class="flex items-center justify-between gap-3 border-t border-gray-100 px-4 py-3">
-            <button type="button" onclick="closeRecipientDrawer()" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
-            <div>
-                <button id="drawerApply" type="button" onclick="applyRecipientDrawer()" class="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Apply</button>
-            </div>
-        </div>
-    </div>
-</aside>
-
-<div id="editDocumentModal" class="hidden fixed inset-0 z-[60] p-4 sm:p-6">
-    <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onclick="closeEditModal()"></div>
-    <div class="relative mx-auto flex h-full w-full max-w-4xl items-center justify-center">
-        <div class="modal-panel w-full max-h-[94vh] overflow-hidden rounded-3xl border border-white/10 bg-white shadow-[0_30px_120px_rgba(15,23,42,0.35)]">
-            <div class="flex items-start justify-between gap-4 border-b border-slate-300 bg-white/90 px-5 py-4 sm:px-6">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-600">Edit Document</p>
-                    <h3 class="mt-1 text-lg font-semibold text-slate-900 sm:text-2xl">Update circulation details</h3>
-                </div>
-                <button onclick="closeEditModal()" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-500 transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close edit modal">
-                    <span class="text-2xl leading-none">×</span>
-                </button>
-            </div>
-            <div id="editModalBody" class="max-h-[calc(94vh-72px)] overflow-auto px-4 py-4 sm:px-6 sm:py-6"></div>
-        </div>
-    </div>
-</div>
-
-<div id="confirmModal" class="hidden fixed inset-0 z-[70] p-4 sm:p-6">
-    <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
-    <div class="relative mx-auto flex h-full w-full max-w-lg items-center justify-center">
-        <div class="modal-panel w-full rounded-3xl border border-white/10 bg-white shadow-[0_30px_120px_rgba(15,23,42,0.35)]">
-            <div class="border-b border-slate-300 px-5 py-4 sm:px-6">
-                <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-red-600">Confirm Action</p>
-                <h3 id="confirmTitle" class="mt-1 text-lg font-semibold text-slate-900">Confirm</h3>
-            </div>
-            <div class="px-5 py-5 sm:px-6">
-                <p id="confirmMessage" class="text-sm leading-7 text-slate-600"></p>
-                <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <button type="button" onclick="closeConfirmModal()" class="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                        Cancel
-                    </button>
-                    <button type="button" id="confirmActionButton" class="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-700">
-                        Confirm
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<form id="hiddenDeleteForm" method="POST" class="hidden"></form>
-<form id="hiddenHardDeleteForm" method="POST" class="hidden"></form>
-
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<!-- (shared modals moved to _shared.php) -->
 
 <style>
     .modal-panel {
@@ -704,11 +449,26 @@
     .correspondence-ui .modal-panel { border: 0; box-shadow: 0 8px 32px rgba(2,6,23,0.04); }
     .correspondence-ui .modal-panel .px-5, .correspondence-ui .modal-panel .px-6 { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
 
-    /* Cleaner table with more vertical rhythm */
-    .correspondence-ui table#documentTable { border-collapse: separate; border-spacing: 0 10px; }
-    .correspondence-ui #documentTable thead th { background: transparent; color: var(--cb-muted); border-bottom: none; padding: 0.6rem 0.75rem; }
+    /* Cleaner table with more vertical rhythm: compact CRM-style */
+    .correspondence-ui table#documentTable { border-collapse: separate; border-spacing: 0 6px; font-size: 0.82rem; }
+    .correspondence-ui #documentTable thead th { background: transparent; color: var(--cb-muted); border-bottom: none; padding: 0.35rem 0.5rem; font-size: 0.66rem; letter-spacing: 0.04em; }
     .correspondence-ui #documentTable tbody tr { background: transparent; box-shadow: none; }
-    .correspondence-ui #documentTable td, .correspondence-ui #documentTable th { padding: 0.5rem 0.6rem; vertical-align: middle; }
+    .correspondence-ui #documentTable td, .correspondence-ui #documentTable th { padding: 0.45rem 0.5rem; vertical-align: middle; }
+
+    /* Default compact tweaks (applied by `compact` class) */
+    .correspondence-ui table#documentTable.compact { border-spacing: 0 6px; }
+    .correspondence-ui table#documentTable.compact td, .correspondence-ui table#documentTable.compact th { padding: 0.25rem 0.35rem; }
+    .correspondence-ui table#documentTable.compact tbody tr { border-radius: 8px; }
+
+    /* Smaller, sleeker badges */
+    .correspondence-ui .inline-flex.items-center.justify-center.rounded-md { background: rgba(15,23,42,0.03); border: none; padding: 0.18rem 0.5rem; font-size: 0.72rem; }
+
+    /* Action buttons: leaner */
+    .correspondence-ui table#documentTable .inline-flex.h-8 { height: 34px; padding: 0 .6rem; font-size: 0.78rem; }
+    .correspondence-ui table#documentTable button.h-8 { height: 34px; }
+
+    /* Row hover — subtle elevation */
+    #documentTable tbody tr:hover { background: rgba(15,23,42,0.02); }
 
     /* Subtle badges */
     .correspondence-ui .inline-flex.items-center.justify-center.rounded-md { background: rgba(15,23,42,0.03); border: none; }
@@ -822,135 +582,10 @@ $(document).ready(function() {
         $('#priorityFilter').val(this.value).trigger('change');
     });
 });
-
-function syncSelectionState() {
-    const recipientChecks = Array.from(document.querySelectorAll('input[data-selection-section="recipients"]'));
-    const ccChecks = Array.from(document.querySelectorAll('input[data-selection-section="cc"]'));
-    const selectedRecipients = new Set(recipientChecks.filter(cb => cb.checked).map(cb => String(cb.dataset.userId)));
-    const selectedCc = new Set(ccChecks.filter(cb => cb.checked).map(cb => String(cb.dataset.userId)));
-
-    const recipientCount = document.getElementById('recipients-count');
-    const ccCount = document.getElementById('cc-count');
-
-    if (recipientCount) {
-        recipientCount.textContent = `${selectedRecipients.size} selected`;
-    }
-
-    if (ccCount) {
-        ccCount.textContent = `${selectedCc.size} selected`;
-    }
-
-    document.querySelectorAll('input[data-selection-section]').forEach(cb => {
-        const section = cb.dataset.selectionSection;
-        const userId = String(cb.dataset.userId || '');
-        const label = cb.closest('[data-user-card]');
-        const counterpartSelected = section === 'recipients'
-            ? selectedCc.has(userId)
-            : selectedRecipients.has(userId);
-
-        cb.disabled = counterpartSelected && !cb.checked;
-
-        if (label) {
-            label.classList.toggle('border-blue-300', cb.checked);
-            label.classList.toggle('bg-blue-50', cb.checked);
-            label.classList.toggle('ring-2', cb.checked);
-            label.classList.toggle('ring-blue-100', cb.checked);
-            label.classList.toggle('opacity-60', counterpartSelected && !cb.checked);
-        }
-    });
-
-    // Update compact summary as chips for recipients and cc
-    function computeSelected(sectionChecks) {
-        return sectionChecks.filter(cb => cb.checked).map(cb => {
-            const userId = String(cb.dataset.userId || '');
-            const label = cb.closest('[data-user-card]');
-            if (!label) return null;
-            const nameEl = label.querySelector('.user-fullname');
-            const deptEl = label.querySelector('.flex > span');
-            const emailEl = label.querySelector('p');
-            const name = (nameEl && nameEl.textContent.trim()) || (deptEl && deptEl.textContent.trim()) || (emailEl && emailEl.textContent.trim()) || userId;
-            return { id: userId, name };
-        }).filter(Boolean);
-    }
-
-    function renderChips(container, items, section) {
-        if (!container) return;
-        container.innerHTML = '';
-        if (!items || items.length === 0) {
-            container.textContent = section === 'recipients' ? 'No recipients selected' : 'No CC selected';
-            return;
-        }
-
-        const maxVisible = 6;
-        items.slice(0, maxVisible).forEach(it => {
-            const chip = document.createElement('span');
-            chip.className = 'inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-base text-slate-700 mr-2 mb-2';
-            chip.setAttribute('data-user-id', it.id);
-            const label = document.createElement('span');
-            label.textContent = it.name;
-            chip.appendChild(label);
-
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.className = 'chip-remove ml-2 text-slate-500';
-            remove.setAttribute('aria-label', 'Remove');
-            remove.textContent = '×';
-            remove.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const cb = document.querySelector(`input[data-selection-section="${section}"][data-user-id="${it.id}"]`);
-                if (cb) { cb.checked = false; syncSelectionState(); }
-            });
-
-            chip.appendChild(remove);
-            container.appendChild(chip);
-        });
-
-        if (items.length > maxVisible) {
-            const more = document.createElement('span');
-            more.className = 'text-sm text-slate-500 align-middle';
-            more.textContent = `+${items.length - maxVisible} more`;
-            container.appendChild(more);
-        }
-    }
-
-    const recipientsSummaryEl = document.getElementById('recipients-summary');
-    const ccSummaryEl = document.getElementById('cc-summary');
-
-    renderChips(recipientsSummaryEl, computeSelected(recipientChecks), 'recipients');
-    renderChips(ccSummaryEl, computeSelected(ccChecks), 'cc');
+// include form JS only when the form exists on the page
+if (document.getElementById('circulationForm')) {
+    <?php include __DIR__ . '/_form_js.php'; ?>
 }
-
-function bindSelectionFilter(section) {
-    const filter = document.querySelector(`[data-selection-filter="${section}"]`);
-    const cards = Array.from(document.querySelectorAll(`[data-selection-list="${section}"] [data-user-card]`));
-
-    if (!filter) return;
-
-    filter.addEventListener('input', function() {
-        const term = this.value.toLowerCase().trim();
-        cards.forEach(card => {
-            const haystack = String(card.dataset.userFilter || '');
-            card.classList.toggle('hidden', term !== '' && !haystack.includes(term));
-        });
-    });
-}
-
-document.querySelectorAll('input[data-selection-section]').forEach(cb => {
-    cb.addEventListener('change', function() {
-        if (this.checked) {
-            const oppositeSection = this.dataset.selectionSection === 'recipients' ? 'cc' : 'recipients';
-            document.querySelectorAll(`input[data-selection-section="${oppositeSection}"][data-user-id="${this.dataset.userId}"]`).forEach(other => {
-                other.checked = false;
-            });
-        }
-
-        syncSelectionState();
-    });
-});
-
-bindSelectionFilter('recipients');
-bindSelectionFilter('cc');
-syncSelectionState();
 
 // Collapsible panels: toggle handlers
 const recipientsToggle = document.getElementById('recipients-toggle');
@@ -1023,23 +658,29 @@ if (drawerSearch) {
 function applyRecipientDrawer() {
     // gather checked
     const checked = Array.from(document.querySelectorAll('#drawerList input[type="checkbox"]:checked'));
-    // remove existing hidden inputs for current mode
+    // remove existing inputs for current mode
     document.querySelectorAll(`input[name="${drawerMode}[]"]`).forEach(n => n.remove());
 
     const recipientsContainer = document.getElementById('recipients-chips');
     const ccContainer = document.getElementById('cc-chips');
-    recipientsContainer.innerHTML = '';
-    ccContainer.innerHTML = '';
+    // only clear the container for the active drawer mode
+    if (drawerMode === 'recipients') {
+        recipientsContainer.innerHTML = '';
+    } else {
+        ccContainer.innerHTML = '';
+    }
 
     checked.forEach(cb => {
         const id = cb.dataset.drawerId;
         const name = cb.dataset.drawerName || cb.dataset.drawerEmail || id;
 
-        // create hidden input
+        // create a hidden checkbox input (so it participates in selection logic)
         const input = document.createElement('input');
-        input.type = 'hidden';
+        input.type = 'checkbox';
         input.name = `${drawerMode}[]`;
         input.value = id;
+        input.checked = true;
+        input.style.display = 'none';
         input.setAttribute('data-selection-section', drawerMode);
         input.setAttribute('data-user-id', id);
         document.getElementById('circulationForm').appendChild(input);
@@ -1060,8 +701,10 @@ function applyRecipientDrawer() {
     if (!ccContainer.children.length) ccContainer.innerHTML = '<span id="cc-placeholder" class="text-sm text-slate-500">No CC selected</span>';
 
     closeRecipientDrawer();
+    // refresh UI counts and chips
     syncSelectionState();
     updateRecipientBadge();
+    updateSummaryPanel();
 }
 
 function updateRecipientBadge() {
@@ -1148,6 +791,17 @@ function resetForm() {
     updateAttachmentFeedback();
 }
 
+function saveDraftFromFinalize() {
+    const form = document.getElementById('circulationForm');
+    if (!form) return;
+    // remove finalize marker so update() treats this as a save-draft
+    const fin = document.getElementById('finalizeInput'); if (fin) fin.remove();
+    // ensure save flag exists
+    let save = document.getElementById('saveDraftInput');
+    if (!save) { save = document.createElement('input'); save.type = 'hidden'; save.name = 'save_draft'; save.id = 'saveDraftInput'; save.value = '1'; form.appendChild(save); }
+    form.submit();
+}
+
 function updateAttachmentFeedback() {
     const input = document.querySelector('input[name="attachments[]"]');
     const feedback = document.getElementById('attachment-feedback');
@@ -1198,7 +852,14 @@ if (circulationForm) {
 
 
 // Enhanced View Document
+const _isAdminOrAbove = <?= in_array($currentUserLevel, [0,1], true) ? 'true' : 'false' ?>;
 function viewDocument(id) {
+    // Admins and super-admins get a dedicated document page; others see modal
+        if (_isAdminOrAbove) {
+            window.location.href = `index.php?controller=correspondence&action=show&id=${encodeURIComponent(id)}`;
+        return;
+    }
+
     const modal = document.getElementById('documentModal');
     const body = document.getElementById('modalBody');
     const title = document.getElementById('modalTitle');
@@ -1243,33 +904,168 @@ document.addEventListener('click', function(e) {
     }
 });
 
-function openEditDocument(id) {
+function openEditDocument(id, title) {
     const modal = document.getElementById('editDocumentModal');
     const body = document.getElementById('editModalBody');
+    const modalTitle = modal && modal.querySelector('h3');
+
+    if (modalTitle) modalTitle.textContent = title ? title : 'Edit Document';
+    body.innerHTML = `<div class="flex justify-center py-12"><div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-300 border-t-blue-600"></div></div>`;
     modal.classList.remove('hidden');
-    body.innerHTML = `<div class="flex flex-col items-center justify-center gap-3 py-24 text-slate-500"><div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-300 border-t-amber-600"></div><p class="text-sm font-medium">Loading edit form...</p></div>`;
 
     fetch(`index.php?controller=correspondence&action=getEditDocumentForm&id=${id}`)
-        .then(r => r.text())
-        .then(html => {
-            const trimmed = (html || '').trim();
-            body.innerHTML = trimmed !== '' ? html : `<div class="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">No edit content returned.</div>`;
-            const form = document.getElementById('editDocumentForm');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    openConfirmModal(
-                        'Save document changes?',
-                        'This will update the sender copy and flag the document as edited for standard users.',
-                        'Save Changes',
-                        'Edit Document',
-                        () => form.submit(),
-                        'bg-amber-600 hover:bg-amber-700'
-                    );
-                }, { once: true });
-            }
+        .then(r => {
+            if (!r.ok) throw new Error('Network response was not ok: ' + r.status);
+            return r.text();
         })
-        .catch(() => body.innerHTML = `<div class="rounded-3xl border border-red-100 bg-red-50 px-4 py-4 text-sm text-red-700">Failed to load edit form.</div>`);
+        .then(html => {
+            body.innerHTML = html;
+            // allow any scripts inside returned HTML to run by re-inserting them
+            Array.from(body.querySelectorAll('script')).forEach(oldScript => {
+                const newScript = document.createElement('script');
+                if (oldScript.src) newScript.src = oldScript.src;
+                else newScript.textContent = oldScript.textContent;
+                document.body.appendChild(newScript).parentNode.removeChild(newScript);
+            });
+        })
+        .catch(err => {
+            console.error('openEditDocument error:', err);
+            body.innerHTML = `<p class="text-red-600 p-6">Failed to load edit form.</p>`;
+        });
+}
+
+function openFinalizeDraft(id) {
+    const form = document.getElementById('circulationForm');
+    // If the create form is not on this page (we're on the repository landing), redirect to the new circulation page and populate the form there
+    if (!form) {
+        window.location.href = `index.php?controller=correspondence&action=newCirculation&draftId=${encodeURIComponent(id)}&fromFinalize=1`;
+        return;
+    }
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.textContent : null;
+    if (submitBtn) submitBtn.textContent = 'Loading...';
+
+    fetch(`index.php?controller=correspondence&action=getDocumentData&id=${id}`)
+        .then(r => r.json())
+        .then(json => {
+            if (!json || !json.success) throw new Error(json.message || 'Failed to load draft');
+            const doc = json.document || {};
+            const recipients = json.recipients || [];
+            const cc = json.cc || [];
+            const attachments = json.attachments || [];
+
+            // populate fields (same as edit)
+            form.querySelector('[name="tracking_id"]').value = doc.tracking_id || '';
+            form.querySelector('[name="title"]').value = doc.title || '';
+            form.querySelector('[name="type"]').value = doc.type || 'Memo';
+            const descEl = document.getElementById('description'); if (descEl) descEl.innerHTML = doc.description || '';
+            const descHidden = document.getElementById('description-hidden'); if (descHidden) descHidden.value = doc.description || '';
+            form.querySelector('[name="sender_email"]').value = doc.sender_email || '';
+            form.querySelector('[name="priority"]').value = doc.priority || 'Medium';
+            form.querySelector('[name="due_date"]').value = doc.due_date || '';
+            form.querySelector('[name="notes"]').value = doc.notes || '';
+            form.querySelector('[name="is_confidential"]').checked = !!doc.is_confidential;
+
+            // clear existing recipient/cc hidden inputs
+            document.querySelectorAll('input[name^="recipients"]').forEach(n => n.remove());
+            document.querySelectorAll('input[name^="cc"]').forEach(n => n.remove());
+            const recipientsContainer = document.getElementById('recipients-chips');
+            const ccContainer = document.getElementById('cc-chips');
+            recipientsContainer.innerHTML = '';
+            ccContainer.innerHTML = '';
+
+            function addSelectionObj(section, item) {
+                const input = document.createElement('input');
+                input.type = 'checkbox'; input.name = `${section}[]`; input.value = item.id; input.checked = true; input.style.display = 'none';
+                form.appendChild(input);
+                const chip = document.createElement('span');
+                chip.className = 'inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700 mr-2';
+                chip.textContent = item.name || item.email || item.id;
+                const container = section === 'cc' ? ccContainer : recipientsContainer;
+                container.appendChild(chip);
+            }
+
+            recipients.forEach(r => addSelectionObj('recipients', r));
+            cc.forEach(c => addSelectionObj('cc', c));
+
+            // attachments: show list of links and disable file input
+            const attachmentInput = document.querySelector('input[name="attachments[]"]');
+            const attachmentFeedback = document.getElementById('attachment-feedback');
+            if (attachmentInput) attachmentInput.style.display = 'none';
+            if (attachmentFeedback) {
+                if (attachments.length === 0) {
+                    attachmentFeedback.textContent = 'No attachments.';
+                } else {
+                    attachmentFeedback.innerHTML = attachments.map(a => `<div class="text-sm"><a href="${a.download_url}" target="_blank" class="text-blue-600 hover:underline">${a.file_name}</a></div>`).join('');
+                }
+            }
+
+            // set form to update mode and mark finalize
+            let editIdInput = document.getElementById('editIdInput');
+            if (!editIdInput) { editIdInput = document.createElement('input'); editIdInput.type = 'hidden'; editIdInput.name = 'id'; editIdInput.id = 'editIdInput'; form.appendChild(editIdInput); }
+            editIdInput.value = id;
+            let finalizeInput = document.getElementById('finalizeInput');
+            if (!finalizeInput) { finalizeInput = document.createElement('input'); finalizeInput.type = 'hidden'; finalizeInput.name = 'finalize'; finalizeInput.id = 'finalizeInput'; finalizeInput.value = '1'; form.appendChild(finalizeInput); }
+
+            form.dataset.originalAction = form.action;
+            form.action = `index.php?controller=correspondence&action=update&id=${id}`;
+            if (submitBtn) submitBtn.textContent = 'Finalize & Circulate';
+
+            // repurpose Reset button to 'Save as Draft' while finalizing
+            const resetBtn = document.querySelector('#formActions button[type="button"]');
+            if (resetBtn) {
+                resetBtn.textContent = 'Save as Draft';
+                resetBtn.onclick = saveDraftFromFinalize;
+            }
+
+            // ensure cancel button exists and label it for finalization
+            if (!document.getElementById('cancelEditButton')) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.type = 'button';
+                cancelBtn.id = 'cancelEditButton';
+                cancelBtn.className = 'h-11 px-4 rounded-2xl border border-slate-300 bg-white text-sm font-semibold text-slate-700 transition hover:bg-slate-50';
+                cancelBtn.textContent = 'Cancel Finalization';
+                cancelBtn.addEventListener('click', function() {
+                    // revert to empty create form (same logic as generic cancel)
+                    if (form.dataset.originalAction) form.action = form.dataset.originalAction;
+                    if (submitBtn) submitBtn.textContent = form.dataset.originalSubmitText || 'Circulate Document';
+                    const eid = document.getElementById('editIdInput'); if (eid) eid.remove();
+                    const fin = document.getElementById('finalizeInput'); if (fin) fin.remove();
+                    const snapshotContainer = document.getElementById('editSnapshotContainer'); if (snapshotContainer) snapshotContainer.innerHTML = '';
+                    form.reset(); const desc = document.getElementById('description'); if (desc) desc.innerHTML = '';
+                    const attachmentInput = document.querySelector('input[name="attachments[]"]');
+                    const attachmentFeedback = document.getElementById('attachment-feedback');
+                    if (attachmentInput) { attachmentInput.style.display = ''; try { attachmentInput.value = null; } catch(e){} }
+                    if (attachmentFeedback) attachmentFeedback.textContent = 'No files selected.';
+                    document.querySelectorAll('input[name^="recipients"]').forEach(n => n.remove());
+                    document.querySelectorAll('input[name^="cc"]').forEach(n => n.remove());
+                    const recipientsContainer = document.getElementById('recipients-chips'); if (recipientsContainer) recipientsContainer.innerHTML = '<span class="text-sm text-slate-500">No recipients selected</span>';
+                    const ccContainer = document.getElementById('cc-chips'); if (ccContainer) ccContainer.innerHTML = '<span class="text-sm text-slate-500">No CC selected</span>';
+                    syncSelectionState(); updateRecipientBadge(); updateSummaryPanel();
+                    // restore Reset button behavior
+                    const resetBtn = document.querySelector('#formActions button[type="button"]');
+                    if (resetBtn) { resetBtn.textContent = 'Reset'; resetBtn.onclick = resetForm; }
+                    this.remove();
+                });
+                const actions = document.getElementById('formActions');
+                if (actions) actions.prepend(cancelBtn);
+            } else {
+                // if already present, update label
+                document.getElementById('cancelEditButton').textContent = 'Cancel Finalization';
+            }
+
+            // show snapshot/history area
+            const snapshotContainer = document.getElementById('editSnapshotContainer');
+            if (snapshotContainer) snapshotContainer.innerHTML = '';
+
+            // focus title
+            form.querySelector('[name="title"]').focus();
+        })
+        .catch(err => {
+            console.error('openFinalizeDraft error', err);
+            alert('Failed to load draft: ' + (err.message || 'Unknown error'));
+        })
+        .finally(() => { if (submitBtn && originalText) submitBtn.textContent = originalText; });
 }
 
 function closeEditModal() {

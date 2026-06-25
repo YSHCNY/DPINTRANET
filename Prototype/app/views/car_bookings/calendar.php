@@ -1,65 +1,66 @@
 <?php
 // Car Bookings Calendar with Vehicle History Cards
 // Requires: CarBookingsController@calendar
+$vehicleActiveCount = 0;
+$vehicleInactiveCount = 0;
+if (!empty($vehicles) && is_array($vehicles)) {
+  foreach ($vehicles as $v) {
+    if (isset($v['status']) && $v['status'] === 'active') {
+      $vehicleActiveCount++;
+    } else {
+      $vehicleInactiveCount++;
+    }
+  }
+}
+$driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 ?>
 
-<div class="min-h-screen bg-gray-50">
-  <div class="max-w-[1600px] mx-auto px-4 py-8">
-    <div class="mb-8 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-      <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-5">
-        <!-- Page header -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-600">Vehicle Bookings</p>
-            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Manage Bookings & Fleet</h1>
+<div class="min-h-screen bg-slate-50">
+  <div class="max-w-[1500px] mx-auto px-4 py-6">
+    <div class="mb-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="max-w-2xl">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-emerald-700">Vehicle bookings</p>
+            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Manage bookings and fleet</h1>
             <p class="mt-2 text-sm text-slate-500">Schedule vehicles, manage drivers, and review booking history.</p>
           </div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button type="button" id="openVehicleModalBtn" class="border rounded-md inline-flex items-center gap-2 rounded-2xl  px-4 py-2 text-sm font-medium">
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="openVehicleModalBtn" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
               <span>🚗</span>
-              <span>Manage Vehicle</span>
+              <span>Manage Vehicles</span>
             </button>
-            <button type="button" id="openDriversModalBtn" class="border rounded-md inline-flex items-center gap-2 rounded-2xl  px-4 py-2 text-sm font-medium">
+            <button type="button" id="openDriversModalBtn" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
               <span>👤</span>
               <span>Manage Drivers</span>
             </button>
           </div>
         </div>
       </div>
-      <div class="p-6 lg:p-7">
-        <div class="space-y-6">
-
-
-  <!-- Calendar Container -->
-  <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-    <!-- Toolbar -->
-    <div class="border-b border-slate-100 px-6 py-4 card-header">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div class="inline-block">
-            <div id="external-events" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm shadow-sm">
-              <span class="text-slate-400">⟡</span>
-              <span class="text-slate-600 font-medium">Drag "New booking" to create</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 flex-wrap">
-          <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-            <label class="text-xs font-medium text-slate-600">View:</label>
-            <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer">
-              <option value="dayGridMonth">Month</option>
-              <option value="timeGridWeek">Week</option>
-              <option value="timeGridDay">Day</option>
-            </select>
-          </div>
-
-          <button type="button" id="refreshBtn" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
-            <span>🔄</span>
-            <span>Refresh</span>
-          </button>
-
-          <div class="hidden sm:flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+      <div class="p-5 lg:p-6">
+        <div class="grid gap-5 xl:grid-cols-8">
+          <div class="xl:col-span-5 grid gap-5">
+            <div class="rounded-[26px] border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div class="border-b border-slate-100 px-4 py-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <div id="external-events" class="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm">
+                      <span class="text-slate-400">⟡</span>
+                      <span class="text-slate-600 font-medium">Drag "New booking" to create</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                      <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">View:</label>
+                      <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer">
+                        <option value="dayGridMonth">Month</option>
+                        <option value="timeGridWeek">Week</option>
+                        <option value="timeGridDay">Day</option>
+                      </select>
+                    </div>
+                  
+                  </div>
+                       <div class="hidden sm:flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
             <label class="text-xs font-medium text-slate-600">Vehicle:</label>
             <select id="vehicleFilter" class="bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer">
               <option value="">All</option>
@@ -78,16 +79,108 @@
               <?php endforeach; ?>
             </select>
           </div>
+                </div>
+              </div>
+              <div id="carBookingCalendar" class="min-h-[520px] p-4 sm:p-5"></div>
+            </div>
+          </div>
+          <aside class="xl:col-span-3 space-y-5">
+            <div class="rounded-[26px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Fleet summary</p>
+                  <h2 class="mt-1 text-lg font-semibold text-slate-900">Snapshot</h2>
+                </div>
+                <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">CRM</span>
+              </div>
+              <div class="mt-4 grid grid-cols-2 gap-3">
+                <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Vehicles</p>
+                  <p class="mt-3 text-2xl font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Active</p>
+                  <p class="mt-3 text-2xl font-semibold text-emerald-700"><?= $vehicleActiveCount ?></p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Inactive</p>
+                  <p class="mt-3 text-2xl font-semibold text-rose-600"><?= $vehicleInactiveCount ?></p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Drivers</p>
+                  <p class="mt-3 text-2xl font-semibold text-slate-900"><?= $driverCount ?></p>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-[26px] border border-slate-200 bg-white p-4 shadow-sm">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-sm font-semibold text-slate-900">Quick controls</h3>
+                  <p class="text-sm text-slate-500 mt-1">Manage your fleet and refresh data faster.</p>
+                </div>
+              </div>
+              <div class="mt-4 grid gap-3">
+                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition" id="quickRefreshBtn">
+                  <span>🔄</span>
+                  <span>Refresh all</span>
+                </button>
+                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition" id="openDriversQuickBtn">
+                  <span>👥</span>
+                  <span>Open drivers</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
+        <div class="mt-5 space-y-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-xl font-semibold text-slate-900">Vehicle Fleet Summary</h2>
+              <p class="text-sm text-slate-500 mt-1">Recent bookings and current availability</p>
+            </div>
+          </div>
+          <div id="vehicleCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Calendar Container -->
+  <!-- <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden"> -->
+    <!-- Toolbar -->
+    <!-- <div class="border-b border-slate-100 px-6 py-4 card-header">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="inline-block">
+            <div id="external-events" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm shadow-sm">
+              <span class="text-slate-400">⟡</span>
+              <span class="text-slate-600 font-medium">Drag "New booking" to create</span>
+            </div>
+          </div>
+        </div> -->
+
+        <div class="flex items-center gap-2 flex-wrap">
+      
+          
+          </div>
+
+          <button type="button" id="refreshBtn" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+
+          </button>
+
+     
         </div>
       </div>
     </div>
 
     <!-- Calendar -->
-    <div id="carBookingCalendar" class="min-h-[600px] p-6"></div>
+    <!-- <div id="carBookingCalendar" class="min-h-[600px] p-6"></div> -->
   </div>
 
   <!-- Vehicle Cards Section -->
-  <div>
+  <!-- <div>
     <div class="mb-4">
       <h2 class="text-xl font-bold text-slate-900">Vehicle Fleet Summary</h2>
       <p class="text-sm text-slate-500 mt-1">Recent bookings and vehicle status</p>
@@ -103,7 +196,7 @@
       </div>
     </div>
   </div>
-</div>
+</div> -->
 
 <!-- ============================================
      BOOKING MODAL
@@ -496,9 +589,9 @@
     --bg-card: #ffffff;
     --surface-1: #f6f7f8; /* very light */
     --surface-2: #eef0f2;
-    --primary: #467c4d;
+    /* --primary: #467c4d; */
     --secondary: #22242a;
-    --accent: #70933d; /* complementary accent */
+    --accent: #888888; /* complementary accent */
     --muted: #6b7280;
     --shadow-1: 0 8px 24px rgba(4,3,22,0.06);
     --shadow-2: 0 12px 36px rgba(4,3,22,0.08);
@@ -2291,6 +2384,27 @@ driverForm.addEventListener('submit', function (e) {
     loadVehicleCards();
     showNotification('Calendar refreshed', 'info');
   });
+
+  const quickRefreshBtn = document.getElementById('quickRefreshBtn');
+  const openDriversQuickBtn = document.getElementById('openDriversQuickBtn');
+
+  if (quickRefreshBtn) {
+    quickRefreshBtn.addEventListener('click', () => {
+      calendar.refetchEvents();
+      loadVehicleCards();
+      showNotification('Fleet and calendar refreshed', 'success');
+    });
+  }
+
+  if (openDriversQuickBtn) {
+    openDriversQuickBtn.addEventListener('click', () => {
+      if (openDriversModalBtn) {
+        setDriversModalFormFromRow(null);
+        loadDriversTable();
+        openModal(driversModalEl);
+      }
+    });
+  }
 
   vehicleFilter.addEventListener('change', () => calendar.refetchEvents());
   driverFilter.addEventListener('change', () => calendar.refetchEvents());

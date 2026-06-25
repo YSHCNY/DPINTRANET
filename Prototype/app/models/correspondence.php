@@ -9,9 +9,134 @@ class CorrespondenceModel {
     public function __construct() {
         $this->conn = Database::connect();
         $this->ensureLifecycleColumns();
+        $this->ensureThreadTables();
+    }
+
+
+    // Transaction helpers
+    public function beginTransaction() {
+        $this->conn->beginTransaction();
+    }
+
+    public function commit() {
+        if ($this->conn->inTransaction()) $this->conn->commit();
+    }
+
+    public function rollBack() {
+        if ($this->conn->inTransaction()) $this->conn->rollBack();
+    }
+
+    public function finalizeDraft($id, $finalizedBy = null) {
+        $sql = "UPDATE documents SET is_draft = 0, updated_at = NOW(), status = 'Inprogress'";
+        $params = [];
+        if ($finalizedBy !== null) {
+            $sql .= ", created_by = ?";
+            $params[] = $finalizedBy;
+        }
+        $sql .= " WHERE id = ?";
+        $params[] = $id;
+
+        $stmt = $this->conn->prepare($sql);
+        $result = $stmt->execute($params);
+        $result2 = true;
+
+        try {
+            $existing = $this->getCirculationDetails($id);
+            if (empty($existing)) {
+                $doc = $this->getById($id);
+                $draftRecipients = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
+                $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+
+                if (!empty($draftRecipients)) {
+                    $this->addRecipients($id, $draftRecipients, false);
+                }
+                if (!empty($draftCc)) {
+                    $this->addRecipients($id, $draftCc, true);
+                }
+
+                // clear draft recipient fields to avoid duplication
+                $upd = $this->conn->prepare("UPDATE documents SET draft_recipients = NULL, draft_cc = NULL WHERE id = ?");
+                $upd->execute([$id]);
+            }
+
+            $stmt = $this->conn->prepare("UPDATE document_circulations SET updated_at = NOW(), status = 'Inprogress' WHERE document_id = ?");
+            $result2 = $stmt->execute([$id]);
+        } catch (Throwable $e) {
+            error_log('Finalize draft circulation creation or status update failed: ' . $e->getMessage());
+        }
+
+        if ($result && $result2) {
+            $this->logCorrespondenceAction("Draft finalized and circulated", $id);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Mark an existing document as draft (used when saving progress)
+     */
+    public function markAsDraft($id) {
+        $stmt = $this->conn->prepare("UPDATE documents SET is_draft = 1, updated_at = NOW() WHERE id = ?");
+        $result = $stmt->execute([$id]);
+        if ($result) {
+            $this->logCorrespondenceAction("Document marked as draft", $id);
+        }
+        return $result;
+    }
+
+    public function setDocumentStatus($id, string $status) {
+        $stmt = $this->conn->prepare("UPDATE documents SET status = ?, updated_at = NOW() WHERE id = ?");
+        return $stmt->execute([$status, $id]);
+    }
+
+    private function ensureThreadTables() {
+        $sql1 = "CREATE TABLE IF NOT EXISTS document_threads (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            document_id INT NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_document_threads (document_id),
+            FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+        $sql2 = "CREATE TABLE IF NOT EXISTS document_thread_entries (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            document_id INT NOT NULL,
+            thread_id INT NOT NULL,
+            actor_type VARCHAR(20) NOT NULL,
+            actor_user_id INT NULL,
+            actor_name VARCHAR(191) NULL,
+            role_label VARCHAR(191) NULL,
+            entry_kind VARCHAR(40) NOT NULL,
+            content TEXT NULL,
+            cycle_reference VARCHAR(191) NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+            FOREIGN KEY (thread_id) REFERENCES document_threads(id) ON DELETE CASCADE,
+            KEY idx_thread_entries_doc_time (document_id, created_at),
+            KEY idx_thread_entries_thread_time (thread_id, created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+        $sql3 = "CREATE TABLE IF NOT EXISTS document_thread_entry_files (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            thread_entry_id INT NOT NULL,
+            file_name VARCHAR(255) NOT NULL,
+            file_path VARCHAR(512) NOT NULL,
+            file_size BIGINT NOT NULL DEFAULT 0,
+            uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (thread_entry_id) REFERENCES document_thread_entries(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+        try {
+            $this->conn->exec($sql1);
+            $this->conn->exec($sql2);
+            $this->conn->exec($sql3);
+        } catch (PDOException $e) {
+            error_log('Thread table creation failed: ' . $e->getMessage());
+        }
     }
 
     private function ensureLifecycleColumns() {
+
         $columns = [
             'is_deleted' => "ALTER TABLE documents ADD COLUMN is_deleted TINYINT(1) NOT NULL DEFAULT 0",
             'deleted_at' => "ALTER TABLE documents ADD COLUMN deleted_at DATETIME NULL",
@@ -21,6 +146,12 @@ class CorrespondenceModel {
             'edited_by' => "ALTER TABLE documents ADD COLUMN edited_by VARCHAR(191) NULL",
             'edit_summary' => "ALTER TABLE documents ADD COLUMN edit_summary TEXT NULL",
             'updated_at' => "ALTER TABLE documents ADD COLUMN updated_at DATETIME NULL",
+            'is_draft' => "ALTER TABLE documents ADD COLUMN is_draft TINYINT(1) NOT NULL DEFAULT 0",
+            'draft_notified' => "ALTER TABLE documents ADD COLUMN draft_notified TINYINT(1) NOT NULL DEFAULT 0",
+            'draft_notified_at' => "ALTER TABLE documents ADD COLUMN draft_notified_at DATETIME NULL",
+            'draft_notified_by' => "ALTER TABLE documents ADD COLUMN draft_notified_by VARCHAR(191) NULL",
+                'draft_recipients' => "ALTER TABLE documents ADD COLUMN draft_recipients TEXT NULL",
+                'draft_cc' => "ALTER TABLE documents ADD COLUMN draft_cc TEXT NULL",
         ];
 
         foreach ($columns as $column => $sql) {
@@ -41,15 +172,16 @@ class CorrespondenceModel {
      */
     public function createDocument($data) {
         $sql = "INSERT INTO documents 
-                (tracking_id, title, type, description, sender_email, priority, 
-                 due_date, is_confidential, notes, created_by) 
-                VALUES 
-                (:tracking_id, :title, :type, :description, :sender_email, :priority, 
-                 :due_date, :is_confidential, :notes, :created_by)";
+            (tracking_id, title, type, description, sender_email, priority, 
+             due_date, is_confidential, notes, created_by, is_draft, draft_recipients, draft_cc) 
+            VALUES 
+            (:tracking_id, :title, :type, :description, :sender_email, :priority, 
+             :due_date, :is_confidential, :notes, :created_by, :is_draft, :draft_recipients, :draft_cc)";
 
         $stmt = $this->conn->prepare($sql);
         
         $created_by = $_SESSION['id'] ?? 1;
+        $is_draft = !empty($data['is_draft']) ? 1 : 0;
 
         $stmt->execute([
             ':tracking_id'     => $data['tracking_id'],
@@ -61,7 +193,10 @@ class CorrespondenceModel {
             ':due_date'        => $data['due_date'],
             ':is_confidential' => $data['is_confidential'],
             ':notes'           => $data['notes'],
-            ':created_by'      => $created_by
+            ':created_by'      => $created_by,
+            ':is_draft'        => $is_draft,
+            ':draft_recipients' => $data['recipients'] ?? null,
+            ':draft_cc' => $data['cc'] ?? null,
         ]);
 
         $documentId = $this->conn->lastInsertId();
@@ -184,10 +319,19 @@ class CorrespondenceModel {
      * Get single document by ID
      */
     public function getById($id) {
-        $sql = "SELECT * FROM documents WHERE id = ?";
+        $sql = "SELECT d.*, u.firstName AS created_by_firstName, u.lastName AS created_by_lastName
+                FROM documents d
+                LEFT JOIN UserTbl u ON u.id = d.created_by
+                WHERE d.id = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
+            $row['created_by_name'] = trim(($row['created_by_firstName'] ?? '') . ' ' . ($row['created_by_lastName'] ?? '')) ?: ($row['created_by'] ?? 'System');
+        }
+
+        return $row;
     }
 
     /**
@@ -334,6 +478,60 @@ class CorrespondenceModel {
         }
 
         return $result;
+    }
+
+    /**
+     * Update draft recipients/cc stored on the documents record
+     */
+    public function updateDraftRecipients($id, $recipientsCsv = null, $ccCsv = null) {
+        $sql = "UPDATE documents SET draft_recipients = :r, draft_cc = :c, updated_at = NOW() WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            ':r' => $recipientsCsv,
+            ':c' => $ccCsv,
+            ':id' => $id
+        ]);
+    }
+
+    /**
+     * Mark draft as notified to admin-level users and create logs
+     */
+    public function notifyAdminsOfDraft($documentId) {
+        // Find admin users (userLevel 0 or 1) and create notifications
+        try {
+            $stmt = $this->conn->prepare("SELECT id, firstName, lastName, userLevel FROM UserTbl WHERE userLevel IN (0,1)");
+            $stmt->execute();
+            $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Update document to mark draft notified
+            $update = $this->conn->prepare("UPDATE documents SET draft_notified = 1, draft_notified_at = NOW(), draft_notified_by = ? WHERE id = ?");
+            $update->execute([$this->getActorName(), $documentId]);
+
+            // Build URL to document (opens correspondence list with doc_id)
+            $doc = $this->getById($documentId);
+            $tracking = $doc['tracking_id'] ?? '';
+            $url = "index.php?controller=correspondence&action=correspondence&doc_id={$documentId}";
+
+            // Create Notification entries
+            require_once 'Notification.php';
+            $notif = new NotificationModel();
+            $adminIds = array_map(function($a){ return (int)$a['id']; }, $admins);
+            $message = "Draft ready for circulation • {$tracking} • By: " . $this->getActorName();
+            if (!empty($adminIds)) {
+                $notif->createForMany($adminIds, $message, $url);
+            }
+
+            // Also log for audit
+            foreach ($admins as $admin) {
+                $desc = "Draft created • Tracking ID: {$tracking} • Created by: " . $this->getActorName() . " • Notified: " . trim(($admin['firstName'] ?? '') . ' ' . ($admin['lastName'] ?? ''));
+                $this->logCorrespondenceAction($desc, $documentId);
+            }
+
+            return true;
+        } catch (Throwable $e) {
+            error_log('Draft notify failed for document #' . $documentId . ': ' . $e->getMessage());
+            return false;
+        }
     }
 
     public function softDeleteDocument($id) {
@@ -534,7 +732,90 @@ class CorrespondenceModel {
             ':recipient_id'=> $recipientId
         ]);
     }
-    
+
+    public function updateAllCirculationsStatus(int $documentId, string $status): array
+{
+    try {
+        $this->conn->beginTransaction();
+
+        // First check if the document has circulation rows at all
+        $check = $this->conn->prepare("
+            SELECT COUNT(*) 
+            FROM document_circulations
+            WHERE document_id = ?
+        ");
+        $check->execute([$documentId]);
+        $circulationCount = (int) $check->fetchColumn();
+
+        if ($circulationCount === 0) {
+            $this->conn->rollBack();
+            return [
+                'success' => false,
+                'message' => 'No circulation records found for this document.'
+            ];
+        }
+
+        // Update all circulation statuses, but preserve recipients already marked as Received.
+        $stmt = $this->conn->prepare("
+            UPDATE document_circulations
+            SET status = ?
+            WHERE document_id = ? AND LOWER(status) != 'received'
+        ");
+        $stmt->execute([$status, $documentId]);
+
+        // Optional document touch/update
+        $doc = $this->conn->prepare("
+            UPDATE documents
+            SET updated_at = NOW(), status = ?
+            WHERE id = ?
+        ");
+        $doc->execute([$status, $documentId]);
+
+        // Optional log
+        $this->logCorrespondenceAction("All circulations set to {$status}", $documentId);
+
+        $this->conn->commit();
+
+        return [
+            'success' => true,
+            'message' => "All circulations updated to {$status}."
+        ];
+    } catch (Throwable $e) {
+        if ($this->conn->inTransaction()) {
+            $this->conn->rollBack();
+        }
+
+        error_log('updateAllCirculationsStatus failed: ' . $e->getMessage());
+
+        return [
+            'success' => false,
+            'message' => 'Database error while updating circulations.'
+        ];
+    }
+}
+
+
+
+    /**
+     * Bulk update circulation statuses for a document.
+     * Does not overwrite entries already marked as 'Received'.
+     * $status is expected to be values like 'open' or 'close'.
+     */
+    public function setCirculationsStatus($documentId, $status) {
+        $allowed = ['open', 'close', 'done', 'suspended', 'Pending', 'Received'];
+        $status = (string)$status;
+        // restrict to simple string; caller is responsible for sane values
+        $sql = "UPDATE document_circulations SET status = :status WHERE document_id = :doc_id AND status != 'Received'";
+        $stmt = $this->conn->prepare($sql);
+        try {
+            return $stmt->execute([':status' => $status, ':doc_id' => $documentId]);
+        } catch (PDOException $e) {
+            error_log('setCirculationsStatus failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+
 
 		public function getAttachments($documentId) {
 		        $sql = "SELECT id, file_name, file_path, file_size FROM document_attachments WHERE document_id = ?";
@@ -550,54 +831,185 @@ class CorrespondenceModel {
 	        return $stmt->fetch(PDO::FETCH_ASSOC);
 	    }
 
-    public function getPortalStats($recipientId, $includeDeleted = false) {
-	        $sql = "SELECT
-	                    COUNT(*) as total,
-	                    SUM(CASE WHEN status = 'Received' THEN 1 ELSE 0 END) as received,
-	                    SUM(CASE WHEN status != 'Received' THEN 1 ELSE 0 END) as pending,
-	                    SUM(CASE WHEN cc = 1 THEN 1 ELSE 0 END) as cc_total
-	                FROM document_circulations dc
-	                INNER JOIN documents d ON d.id = dc.document_id
-	                WHERE dc.recipient_id = ?
-	                  " . ($includeDeleted ? "" : "AND COALESCE(d.is_deleted, 0) = 0");
+
+    private function ensureThreadForDocument(int $documentId): int {
+        $stmt = $this->conn->prepare("SELECT id FROM document_threads WHERE document_id = ? LIMIT 1");
+        $stmt->execute([$documentId]);
+        $id = $stmt->fetchColumn();
+        if ($id) {
+            return (int)$id;
+        }
+
+        // Concurrency-safe: avoid failing the whole request if another process inserts the thread.
+        // document_threads has UNIQUE(document_id), so we can insert-ignore.
+        $ins = $this->conn->prepare("INSERT IGNORE INTO document_threads (document_id) VALUES (?)");
+        $ins->execute([$documentId]);
+
+        // Re-read to get the real thread id in both cases (insert or ignored).
+        $stmt2 = $this->conn->prepare("SELECT id FROM document_threads WHERE document_id = ? LIMIT 1");
+        $stmt2->execute([$documentId]);
+        $id2 = $stmt2->fetchColumn();
+        if ($id2) {
+            return (int)$id2;
+        }
+
+        // Fallback: if something unexpected happened, return 0 so callers treat it as failure.
+        return 0;
+    }
+
+
+    public function getThreadEntries(int $documentId): array {
+        $threadIdStmt = $this->conn->prepare("SELECT id FROM document_threads WHERE document_id = ? LIMIT 1");
+        $threadIdStmt->execute([$documentId]);
+        $threadId = $threadIdStmt->fetchColumn();
+        if (!$threadId) return [];
+
+        $sql = "SELECT te.*, d.tracking_id
+                FROM document_thread_entries te
+                INNER JOIN documents d ON d.id = te.document_id
+                WHERE te.document_id = ?
+                ORDER BY te.created_at ASC, te.id ASC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$documentId]);
+        $entries = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($entries)) return [];
+
+        $entryIds = array_map(fn($e) => (int)$e['id'], $entries);
+        $in = implode(',', array_fill(0, count($entryIds), '?'));
+        $filesSql = "SELECT * FROM document_thread_entry_files WHERE thread_entry_id IN ({$in}) ORDER BY id ASC";
+        $filesStmt = $this->conn->prepare($filesSql);
+        $filesStmt->execute($entryIds);
+        $files = $filesStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $fileMap = [];
+        foreach ($files as $f) {
+            $fileMap[(int)$f['thread_entry_id']][] = $f;
+        }
+
+        foreach ($entries as &$e) {
+            $eid = (int)$e['id'];
+            $e['files'] = $fileMap[$eid] ?? [];
+        }
+        unset($e);
+
+        return $entries;
+    }
+
+    public function addThreadEntry(
+        int $documentId,
+        string $actorType,
+        ?int $actorUserId,
+        string $actorName,
+        string $roleLabel,
+        string $entryKind,
+        ?string $content,
+        ?string $cycleReference,
+        array $uploadedFiles = []
+    ): int {
+        $this->conn->beginTransaction();
+        try {
+            $threadId = $this->ensureThreadForDocument($documentId);
+
+            $stmt = $this->conn->prepare("INSERT INTO document_thread_entries
+                (document_id, thread_id, actor_type, actor_user_id, actor_name, role_label, entry_kind, content, cycle_reference)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" );
+
+            $stmt->execute([
+                $documentId,
+                $threadId,
+                $actorType,
+                $actorUserId,
+                $actorName,
+                $roleLabel,
+                $entryKind,
+                $content,
+                $cycleReference
+            ]);
+
+            $entryId = (int)$this->conn->lastInsertId();
+
+            // store files
+            if (!empty($uploadedFiles)) {
+                $fileStmt = $this->conn->prepare("INSERT INTO document_thread_entry_files
+                    (thread_entry_id, file_name, file_path, file_size)
+                    VALUES (?, ?, ?, ?)");
+
+                foreach ($uploadedFiles as $f) {
+                    $fileStmt->execute([
+                        $entryId,
+                        $f['file_name'],
+                        $f['file_path'],
+                        (int)($f['file_size'] ?? 0)
+                    ]);
+                }
+            }
+
+            $this->conn->commit();
+            return $entryId;
+        } catch (Throwable $e) {
+            $this->conn->rollBack();
+            error_log('addThreadEntry failed: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+		public function getPortalStats($recipientId, $includeDeleted = false) {
+                $sql = "SELECT
+                                        COUNT(*) as total,
+                                        SUM(CASE WHEN dc.status = 'Received' THEN 1 ELSE 0 END) as received,
+                                        SUM(CASE WHEN dc.status != 'Received' THEN 1 ELSE 0 END) as pending,
+                                        SUM(CASE WHEN dc.cc = 1 THEN 1 ELSE 0 END) as cc_total
+                                FROM document_circulations dc
+                                INNER JOIN documents d ON d.id = dc.document_id
+                                WHERE dc.recipient_id = ?
+                                    " . ($includeDeleted ? "" : "AND COALESCE(d.is_deleted, 0) = 0");
 	        $stmt = $this->conn->prepare($sql);
 	        $stmt->execute([$recipientId]);
 	        return $stmt->fetch(PDO::FETCH_ASSOC);
 	    }
 
 	    public function getPortalDocuments($recipientId, $includeDeleted = false) {
-	        $sql = "SELECT d.*,
-	                       dc.id as circulation_id,
-	                       dc.cc,
-	                       dc.status as circulation_status,
-	                       dc.received_at,
-	                       dc.remarks,
-	                       (SELECT COUNT(*) FROM document_attachments da WHERE da.document_id = d.id) as attachment_count
-	                FROM document_circulations dc
-	                INNER JOIN documents d ON d.id = dc.document_id
-	                WHERE dc.recipient_id = ?
-	                  " . ($includeDeleted ? "" : "AND COALESCE(d.is_deleted, 0) = 0") . "
-	                ORDER BY
-	                    CASE WHEN dc.status = 'Received' THEN 1 ELSE 0 END ASC,
-	                    d.created_at DESC";
+                        $sql = "SELECT d.*,
+                                                     dc.id as circulation_id,
+                                                     dc.cc,
+                                                     CASE
+                                                             WHEN LOWER(dc.status) = 'open' THEN 'done'
+                                                             WHEN LOWER(dc.status) = 'close' THEN 'suspended'
+                                                             ELSE LOWER(dc.status)
+                                                     END as circulation_status,
+                                                     dc.received_at,
+                                                     dc.remarks,
+                                                     (SELECT COUNT(*) FROM document_attachments da WHERE da.document_id = d.id) as attachment_count
+                                        FROM document_circulations dc
+                                        INNER JOIN documents d ON d.id = dc.document_id
+                                        WHERE dc.recipient_id = ?
+                                            " . ($includeDeleted ? "" : "AND COALESCE(d.is_deleted, 0) = 0") . "
+                                        ORDER BY
+                                                CASE WHEN LOWER(dc.status) = 'received' THEN 1 ELSE 0 END ASC,
+                                                d.created_at DESC";
 	        $stmt = $this->conn->prepare($sql);
 	        $stmt->execute([$recipientId]);
 	        return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	    }
 
 	    public function getPortalDocument($documentId, $recipientId, $allowDeleted = true) {
-	        $sql = "SELECT d.*,
-	                       dc.id as circulation_id,
-	                       dc.cc,
-	                       dc.status as circulation_status,
-	                       dc.received_at,
-	                       dc.remarks,
-	                       dc.pin_code
-	                FROM document_circulations dc
-	                INNER JOIN documents d ON d.id = dc.document_id
-	                WHERE dc.document_id = ? AND dc.recipient_id = ?
-	                  " . ($allowDeleted ? "" : "AND COALESCE(d.is_deleted, 0) = 0") . "
-	                LIMIT 1";
+                $sql = "SELECT d.*,
+                                             dc.id as circulation_id,
+                                             dc.cc,
+                                             CASE
+                                                     WHEN LOWER(dc.status) = 'open' THEN 'done'
+                                                     WHEN LOWER(dc.status) = 'close' THEN 'suspended'
+                                                     ELSE LOWER(dc.status)
+                                             END as circulation_status,
+                                             dc.received_at,
+                                             dc.remarks,
+                                             dc.pin_code
+                                FROM document_circulations dc
+                                INNER JOIN documents d ON d.id = dc.document_id
+                                WHERE dc.document_id = ? AND dc.recipient_id = ?
+                                    " . ($allowDeleted ? "" : "AND COALESCE(d.is_deleted, 0) = 0") . "
+                                LIMIT 1";
 	        $stmt = $this->conn->prepare($sql);
 	        $stmt->execute([$documentId, $recipientId]);
 	        return $stmt->fetch(PDO::FETCH_ASSOC);
