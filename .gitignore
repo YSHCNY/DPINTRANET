@@ -3,3 +3,4 @@
 #DATABASE
 */core/Database.php
 **/Database.php
+app/core/Database.php
