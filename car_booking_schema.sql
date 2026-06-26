@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS car_bookings (
   purpose VARCHAR(180) NOT NULL,
   passengers INT NOT NULL,
 
-  departure_expected DATE NOT NULL,
-  return_expected DATE NOT NULL,
+  departure_expected DATETIME NOT NULL,
+  return_expected DATETIME NOT NULL,
 
   special_instructions TEXT NULL,
   remarks TEXT NULL,

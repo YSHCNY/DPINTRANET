@@ -58,6 +58,18 @@ class CarBookings extends Model {
         }
     }
 
+    private function normalizeDateValue(string $value): string {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        $timestamp = strtotime(str_replace('T', ' ', $value));
+        if ($timestamp === false) {
+            return '';
+        }
+        return date('Y-m-d', $timestamp);
+    }
+
 
     public function getCalendarEvents(string $start, string $end, ?int $vehicleId = null, ?int $driverId = null): array {
         // FullCalendar passes ISO strings; use as DATETIME boundaries.
@@ -131,6 +143,8 @@ class CarBookings extends Model {
 
                     'departure_expected' => $departureExpected,
                     'return_expected' => $returnExpected,
+                    'vehicle_id' => $r['vehicle_id'],
+                    'driver_id' => $r['driver_id'],
                     'status' => $status,
                 ],
 
@@ -158,8 +172,16 @@ class CarBookings extends Model {
             throw new Exception('Selected driver is not active or does not exist.');
         }
 
+        $dateTrip = trim((string)($data['date_trip'] ?? ''));
+        $dateRequested = trim((string)($data['date_requested'] ?? ''));
         $start = trim((string)($data['departure_expected'] ?? ''));
         $end = trim((string)($data['return_expected'] ?? ''));
+
+        $dateTripNorm = $this->normalizeDateValue($dateTrip);
+        $dateRequestedNorm = $this->normalizeDateValue($dateRequested);
+        if ($dateTripNorm === '' || $dateRequestedNorm === '') {
+            throw new Exception('[DATE_INVALID] Trip date and request date must be valid dates.');
+        }
 
         // accept datetime-local 'YYYY-MM-DDTHH:MM'
         $startNorm = str_replace('T', ' ', $start);
@@ -244,8 +266,8 @@ class CarBookings extends Model {
             );
 
             $stmt->execute([
-                ':date_trip' => $data['date_trip'],
-                ':date_requested' => $data['date_requested'],
+                ':date_trip' => $dateTripNorm,
+                ':date_requested' => $dateRequestedNorm,
                 ':destinations' => $data['destinations'],
                 ':purpose' => $data['purpose'],
                 ':passengers' => (int)$data['passengers'],
@@ -285,8 +307,16 @@ class CarBookings extends Model {
         $existing = $this->getBookingById($id);
         if (!$existing) throw new Exception('Booking not found');
 
+        $dateTrip = trim((string)($data['date_trip'] ?? $existing['date_trip']));
+        $dateRequested = trim((string)($data['date_requested'] ?? $existing['date_requested']));
         $start = isset($data['departure_expected']) ? trim((string)$data['departure_expected']) : $existing['departure_expected'];
         $end = isset($data['return_expected']) ? trim((string)$data['return_expected']) : $existing['return_expected'];
+
+        $dateTripNorm = $this->normalizeDateValue($dateTrip);
+        $dateRequestedNorm = $this->normalizeDateValue($dateRequested);
+        if ($dateTripNorm === '' || $dateRequestedNorm === '') {
+            throw new Exception('[DATE_INVALID] Trip date and request date must be valid dates.');
+        }
 
         $startNorm = str_replace('T', ' ', $start);
         $endNorm = str_replace('T', ' ', $end);
@@ -377,8 +407,8 @@ class CarBookings extends Model {
             );
 
             $stmt->execute([
-                ':date_trip' => $data['date_trip'] ?? $existing['date_trip'],
-                ':date_requested' => $data['date_requested'] ?? $existing['date_requested'],
+                ':date_trip' => $dateTripNorm,
+                ':date_requested' => $dateRequestedNorm,
                 ':destinations' => $data['destinations'] ?? $existing['destinations'],
                 ':purpose' => $data['purpose'] ?? $existing['purpose'],
                 ':passengers' => isset($data['passengers']) ? (int)$data['passengers'] : (int)$existing['passengers'],

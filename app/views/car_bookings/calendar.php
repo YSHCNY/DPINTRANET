@@ -128,6 +128,10 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
                   <span>👥</span>
                   <span>Open drivers</span>
                 </button>
+                  <button type="button" id="openVehicleModalQuickBtn" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
+              <span>🚗</span>
+              <span>Open Vehicles</span>
+            </button>
               </div>
             </div>
           </aside>
@@ -225,14 +229,14 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         <!-- Date of Trip -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Date of Trip <span class="text-red-500">*</span></label>
-          <input type="datetime-local" name="date_trip" id="dateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
-          <p class="text-xs text-slate-500 mt-1">When will the trip occur?</p>
+          <input type="date" name="date_trip" id="dateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <p class="text-xs text-slate-500 mt-1">Select the trip date.</p>
         </div>
 
         <!-- Date Requested -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Date Requested <span class="text-red-500">*</span></label>
-          <input type="datetime-local" name="date_requested" id="dateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <input type="date" name="date_requested" id="dateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
           <p class="text-xs text-slate-500 mt-1">When was this booking requested?</p>
         </div>
 
@@ -261,14 +265,14 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Expected Departure <span class="text-red-500">*</span></label>
           <input type="datetime-local" name="departure_expected" id="departureExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
-          <p class="text-xs text-slate-500 mt-1">Cannot be in the past</p>
+          <p class="text-xs text-slate-500 mt-1">Expected departure date and time.</p>
         </div>
 
         <!-- Return Expected -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Expected Return <span class="text-red-500">*</span></label>
           <input type="datetime-local" name="return_expected" id="returnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
-          <p class="text-xs text-slate-500 mt-1">Must be after departure</p>
+          <p class="text-xs text-slate-500 mt-1">Expected return date and time.</p>
         </div>
 
         <!-- Vehicle Selection -->
@@ -716,7 +720,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   'use strict';
 
   const calendarEl = document.getElementById('carBookingCalendar');
-  if (!calendarEl) return;
+  const hasCalendar = Boolean(calendarEl);
 
   // ==================== CONSTANTS ====================
   // Build the base URL dynamically to handle any routing setup
@@ -814,6 +818,35 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     return s;
   }
 
+  function toLocalDateValue(dtStr) {
+    if (!dtStr) return '';
+    const s = String(dtStr).replace(' ', 'T');
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return toISODate(d);
+    const m = String(dtStr).match(/^(\d{4}-\d{2}-\d{2})/);
+    return m ? m[1] : '';
+  }
+
+  function toLocalTimeValue(dtStr) {
+    if (!dtStr) return '';
+    const s = String(dtStr).trim();
+    const timeOnly = s.match(/^(\d{2}:\d{2})(:\d{2})?$/);
+    if (timeOnly) return timeOnly[1];
+    const d = new Date(s.replace(' ', 'T'));
+    if (!isNaN(d.getTime())) {
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+    return '';
+  }
+
+  function combineDateAndTime(dateStr, timeStr) {
+    if (!dateStr || !timeStr) return '';
+    const datePart = String(dateStr).trim();
+    const timePart = String(timeStr).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart) || !/^\d{2}:\d{2}$/.test(timePart)) return '';
+    return `${datePart}T${timePart}`;
+  }
+
   // Safely parse JSON responses and provide helpful logging when server returns HTML
   function parseJsonResponse(response) {
     if (!response.ok) {
@@ -880,15 +913,15 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   // ==================== BOOKING MODAL ====================
   function setBookingDefaults(dateStr) {
     const today = new Date();
-    // default times: departure 09:00, return 17:00
-    const d = dateStr ? new Date(dateStr + 'T09:00:00') : today;
+    const tripDate = dateStr ? new Date(dateStr + 'T00:00:00') : today;
+    const defaultDate = toISODate(tripDate);
+    const defaultStart = new Date(tripDate.getFullYear(), tripDate.getMonth(), tripDate.getDate(), 9, 0);
+    const defaultEnd = new Date(tripDate.getFullYear(), tripDate.getMonth(), tripDate.getDate(), 17, 0);
 
-    document.getElementById('dateTrip').value = toISODateTime(d);
-    document.getElementById('dateRequested').value = toISODateTime(today);
-    document.getElementById('departureExpected').value = toISODateTime(d);
-    const ret = new Date(d);
-    ret.setHours(17,0,0,0);
-    document.getElementById('returnExpected').value = toISODateTime(ret);
+    document.getElementById('dateTrip').value = defaultDate;
+    document.getElementById('dateRequested').value = toISODate(today);
+    document.getElementById('departureExpected').value = toISODateTime(defaultStart);
+    document.getElementById('returnExpected').value = toISODateTime(defaultEnd);
 
     bookingId.value = '';
     const deleteBookingBtn = document.getElementById('deleteBookingBtn');
@@ -970,12 +1003,23 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     const isUpdate = bookingId && bookingId.value;
     const url = isUpdate ? updateBookingUrl : createBookingUrl;
 
+    const tripDate = document.getElementById('dateTrip') ? document.getElementById('dateTrip').value : formData.get('date_trip');
+    const departureExpected = document.getElementById('departureExpected') ? document.getElementById('departureExpected').value : formData.get('departure_expected');
+    const returnExpected = document.getElementById('returnExpected') ? document.getElementById('returnExpected').value : formData.get('return_expected');
+    if (!departureExpected || !returnExpected) {
+      showNotification('Please select both expected departure and return date/time.', 'error');
+      return;
+    }
+    formData.set('departure_expected', departureExpected);
+    formData.set('return_expected', returnExpected);
+    if (tripDate) formData.set('date_trip', tripDate);
+
     // Client-side conflict check to provide immediate, actionable feedback
     try {
       const vehicle_id = document.getElementById('vehicleId') ? document.getElementById('vehicleId').value : formData.get('vehicle_id');
       const driver_id = document.getElementById('driverId') ? document.getElementById('driverId').value : formData.get('driver_id');
-      const start = document.getElementById('departureExpected') ? document.getElementById('departureExpected').value : formData.get('departure_expected');
-      const end = document.getElementById('returnExpected') ? document.getElementById('returnExpected').value : formData.get('return_expected');
+      const start = departureExpected;
+      const end = returnExpected;
       const excludeId = isUpdate ? bookingId.value : null;
       const bufferMinutes = bookingForm.dataset.bufferMinutes ? parseInt(bookingForm.dataset.bufferMinutes, 10) : 15;
       const requesterEl = bookingForm.querySelector('[name="requester_id"]');
@@ -1021,7 +1065,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       }
       resetBookingModalForm();
       closeModal(bookingModalEl);
-      calendar.refetchEvents();
+      if (calendar) calendar.refetchEvents();
       loadVehicleCards();
       showNotification(isUpdate ? 'Booking updated successfully!' : 'Booking created successfully!', 'success');
     })
@@ -1080,6 +1124,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   const vehicleForm = document.getElementById('vehicleForm');
   const resetVehicleFormBtn = document.getElementById('resetVehicleFormBtn');
   const openVehicleModalBtn = document.getElementById('openVehicleModalBtn');
+  const openVehicleModalQuickBtn = document.getElementById('openVehicleModalQuickBtn');
   const closeVehicleModalBtn = document.getElementById('closeVehicleModalBtn');
   const vehicleModalBackdrop = document.getElementById('vehicleModalBackdrop');
 
@@ -1265,10 +1310,18 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     setVehicleModalFormFromRow(null);
   }
 
-  openVehicleModalBtn.addEventListener('click', () => {
-    openModal(vehicleModalEl);
-    loadVehiclesTable();
-  });
+  if (openVehicleModalBtn) {
+    openVehicleModalBtn.addEventListener('click', () => {
+      openModal(vehicleModalEl);
+      loadVehiclesTable();
+    });
+  }
+  if (openVehicleModalQuickBtn) {
+    openVehicleModalQuickBtn.addEventListener('click', () => {
+      openModal(vehicleModalEl);
+      loadVehiclesTable();
+    });
+  }
   closeVehicleModalBtn.addEventListener('click', () => { resetVehicleModalForm(); closeModal(vehicleModalEl); });
   vehicleModalBackdrop.addEventListener('click', () => { resetVehicleModalForm(); closeModal(vehicleModalEl); });
 
@@ -1598,8 +1651,8 @@ driverForm.addEventListener('submit', function (e) {
         return;
       }
 
-      // display up to 6 vehicles; inactive vehicles will be shown but visually de-emphasized
-      vehicles.slice(0, 6).forEach(vehicle => {
+      // display all vehicles; inactive vehicles will be shown but visually de-emphasized
+      vehicles.forEach(vehicle => {
         const card = createVehicleCard(vehicle);
         vehicleCardsContainer.appendChild(card);
       });
@@ -1833,8 +1886,8 @@ driverForm.addEventListener('submit', function (e) {
         const b = data.booking;
         // populate form fields
         bookingId.value = String(b.id || '');
-        document.getElementById('dateTrip').value = toLocalInputValue(b.date_trip || b.start_at || '');
-        document.getElementById('dateRequested').value = toLocalInputValue(b.date_requested || '');
+        document.getElementById('dateTrip').value = toLocalDateValue(b.date_trip || b.start_at || '');
+        document.getElementById('dateRequested').value = toLocalDateValue(b.date_requested || '');
         document.getElementById('departureExpected').value = toLocalInputValue(b.start_at || b.departure_expected || '');
         document.getElementById('returnExpected').value = toLocalInputValue(b.end_at || b.return_expected || '');
         document.getElementById('destinations').value = b.destinations || '';
@@ -2088,10 +2141,12 @@ driverForm.addEventListener('submit', function (e) {
   }
 
   // ==================== CALENDAR ====================
-  const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    height: 'auto',
-    headerToolbar: {
+  let calendar = null;
+  if (hasCalendar) {
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      height: 'auto',
+      headerToolbar: {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,timeGridWeek,timeGridDay'
@@ -2200,8 +2255,8 @@ driverForm.addEventListener('submit', function (e) {
           const b = data.booking;
           // populate modal
           bookingId.value = b.id || '';
-          document.getElementById('dateTrip').value = toLocalInputValue(b.date_trip || b.start_at || '');
-          document.getElementById('dateRequested').value = toLocalInputValue(b.date_requested || '');
+          document.getElementById('dateTrip').value = toLocalDateValue(b.date_trip || b.start_at || '');
+          document.getElementById('dateRequested').value = toLocalDateValue(b.date_requested || '');
           document.getElementById('destinations').value = b.destinations || '';
           document.getElementById('purpose').value = b.purpose || '';
           document.getElementById('passengers').value = b.passengers || b.seat_count || '';
@@ -2358,6 +2413,11 @@ driverForm.addEventListener('submit', function (e) {
 });
 
   calendar.render();
+  }
+
+  const refetchCalendarEvents = () => {
+    if (calendar) calendar.refetchEvents();
+  };
 
   // External drag for new bookings
   if (externalEventsEl) {
@@ -2375,12 +2435,14 @@ driverForm.addEventListener('submit', function (e) {
     }
   }
 
-  calendarViewSelect.addEventListener('change', function () {
-    calendar.changeView(this.value);
-  });
+  if (calendarViewSelect && calendar) {
+    calendarViewSelect.addEventListener('change', function () {
+      calendar.changeView(this.value);
+    });
+  }
 
   refreshBtn.addEventListener('click', () => {
-    calendar.refetchEvents();
+    refetchCalendarEvents();
     loadVehicleCards();
     showNotification('Calendar refreshed', 'info');
   });
@@ -2390,7 +2452,7 @@ driverForm.addEventListener('submit', function (e) {
 
   if (quickRefreshBtn) {
     quickRefreshBtn.addEventListener('click', () => {
-      calendar.refetchEvents();
+      refetchCalendarEvents();
       loadVehicleCards();
       showNotification('Fleet and calendar refreshed', 'success');
     });
@@ -2406,8 +2468,8 @@ driverForm.addEventListener('submit', function (e) {
     });
   }
 
-  vehicleFilter.addEventListener('change', () => calendar.refetchEvents());
-  driverFilter.addEventListener('change', () => calendar.refetchEvents());
+  vehicleFilter.addEventListener('change', () => refetchCalendarEvents());
+  driverFilter.addEventListener('change', () => refetchCalendarEvents());
 
   // ==================== INITIALIZATION ====================
   loadVehicleCards();

@@ -29,13 +29,13 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `car_bookings` (
   `id` int(11) NOT NULL,
-  `date_trip` datetime NOT NULL,
-  `date_requested` datetime NOT NULL,
+  `date_trip` date NOT NULL,
+  `date_requested` date NOT NULL,
   `destinations` varchar(255) NOT NULL,
   `purpose` varchar(180) NOT NULL,
   `passengers` int(11) NOT NULL,
-  `departure_expected` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `return_expected` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `departure_expected` datetime NOT NULL,
+  `return_expected` datetime NOT NULL,
   `special_instructions` text DEFAULT NULL,
   `remarks` text DEFAULT NULL,
   `vehicle_id` int(11) NOT NULL,
