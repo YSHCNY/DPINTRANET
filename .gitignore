@@ -1,0 +1,5 @@
+#LIST TO NOT UPLOAD
+
+#DATABASE
+*/core/Database.php
+**/Database.php
