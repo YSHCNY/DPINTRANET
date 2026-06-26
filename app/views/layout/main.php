@@ -2,12 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dalton Bypass</title>
+    <?php
+        $currentController = $_GET['controller'] ?? '';
+        $currentAction = $_GET['action'] ?? '';
+
+        if ($currentController === 'Auth' && $currentAction === 'dashboard') {
+            $documentTitle = 'Dashboard';
+        } elseif ($currentController === 'Files' && $currentAction === 'files') {
+            $documentTitle = 'Files Management';
+        } elseif ($currentController === 'Auth' && $currentAction === 'users') {
+            $documentTitle = 'Core Users';
+        } elseif ($currentController === 'Auth' && $currentAction === 'profile') {
+            $documentTitle = 'Profile & Security';
+        } elseif ($currentController === 'Syslogs' && $currentAction === 'syslogs') {
+            $documentTitle = 'System Logs';
+        } elseif ($currentController === 'correspondence' && $currentAction === 'correspondence') {
+            $documentTitle = 'Correspondence Management';
+        } elseif ($currentController === 'StandardUsers' && $currentAction === 'index') {
+            $documentTitle = 'Standard Users';
+        } elseif ($currentController === 'CarBookings' && $currentAction === 'calendar') {
+            $documentTitle = 'Car Bookings';
+        } else {
+            $documentTitle = 'FMS Portal';
+        }
+    ?>
+    <title><?= htmlspecialchars($documentTitle) ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+
+    <!-- Global design tokens for uniform design kit -->
+    <style>
+      /* :root{
+        --text: #0f1724; /* primary text: softer deep slate */
+        --bg-page: #f7f8fb; /* page background: subtle off-white */
+        --card: #ffffff;
+        --surface-1: #f5f7f9; /* subtle surface */
+        --surface-2: #e9edf0;
+        --primary: #346656; /* muted green primary */
+        --secondary: #111827; /* deep accent / headings */
+        --accent: #4b7a58; /* accent (hover, highlights) */
+        --muted: #6b7280;
+        --success: #059669;
+        --danger: #dc2626;
+        --info: #2563eb;
+        --warning: #f59e0b;
+        --shadow-sm: 0 6px 18px rgba(15,23,42,0.05);
+        --shadow-md: 0 10px 30px rgba(15,23,42,0.06);
+        --radius-lg: 10px;
+      } */
+
+      
+    </style>
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
@@ -20,18 +68,19 @@
     <!-- ColReorderWithResize plugin -->
     <script src="https://cdn.jsdelivr.net/gh/akottr/ColReorderWithResize/ColReorderWithResize.js"></script>
     <!-- Tailwind overrides for DataTables -->
-<link rel="stylesheet" href=".././app/assets/css/dataTables-tailwind.css">
+    <link rel="stylesheet" href="../../assets/css/datatables-tailwind.css">
 
 </head>
 
 
 <body class=" bg-light">
+  <body class="theme-palette bg-light">
 <?php require __DIR__ . '/../partials/icons.php'; ?>
   <!-- Sidebar -->
   <?php require __DIR__ . '/../partials/sidebar.php'; ?>
 
   <!-- Page Wrapper -->
-  <div class="ml-0 md:ml-72 min-h-screen flex flex-col transition-all">
+  <div class="ml-0 md:ml-[17.5rem] min-h-screen flex flex-col transition-all">
 
     <!-- Header -->
     <?php require __DIR__ . '/../partials/header.php'; ?>
@@ -59,13 +108,8 @@
 
 
           <?php if (isset($_GET['wc']) && $_GET['wc'] === 'welcome'): ?>
-            <div id="flash"
-                class="mb-6 flex items-center gap-3
-                        px-5 py-4 rounded-xl
-                        bg-gradient-to-r from-sky-500 to-emerald-500
-                        text-white shadow-lg
-                        transition-all duration-500 ease-out
-                        opacity-0 translate-y-2">
+                <div id="flash"
+                  class="mb-6 flex items-center gap-3 px-5 py-4 rounded-xl text-white shadow-lg transition-all duration-500 ease-out opacity-0 translate-y-2 bg-gradient-to-r from-[#111827] to-[#222222]">
 
 
               <!-- Icon -->
@@ -106,8 +150,6 @@
     </main>
 
   </div>
-
-</body>
 
 </body>
 </html>

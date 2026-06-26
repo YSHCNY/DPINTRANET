@@ -76,7 +76,7 @@
 
 
       <div class="w-1/3  flex my-8">
-      <img src=".././app/assets/logo/symbol.png" alt="Login Image" class="object-cover h-1/2 w-1/2">
+      <img src=".././app/assets/logo/official.png" alt="Login Image" class="object-cover h-1/2 w-1/2">
     </div>
 
 
@@ -120,14 +120,25 @@
         </div>
 
         <button type="submit"
-          class="w-full rounded-xl bg-sky-700 px-4 py-3 font-medium
-                 text-white hover:bg-sky-800 transition">
+          class="w-full rounded-xl bg-green-800 px-4 py-3 font-medium
+                 text-white hover:bg-green-900 transition">
           Login
         </button>
 
-      </form>
+	      </form>
 
-      <!-- Optional register link -->
+	      <div class="mt-6 border-t border-gray-200 pt-5">
+	        <a href="index.php?controller=StandardPortal&action=login"
+	           class="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700">
+	          <span>
+	            <span class="block">Standard User Portal</span>
+	            <span class="block text-xs font-normal text-gray-500">Receive assigned correspondence</span>
+	          </span>
+	          <span class="text-lg leading-none">&rsaquo;</span>
+	        </a>
+	      </div>
+
+	      <!-- Optional register link -->
       <!--
       <p class="text-center text-gray-500 mt-6 text-sm">
         Don't have an account? 
