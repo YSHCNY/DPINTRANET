@@ -4,3 +4,15 @@
 */core/Database.php
 **/Database.php
 app/core/Database.php
+
+#UPLOADS
+app/uploads/standard_users/*
+app/uploads/correspondence/*
+uploads/thread/*
+uploads/vehicle/*
+
+# Keep the folders themselves
+!uploads/standard_users/.gitkeep
+!uploads/correspondence/.gitkeep
+!uploads/thread/.gitkeep
+!uploads/vehicle/.gitkeep
