@@ -294,6 +294,16 @@ class CorrespondenceModel {
     }
 
     /**
+     * Return true when the submitted tracking ID already exists.
+     */
+    public function trackingIdExists(string $trackingId): bool {
+        $sql = "SELECT 1 FROM documents WHERE tracking_id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$trackingId]);
+        return (bool)$stmt->fetchColumn();
+    }
+
+    /**
      * Get all documents for repository table
      */
     public function getAllDocuments($includeDeleted = false) {
@@ -332,6 +342,76 @@ class CorrespondenceModel {
         }
 
         return $row;
+    }
+
+    public function getDashboardMetrics(): array {
+        $sql = "SELECT
+                    COUNT(*) as total_documents,
+                    SUM(CASE WHEN COALESCE(d.is_draft, 0) = 1 THEN 1 ELSE 0 END) as draft_documents,
+                    SUM(CASE WHEN LOWER(d.status) = 'inprogress' THEN 1 ELSE 0 END) as inprogress_documents,
+                    COUNT(dc.id) as total_recipients,
+                    SUM(CASE WHEN dc.status = 'Received' THEN 1 ELSE 0 END) as received_recipients,
+                    SUM(CASE WHEN dc.status != 'Received' THEN 1 ELSE 0 END) as pending_recipients
+                FROM documents d
+                LEFT JOIN document_circulations dc ON dc.document_id = d.id
+                WHERE COALESCE(d.is_deleted, 0) = 0";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return [
+            'total_documents' => (int)($result['total_documents'] ?? 0),
+            'draft_documents' => (int)($result['draft_documents'] ?? 0),
+            'inprogress_documents' => (int)($result['inprogress_documents'] ?? 0),
+            'total_recipients' => (int)($result['total_recipients'] ?? 0),
+            'received_recipients' => (int)($result['received_recipients'] ?? 0),
+            'pending_recipients' => (int)($result['pending_recipients'] ?? 0),
+        ];
+    }
+
+    public function getRecentDocuments(int $limit = 6): array {
+        $sql = "SELECT d.id, d.tracking_id, d.title, d.type, d.priority, d.status, d.is_draft,
+                       d.created_at,
+                       SUM(CASE WHEN dc.status = 'Received' THEN 1 ELSE 0 END) as received_count,
+                       SUM(CASE WHEN dc.status != 'Received' THEN 1 ELSE 0 END) as pending_count,
+                       COUNT(dc.id) as recipient_count
+                FROM documents d
+                LEFT JOIN document_circulations dc ON dc.document_id = d.id
+                WHERE COALESCE(d.is_deleted, 0) = 0
+                GROUP BY d.id
+                ORDER BY d.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getPendingActions(int $limit = 5): array {
+        $sql = "SELECT dc.id as circulation_id,
+                       d.id as document_id,
+                       d.tracking_id,
+                       d.title,
+                       dc.recipient_id,
+                       CASE WHEN u.id IS NOT NULL THEN CONCAT(u.firstName, ' ', u.lastName) ELSE CONCAT('Recipient #', dc.recipient_id) END as recipient_name,
+                       dc.cc,
+                       dc.status,
+                       dc.received_at,
+                       d.created_at
+                FROM document_circulations dc
+                INNER JOIN documents d ON d.id = dc.document_id
+                LEFT JOIN UserTbl u ON u.id = dc.recipient_id
+                WHERE COALESCE(d.is_deleted, 0) = 0
+                  AND dc.status != 'Received'
+                ORDER BY d.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**

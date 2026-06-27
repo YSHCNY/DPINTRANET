@@ -31,6 +31,11 @@ class CarBookings extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function countScheduledBookings(): int {
+        $stmt = $this->db->query("SELECT COUNT(*) FROM {$this->table} WHERE status = 'scheduled'");
+        return (int)$stmt->fetchColumn();
+    }
+
     public function getBookingStatus(string $departureDate, string $returnDate): string {
         $now = time();
         $startTs = strtotime($departureDate);

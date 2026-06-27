@@ -18,9 +18,35 @@ $unreadCount = 0;
 $notifications = [];
 if (!empty($_SESSION['id'])) {
   require_once '../app/models/Notification.php';
+  require_once '../app/models/correspondence.php';
   $notifModel = new NotificationModel();
+  $correspondenceModel = new CorrespondenceModel();
   $unreadCount = $notifModel->getUnreadCount((int)$_SESSION['id']);
   $notifications = $notifModel->getForUser((int)$_SESSION['id'], 8);
+}
+
+function buildNotificationLink(array $notification, CorrespondenceModel $correspondenceModel) {
+  $defaultUrl = 'index.php?controller=Notifications&action=view&id=' . (int)($notification['id'] ?? 0);
+  $url = trim((string)($notification['url'] ?? ''));
+  if ($url === '') {
+    return $defaultUrl;
+  }
+
+  $parsed = parse_url($url);
+  if (!empty($parsed['query'])) {
+    parse_str($parsed['query'], $params);
+    if (!empty($params['controller']) && strtolower($params['controller']) === 'correspondence' && !empty($params['doc_id'])) {
+      $docId = (int)$params['doc_id'];
+      if ($docId > 0) {
+        $doc = $correspondenceModel->getById($docId);
+        if (!empty($doc['is_draft'])) {
+          return 'index.php?controller=correspondence&action=newCirculation&draftId=' . $docId . '&fromFinalize=1';
+        }
+      }
+    }
+  }
+
+  return $defaultUrl;
 }
 
 if ($currentController == 'Auth' && $currentAction == 'dashboard') {
@@ -81,7 +107,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
             <div class="p-3 text-xs text-slate-500 text-center">No notifications</div>
           <?php else: ?>
             <?php foreach ($notifications as $n): ?>
-              <a href="index.php?controller=Notifications&action=view&id=<?= (int)$n['id'] ?>" class="block px-3 py-2 hover:bg-slate-50 border-b border-slate-100 transition">
+              <a href="<?= htmlspecialchars(buildNotificationLink($n, $correspondenceModel)) ?>" class="block px-3 py-2 hover:bg-slate-50 border-b border-slate-100 transition">
                 <div class="text-xs text-slate-800 line-clamp-2"><?= htmlspecialchars($n['message']) ?></div>
                 <div class="text-[11px] text-slate-500 mt-1"><?= date('M d g:i A', strtotime($n['created_at'])) ?></div>
               </a>

@@ -38,8 +38,91 @@ class AuthController extends Controller {
 
     public function dashboard() {
         $this->requireLogin();
-        $content = $this->renderView('auth/dashboard', ['username' => $_SESSION['user']]);
+
+        require_once '../app/models/correspondence.php';
+        require_once '../app/models/Files.php';
+        require_once '../app/models/CarBookings.php';
+        require_once '../app/models/RoomBookings.php';
+        require_once '../app/models/CarVehicles.php';
+        require_once '../app/models/Rooms.php';
+
+        $correspondenceModel = new CorrespondenceModel();
+        $fileModel = new FileModel();
+        $carBookings = new CarBookings();
+        $roomBookings = new RoomBookings();
+        $carVehicles = new CarVehicles();
+        $roomsModel = new Rooms();
+
+        $correspondenceMetrics = $correspondenceModel->getDashboardMetrics();
+        $recentDocuments = $correspondenceModel->getRecentDocuments(6);
+        $latestFiles = $fileModel->getLatestUpdatedFiles(6);
+
+        $fileMetrics = [
+            'total' => $fileModel->countFiles(),
+            'recent30Days' => $fileModel->countRecentFiles(30),
+        ];
+
+        $carMetrics = [
+            'activeVehicles' => $carVehicles->countActiveVehicles(),
+            'scheduledBookings' => $carBookings->countScheduledBookings(),
+        ];
+
+        $roomMetrics = [
+            'activeRooms' => $roomsModel->countActiveRooms(),
+            'scheduledBookings' => $roomBookings->countScheduledBookings(),
+        ];
+
+        $content = $this->renderView('auth/dashboard', [
+            'username' => $_SESSION['user'],
+            'firstName' => $_SESSION['firstName'] ?? 'User',
+            'correspondenceMetrics' => $correspondenceMetrics,
+            'recentDocuments' => $recentDocuments,
+            'latestFiles' => $latestFiles,
+            'fileMetrics' => $fileMetrics,
+            'carMetrics' => $carMetrics,
+            'roomMetrics' => $roomMetrics,
+        ]);
         $this->view('layout/main', ['content' => $content]);
+    }
+
+    public function dashboardEvents() {
+        $this->requireLogin();
+        require_once '../app/models/CarBookings.php';
+        require_once '../app/models/RoomBookings.php';
+
+        $start = $_GET['start'] ?? '';
+        $end = $_GET['end'] ?? '';
+        $type = strtolower(trim($_GET['type'] ?? 'all'));
+
+        $carBookings = new CarBookings();
+        $roomBookings = new RoomBookings();
+        $events = [];
+
+        if ($type === 'all' || $type === 'car') {
+            $carEvents = $carBookings->getCalendarEvents($start, $end);
+            foreach ($carEvents as $event) {
+                $event['id'] = 'car-' . $event['id'];
+                $event['extendedProps']['source'] = 'Vehicle';
+                $event['extendedProps']['booking_type'] = 'Car Booking';
+                $event['extendedProps']['module_route'] = 'index.php?controller=CarBookings&action=calendar';
+                $events[] = $event;
+            }
+        }
+
+        if ($type === 'all' || $type === 'room') {
+            $roomEvents = $roomBookings->getCalendarEvents($start, $end);
+            foreach ($roomEvents as $event) {
+                $event['id'] = 'room-' . $event['id'];
+                $event['extendedProps']['source'] = 'Room';
+                $event['extendedProps']['booking_type'] = 'Room Booking';
+                $event['extendedProps']['module_route'] = 'index.php?controller=RoomBookings&action=calendar';
+                $events[] = $event;
+            }
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'events' => $events]);
+        exit;
     }
 
     public function profile() {

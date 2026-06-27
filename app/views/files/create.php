@@ -17,16 +17,24 @@
           <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
             <section class="space-y-5">
               <div class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Routing</p>
-                <h3 class="mt-1 text-lg font-semibold text-slate-900">From and to categories</h3>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Routing</p>
+                    <h3 class="mt-1 text-lg font-semibold text-slate-900">From and to categories</h3>
+                  </div>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="routingToggle" class="w-5 h-5 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-500">
+                    <span class="text-sm font-medium text-slate-600">Enable Routing</span>
+                  </label>
+                </div>
 
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-end">
+                <div id="routingFields" class="mt-4 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-end opacity-50 pointer-events-none transition-opacity duration-200">
                   <div>
                     <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">From</label>
-                    <select name="fromCategory" required class="w-full h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                      <?php $defaultCategory = 'NKJV'; ?>
+                    <select name="fromCategory" class="w-full h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                      <option value="">No Routing</option>
                       <?php foreach ($recipientsCateg as $category): ?>
-                        <option value="<?= htmlspecialchars($category['category']) ?>" <?= $category['category'] === $defaultCategory ? 'selected' : '' ?>>
+                        <option value="<?= htmlspecialchars($category['category']) ?>">
                           <?= htmlspecialchars($category['category']) ?>
                         </option>
                       <?php endforeach; ?>
@@ -37,10 +45,10 @@
                   </div>
                   <div>
                     <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">To</label>
-                    <select name="toCategory" required class="w-full h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                      <?php $defaultCategory = 'DPWH'; ?>
+                    <select name="toCategory" class="w-full h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                      <option value="">No Routing</option>
                       <?php foreach ($recipientsCateg as $category): ?>
-                        <option value="<?= htmlspecialchars($category['category']) ?>" <?= $category['category'] === $defaultCategory ? 'selected' : '' ?>>
+                        <option value="<?= htmlspecialchars($category['category']) ?>">
                           <?= htmlspecialchars($category['category']) ?>
                         </option>
                       <?php endforeach; ?>
@@ -77,16 +85,22 @@
 
               <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Upload</p>
-                <h3 class="mt-1 text-lg font-semibold text-slate-900">Drop your file</h3>
+                <h3 class="mt-1 text-lg font-semibold text-slate-900">Drop your files</h3>
+                <p class="mt-2 text-xs text-slate-500">Upload up to 4 files with a maximum total size of 40MB</p>
 
                 <div id="dropZone" class="mt-4 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center transition hover:border-blue-300 hover:bg-blue-50/50">
                   <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm">
                     <span class="text-2xl text-sky-600"><?= $cloudIcon ?? '☁️' ?></span>
                   </div>
-                  <p class="mt-4 text-base font-semibold text-slate-900">Drag & drop a file here</p>
+                  <p class="mt-4 text-base font-semibold text-slate-900">Drag & drop files here</p>
                   <p class="mt-1 text-sm text-slate-500">or click to browse your computer</p>
-                  <div id="fileName" class="mt-3 text-sm font-medium text-sky-700"></div>
-                  <input type="file" id="file" name="file" class="hidden" required>
+                  <div id="fileList" class="mt-4 space-y-2"></div>
+                  <input type="file" id="fileInput" name="files[]" class="hidden" multiple required>
+                </div>
+
+                <div id="filePreview" class="mt-4 space-y-2"></div>
+                <div id="sizeWarning" class="mt-3 hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  Total file size exceeds 40MB limit
                 </div>
               </div>
             </section>
@@ -133,18 +147,119 @@
 </div>
 
 <script>
+const MAX_FILES = 4;
+const MAX_TOTAL_SIZE = 40 * 1024 * 1024; // 40MB in bytes
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB per file
 const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('file');
-const fileName = document.getElementById('fileName');
+const fileInput = document.getElementById('fileInput');
+const filePreview = document.getElementById('filePreview');
+const sizeWarning = document.getElementById('sizeWarning');
+const fileList = document.getElementById('fileList');
+const routingToggle = document.getElementById('routingToggle');
+const routingFields = document.getElementById('routingFields');
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+function validateAndDisplay(files) {
+  const fileArray = Array.from(files);
+  
+  // Check max files limit
+  if (fileArray.length > MAX_FILES) {
+    alert(`Maximum ${MAX_FILES} files allowed`);
+    return;
+  }
+
+  // Calculate total size
+  let totalSize = 0;
+  fileArray.forEach(file => {
+    totalSize += file.size;
+  });
+
+  // Check total size limit
+  if (totalSize > MAX_TOTAL_SIZE) {
+    sizeWarning.classList.remove('hidden');
+    fileInput.value = '';
+    filePreview.innerHTML = '';
+    return;
+  }
+
+  sizeWarning.classList.add('hidden');
+  fileInput.files = files;
+
+  // Display file preview
+  filePreview.innerHTML = '';
+  fileArray.forEach((file, index) => {
+    const fileItem = document.createElement('div');
+    fileItem.className = 'flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3';
+    fileItem.innerHTML = `
+      <div class="flex items-center gap-3">
+        <span class="h-10 w-10 flex items-center justify-center rounded-lg bg-sky-100 text-sky-600 font-semibold text-sm">
+          ${file.name.split('.').pop().toUpperCase()}
+        </span>
+        <div>
+          <p class="text-sm font-medium text-slate-900">${file.name}</p>
+          <p class="text-xs text-slate-500">${formatFileSize(file.size)}</p>
+        </div>
+      </div>
+      <button type="button" onclick="removeFile(${index})" class="text-rose-600 hover:text-rose-700 font-semibold text-sm">Remove</button>
+    `;
+    filePreview.appendChild(fileItem);
+  });
+
+  // Update file list summary
+  const totalSizeDisplay = formatFileSize(totalSize);
+  fileList.innerHTML = `
+    <p class="text-sm font-medium text-slate-700">
+      <span class="text-blue-600">${fileArray.length}</span> file(s) selected - <span class="text-blue-600">${totalSizeDisplay}</span> of 40MB
+    </p>
+  `;
+}
+
+function removeFile(index) {
+  const files = Array.from(fileInput.files);
+  files.splice(index, 1);
+  
+  // Create a new DataTransfer object to update the input
+  const dt = new DataTransfer();
+  files.forEach(file => {
+    dt.items.add(file);
+  });
+  
+  validateAndDisplay(dt.files);
+}
+
+// Routing toggle functionality
+if (routingToggle && routingFields) {
+  const fromSelect = routingFields.querySelector('select[name="fromCategory"]');
+  const toSelect = routingFields.querySelector('select[name="toCategory"]');
+
+  routingToggle.addEventListener('change', function() {
+    if (this.checked) {
+      routingFields.classList.remove('opacity-50', 'pointer-events-none');
+    } else {
+      routingFields.classList.add('opacity-50', 'pointer-events-none');
+      // Reset to "No Routing" when disabled
+      if (fromSelect) fromSelect.value = '';
+      if (toSelect) toSelect.value = '';
+    }
+  });
+}
 
 if (dropZone && fileInput) {
   dropZone.addEventListener('click', () => fileInput.click());
 
   fileInput.addEventListener('change', () => {
     if (fileInput.files.length > 0) {
-      fileName.textContent = `Selected: ${fileInput.files[0].name}`;
+      validateAndDisplay(fileInput.files);
     } else {
-      fileName.textContent = '';
+      filePreview.innerHTML = '';
+      fileList.innerHTML = '';
     }
   });
 
@@ -161,9 +276,16 @@ if (dropZone && fileInput) {
     e.preventDefault();
     dropZone.classList.remove('border-blue-400', 'bg-blue-50');
     if (e.dataTransfer.files.length) {
-      fileInput.files = e.dataTransfer.files;
-      fileName.textContent = `Selected: ${e.dataTransfer.files[0].name}`;
+      validateAndDisplay(e.dataTransfer.files);
     }
   });
 }
+
+// Validate form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+  if (!fileInput.files || fileInput.files.length === 0) {
+    e.preventDefault();
+    alert('Please select at least one file');
+  }
+});
 </script>

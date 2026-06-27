@@ -41,42 +41,94 @@ class FilesController extends Controller {
         require __DIR__ . '/../views/files/create.php'; 
     }
 
-    // Store new file
+    // Store new files (multiple upload support)
     public function store() {
         $this->requireAnyRole([0, 1, 2], 'You do not have permission to upload files.');
 
-        if (isset($_FILES['file'])) {
-            $fileName = $_FILES['file']['name'];
-            $targetDir = __DIR__ . "/../uploads/";
-            $targetFile = $targetDir . basename($fileName);
+        if (!isset($_FILES['files']) || empty($_FILES['files']['name'][0])) {
+            $_SESSION['message'] = "No files selected.";
+            $_SESSION['msg_type'] = "error";
+            header("Location: index.php?controller=Files&action=files");
+            exit;
+        }
 
-            $description   = $_POST['description'] ?? '';
-            $uploaded_by   = $_SESSION['id'] ?? 'guest';
-            $position      = $_SESSION['position'] ?? 'guest';
-            $directionFrom = $_POST['fromCategory'] ?? '';
-            $directionTo   = $_POST['toCategory'] ?? '';
-            $fileCategory  = $_POST['fileCategory'] ?? 'Uncategorized';
+        $description   = $_POST['description'] ?? '';
+        $uploaded_by   = $_SESSION['id'] ?? 'guest';
+        $position      = $_SESSION['position'] ?? 'guest';
+        $directionFrom = $_POST['fromCategory'] ?? '';
+        $directionTo   = $_POST['toCategory'] ?? '';
+        $fileCategory  = $_POST['fileCategory'] ?? 'Uncategorized';
 
-            $first    = $_SESSION['firstName'] ?? '';
-            $last     = $_SESSION['lastName'] ?? '';
-            $uploader = trim($first . ' ' . $last) ?: 'System';
-            $userID   = $_SESSION['id'] ?? 'guest';
+        $first    = $_SESSION['firstName'] ?? '';
+        $last     = $_SESSION['lastName'] ?? '';
+        $uploader = trim($first . ' ' . $last) ?: 'System';
+        $userID   = $_SESSION['id'] ?? 'guest';
 
-            if (move_uploaded_file($_FILES['file']['tmp_name'], $targetFile)) {
-                $this->model->create($fileName, $targetFile, $description, $uploaded_by, $fileCategory, $position, $directionFrom, $directionTo);
-                $this->model->newLog($userID, $fileName, $uploaded_by, $position, $fileCategory, $directionFrom, $directionTo, $uploader, $description);
+        $targetDir = __DIR__ . "/../uploads/";
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        // Validate total file size (40MB max)
+        $totalSize = 0;
+        foreach ($_FILES['files']['size'] as $size) {
+            $totalSize += $size;
+        }
+
+        $maxTotalSize = 40 * 1024 * 1024; // 40MB
+        if ($totalSize > $maxTotalSize) {
+            $_SESSION['message'] = "Total file size exceeds 40MB limit.";
+            $_SESSION['msg_type'] = "error";
+            header("Location: index.php?controller=Files&action=files");
+            exit;
+        }
+
+        $successCount = 0;
+        $failureCount = 0;
+        $uploadedFiles = [];
+
+        // Process each file
+        for ($i = 0; $i < count($_FILES['files']['name']); $i++) {
+            if ($_FILES['files']['error'][$i] !== UPLOAD_ERR_OK) {
+                $failureCount++;
+                continue;
+            }
+
+            $fileName = $_FILES['files']['name'][$i];
+            $tmpName = $_FILES['files']['tmp_name'][$i];
+            $fileSize = $_FILES['files']['size'][$i];
+
+            // Generate unique filename to prevent conflicts
+            $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
+            $fileBaseName = pathinfo($fileName, PATHINFO_FILENAME);
+            $uniqueFileName = $fileBaseName . '_' . time() . '_' . uniqid() . '.' . $fileExtension;
+            $targetFile = $targetDir . $uniqueFileName;
+
+            if (move_uploaded_file($tmpName, $targetFile)) {
+                $this->model->create($uniqueFileName, $targetFile, $description, $uploaded_by, $fileCategory, $position, $directionFrom, $directionTo);
+                $this->model->newLog($userID, $uniqueFileName, $uploaded_by, $position, $fileCategory, $directionFrom, $directionTo, $uploader, $description);
                 
-                $_SESSION['message'] = "File uploaded successfully!";
-                $_SESSION['msg_type'] = "success";
-                header("Location: index.php?controller=Files&action=files");
-                exit;
+                $successCount++;
+                $uploadedFiles[] = $uniqueFileName;
             } else {
-                $_SESSION['message'] = "Failed to upload file.";
-                $_SESSION['msg_type'] = "error";
-                header("Location: index.php?controller=Files&action=files");
-                exit;
+                $failureCount++;
             }
         }
+
+        // Prepare session messages
+        if ($successCount > 0 && $failureCount === 0) {
+            $_SESSION['message'] = $successCount . " file(s) uploaded successfully!";
+            $_SESSION['msg_type'] = "success";
+        } elseif ($successCount > 0 && $failureCount > 0) {
+            $_SESSION['message'] = $successCount . " file(s) uploaded. " . $failureCount . " file(s) failed.";
+            $_SESSION['msg_type'] = "warning";
+        } else {
+            $_SESSION['message'] = "Failed to upload files.";
+            $_SESSION['msg_type'] = "error";
+        }
+
+        header("Location: index.php?controller=Files&action=files");
+        exit;
     }
 
     // Edit form
@@ -99,6 +151,18 @@ class FilesController extends Controller {
         $filepath = $file['filepath'];
         $description = $_POST['description'] ?? $file['desc'] ?? '';
         $fileCategory = $_POST['fileCategory'] ?? $file['category'] ?? '';
+        
+        // Check if routing is enabled via hidden input
+        $routingEnabled = $_POST['routingEnabled'] ?? '0';
+        if ($routingEnabled === '1') {
+            // Routing is enabled - use submitted values or fallback to existing
+            $directionFrom = $_POST['fromCategory'] ?? $file['directionFrom'] ?? '';
+            $directionTo = $_POST['toCategory'] ?? $file['directionTo'] ?? '';
+        } else {
+            // Routing is disabled - clear routing values
+            $directionFrom = '';
+            $directionTo = '';
+        }
 
         $first = $_SESSION['firstName'] ?? '';
         $last  = $_SESSION['lastName'] ?? '';
@@ -116,8 +180,8 @@ class FilesController extends Controller {
             move_uploaded_file($_FILES['file']['tmp_name'], $filepath);
         }
 
-        $this->model->update($id, $filename, $filepath, $description, $fileCategory);
-        $this->model->updateLog($id, $userID, $filename, $filepath, $description, $fileCategory, $uploader);
+        $this->model->update($id, $filename, $filepath, $description, $fileCategory, $directionFrom, $directionTo);
+        $this->model->updateLog($id, $userID, $filename, $filepath, $description, $fileCategory, $directionFrom, $directionTo, $uploader);
 
         $_SESSION['message'] = $filename . " has been edited successfully!";
         $_SESSION['msg_type'] = "success";

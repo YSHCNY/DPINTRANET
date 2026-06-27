@@ -24,6 +24,11 @@ class CarVehicles extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function countActiveVehicles(): int {
+        $stmt = $this->db->query("SELECT COUNT(*) FROM {$this->table} WHERE status = 'active'");
+        return (int)$stmt->fetchColumn();
+    }
+
     // Used by dropdowns/modals
     public function listVehicles(?string $status = null): array {
         $params = [];

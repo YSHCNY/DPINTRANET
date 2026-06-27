@@ -15,17 +15,27 @@
       <div class="p-6 lg:p-7">
         <form action="index.php?controller=Files&action=update" method="post" enctype="multipart/form-data" class="space-y-6">
           <input type="hidden" name="id" value="<?= htmlspecialchars($file['id']) ?>">
+          <input type="hidden" name="routingEnabled" id="routingEnabled" value="0">
 
           <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
             <section class="space-y-5">
               <div class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5 shadow-sm">
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Routing</p>
-                <h3 class="mt-1 text-lg font-semibold text-slate-900">From and to categories</h3>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Routing</p>
+                    <h3 class="mt-1 text-lg font-semibold text-slate-900">From and to categories</h3>
+                  </div>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="routingToggle" class="w-5 h-5 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-500" <?= (!empty($file['directionFrom']) || !empty($file['directionTo'])) ? 'checked' : '' ?>>
+                    <span class="text-sm font-medium text-slate-600">Enable Routing</span>
+                  </label>
+                </div>
 
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-end">
+                <div id="routingFields" class="mt-4 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-end <?= (empty($file['directionFrom']) && empty($file['directionTo'])) ? 'opacity-50' : '' ?> transition-opacity duration-200">
                   <div>
                     <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">From</label>
-                    <select name="fromCategory" required class="w-full h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100">
+                    <select name="fromCategory" id="fromCategory" class="w-full h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100" <?= (empty($file['directionFrom']) && empty($file['directionTo'])) ? 'disabled' : '' ?>>
+                      <option value="">No Routing</option>
                       <?php foreach ($recipientsCateg as $category): ?>
                         <option value="<?= htmlspecialchars($category['category']) ?>" <?= $category['category'] === $file['directionFrom'] ? 'selected' : '' ?>>
                           <?= htmlspecialchars($category['category']) ?>
@@ -38,7 +48,8 @@
                   </div>
                   <div>
                     <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">To</label>
-                    <select name="toCategory" required class="w-full h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100">
+                    <select name="toCategory" id="toCategory" class="w-full h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100" <?= (empty($file['directionFrom']) && empty($file['directionTo'])) ? 'disabled' : '' ?>>
+                      <option value="">No Routing</option>
                       <?php foreach ($recipientsCateg as $category): ?>
                         <option value="<?= htmlspecialchars($category['category']) ?>" <?= $category['category'] === $file['directionTo'] ? 'selected' : '' ?>>
                           <?= htmlspecialchars($category['category']) ?>
@@ -67,8 +78,8 @@
 
                   <div>
                     <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Description</label>
-                    <input type="text" name="description" required value="<?= htmlspecialchars($file['desc']) ?>" placeholder="Enter file description"
-                           class="w-full h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700 outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100">
+                    <textarea name="description" required rows="7" placeholder="Enter a concise file description"
+                              class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700 outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"><?= htmlspecialchars($file['desc']) ?></textarea>
                   </div>
                 </div>
               </div>
@@ -113,7 +124,17 @@
                   </div>
                   <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3">
                     <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Direction</p>
-                    <p class="mt-1 font-semibold text-slate-900"><?= htmlspecialchars(trim(($file['directionFrom'] ?? '') . ' ⇄ ' . ($file['directionTo'] ?? 'No Direction'))) ?></p>
+                    <p class="mt-1 font-semibold text-slate-900">
+                      <?php 
+                        $directionFrom = trim($file['directionFrom'] ?? '');
+                        $directionTo = trim($file['directionTo'] ?? '');
+                        if (empty($directionFrom) && empty($directionTo)) {
+                          echo 'No route needed';
+                        } else {
+                          echo htmlspecialchars($directionFrom . ' ⇄ ' . $directionTo);
+                        }
+                      ?>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -143,6 +164,35 @@
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileName = document.getElementById('fileName');
+const routingToggle = document.getElementById('routingToggle');
+const routingFields = document.getElementById('routingFields');
+const fromSelect = document.getElementById('fromCategory');
+const toSelect = document.getElementById('toCategory');
+
+// Routing toggle functionality
+if (routingToggle && routingFields) {
+  routingToggle.addEventListener('change', function() {
+    const routingEnabledInput = document.getElementById('routingEnabled');
+    if (this.checked) {
+      routingFields.classList.remove('opacity-50');
+      fromSelect.disabled = false;
+      toSelect.disabled = false;
+      routingEnabledInput.value = '1';
+    } else {
+      routingFields.classList.add('opacity-50');
+      fromSelect.disabled = true;
+      toSelect.disabled = true;
+      // Reset to "No Routing" when disabled
+      fromSelect.value = '';
+      toSelect.value = '';
+      routingEnabledInput.value = '0';
+    }
+  });
+  
+  // Set initial value on page load
+  const routingEnabledInput = document.getElementById('routingEnabled');
+  routingEnabledInput.value = routingToggle.checked ? '1' : '0';
+}
 
 if (dropZone && fileInput) {
   dropZone.addEventListener('click', () => fileInput.click());

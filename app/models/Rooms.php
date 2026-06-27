@@ -20,6 +20,11 @@ class Rooms extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function countActiveRooms(): int {
+        $stmt = $this->db->query("SELECT COUNT(*) FROM {$this->table} WHERE status = 'active'");
+        return (int)$stmt->fetchColumn();
+    }
+
     public function listRooms(?string $status = null): array {
         $params = [];
         $sql = "SELECT id, room_name, room_code, capacity, status FROM {$this->table}";

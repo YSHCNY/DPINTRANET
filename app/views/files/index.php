@@ -1,5 +1,22 @@
 <?php require __DIR__ . '/../partials/icons.php'; ?>
 <?php
+    // Function to determine badge color based on category
+    function getCategoryBadgeColor($category) {
+        $colors = [
+            'Meeting Minutes' => ['bg' => 'bg-purple-50', 'border' => 'border-purple-100', 'text' => 'text-purple-700'],
+            'HR' => ['bg' => 'bg-rose-50', 'border' => 'border-rose-100', 'text' => 'text-rose-700'],
+            'Letter' => ['bg' => 'bg-indigo-50', 'border' => 'border-indigo-100', 'text' => 'text-indigo-700'],
+            'Reports' => ['bg' => 'bg-orange-50', 'border' => 'border-orange-100', 'text' => 'text-orange-700'],
+            'Others' => ['bg' => 'bg-slate-50', 'border' => 'border-slate-100', 'text' => 'text-slate-700'],
+        ];
+        
+        return $colors[$category] ?? [
+            'bg' => 'bg-emerald-50',
+            'border' => 'border-emerald-100',
+            'text' => 'text-emerald-700'
+        ];
+    }
+
     $canManageFiles = !empty($canManageFiles);
     $fileCount = count($files ?? []);
     $categoryOptions = [];
@@ -135,7 +152,15 @@
                         <?php if (!empty($files)): ?>
                             <?php foreach ($files as $file): ?>
                                 <?php
-                                    $directionLabel = trim(($file['directionFrom'] ?? '') . ' ⇄ ' . ($file['directionTo'] ?? 'No Direction'));
+                                    $directionFrom = trim($file['directionFrom'] ?? '');
+                                    $directionTo = trim($file['directionTo'] ?? '');
+                                    
+                                    if (empty($directionFrom) && empty($directionTo)) {
+                                        $directionLabel = 'No route needed';
+                                    } else {
+                                        $directionLabel = trim(($directionFrom) . ' ⇄ ' . ($directionTo));
+                                    }
+                                    
                                     $uploaderName = trim(($file['firstName'] ?? '') . ' ' . ($file['lastName'] ?? ''));
                                     $position = trim($file['position'] ?? '');
                                     $category = trim($file['category'] ?? 'Uncategorized');
@@ -149,15 +174,29 @@
                                     </td>
                                     <td class="px-4 py-4 min-w-[280px] text-slate-600">
                                         <div class="max-w-[360px]">
-                                            <p class="leading-6"><?= htmlspecialchars($file['desc'] ?? $file['description'] ?? '') ?></p>
+                                            <?php 
+                                                $desc = htmlspecialchars($file['desc'] ?? $file['description'] ?? '');
+                                                $descLength = strlen($desc);
+                                                $isLong = $descLength >= 100;
+                                                $truncated = $isLong ? substr($desc, 0, 100) . '...' : $desc;
+                                            ?>
+                                            <p class="leading-6 description-text" data-full-text="<?= htmlspecialchars($desc) ?>" data-is-long="<?= $isLong ? '1' : '0' ?>">
+                                                <span class="description-display"><?= $truncated ?></span>
+                                                <?php if ($isLong): ?>
+                                                    <button type="button" class="ml-1 italic text-emerald-500 hover:text-emerald-600 transition description-toggle" onclick="toggleDescription(event)">
+                                                        see more
+                                                    </button>
+                                                <?php endif; ?>
+                                            </p>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-4">
-                                        <span class="inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                    <td class="px-4 py-4" data-category="<?= htmlspecialchars($category) ?>">
+                                        <?php $badgeColor = getCategoryBadgeColor($category); ?>
+                                        <span class="inline-flex items-center rounded-full border <?= $badgeColor['border'] ?> <?= $badgeColor['bg'] ?> px-3 py-1 text-xs font-semibold <?= $badgeColor['text'] ?>">
                                             <?= htmlspecialchars($category) ?>
                                         </span>
                                     </td>
-                                    <td class="px-4 py-4 text-slate-600 whitespace-nowrap">
+                                    <td class="px-4 py-4 text-slate-600 whitespace-nowrap" data-direction="<?= htmlspecialchars($directionLabel) ?>">
                                         <?= htmlspecialchars($directionLabel) ?>
                                     </td>
                                     <td class="px-4 py-4 min-w-[190px]">
@@ -217,6 +256,23 @@
 <!-- Module-specific CSS removed: replaced by global Tailwind utilities and shared DataTables tailwind stylesheet -->
 
 <script>
+function toggleDescription(event) {
+  event.preventDefault();
+  const descElement = event.target.closest('.description-text');
+  const displaySpan = descElement.querySelector('.description-display');
+  const toggleBtn = event.target;
+  const fullText = descElement.dataset.fullText;
+  
+  if (toggleBtn.textContent.trim() === 'see more') {
+    displaySpan.textContent = fullText;
+    toggleBtn.textContent = 'see less';
+  } else {
+    const truncated = fullText.substring(0, 100) + '...';
+    displaySpan.textContent = truncated;
+    toggleBtn.textContent = 'see more';
+  }
+}
+
 $(document).ready(function () {
   const table = $('#filesTable').DataTable({
     pageLength: 25,
@@ -230,12 +286,29 @@ $(document).ready(function () {
     }
   });
 
-  $('#categoryFilter').on('change', function () {
-    table.column(2).search(this.value ? '^' + $.fn.dataTable.util.escapeRegex(this.value) + '$' : '', true, false).draw();
+  // Custom search for data attributes
+  $.fn.DataTable.ext.search.push(function (settings, data, dataIndex) {
+    const categoryFilter = $('#categoryFilter').val();
+    const directionFilter = $('#directionFilter').val();
+    const $row = $(table.row(dataIndex).node());
+    
+    const rowCategory = $row.find('td').eq(2).data('category') || '';
+    const rowDirection = $row.find('td').eq(3).data('direction') || '';
+    
+    const categoryMatch = !categoryFilter || rowCategory === categoryFilter;
+    const directionMatch = !directionFilter || rowDirection === directionFilter;
+    
+    return categoryMatch && directionMatch;
   });
 
+  // Category filter
+  $('#categoryFilter').on('change', function () {
+    table.draw();
+  });
+
+  // Direction filter
   $('#directionFilter').on('change', function () {
-    table.column(3).search(this.value ? '^' + $.fn.dataTable.util.escapeRegex(this.value) + '$' : '', true, false).draw();
+    table.draw();
   });
 });
 </script>

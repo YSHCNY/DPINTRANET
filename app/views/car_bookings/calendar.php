@@ -95,21 +95,24 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
               </div>
               <div class="mt-4 grid grid-cols-2 gap-3">
                 <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Vehicles</p>
-                  <p class="mt-3 text-2xl font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
+                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Total Fleet</p>
+                  <p id="totalFleetCount" class="mt-3 text-2xl font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Active</p>
-                  <p class="mt-3 text-2xl font-semibold text-emerald-700"><?= $vehicleActiveCount ?></p>
+                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">On Trip</p>
+                  <p id="onTripCount" class="mt-3 text-2xl font-semibold text-emerald-700">0</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Inactive</p>
-                  <p class="mt-3 text-2xl font-semibold text-rose-600"><?= $vehicleInactiveCount ?></p>
+                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Ready for Booking</p>
+                  <p id="readyBookingCount" class="mt-3 text-2xl font-semibold text-emerald-700">0</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-3">
                   <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Drivers</p>
-                  <p class="mt-3 text-2xl font-semibold text-slate-900"><?= $driverCount ?></p>
+                  <p id="driverAvailableCount" class="mt-3 text-2xl font-semibold text-slate-900">0</p>
                 </div>
+              </div>
+              <div class="mt-4 flex items-center justify-between gap-3">
+                <p id="fleetStatusBadge" class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Live availability</p>
               </div>
             </div>
             <div class="rounded-[26px] border border-slate-200 bg-white p-4 shadow-sm">
@@ -764,6 +767,11 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   const driverFilter = document.getElementById('driverFilter');
   const calendarViewSelect = document.getElementById('calendarViewSelect');
   const refreshBtn = document.getElementById('refreshBtn');
+  const totalFleetCountEl = document.getElementById('totalFleetCount');
+  const onTripCountEl = document.getElementById('onTripCount');
+  const readyBookingCountEl = document.getElementById('readyBookingCount');
+  const driverAvailableCountEl = document.getElementById('driverAvailableCount');
+  const fleetStatusBadgeEl = document.getElementById('fleetStatusBadge');
 
   const externalEventsEl = document.getElementById('external-events');
   const vehicleCardsContainer = document.getElementById('vehicleCardsContainer');
@@ -1648,6 +1656,7 @@ driverForm.addEventListener('submit', function (e) {
 
       if (vehicles.length === 0) {
         vehicleCardsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-slate-500">No vehicles available</div>';
+        refreshFleetSnapshot(vehicles);
         return;
       }
 
@@ -1656,11 +1665,86 @@ driverForm.addEventListener('submit', function (e) {
         const card = createVehicleCard(vehicle);
         vehicleCardsContainer.appendChild(card);
       });
+      refreshFleetSnapshot(vehicles);
     })
     .catch(err => {
       console.error('Error loading vehicle cards:', err);
       vehicleCardsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-rose-500">Failed to load vehicles</div>';
+      updateFleetSnapshot([], [], []);
     });
+  }
+
+  function getTodayRange() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    return { start: start.toISOString(), end: end.toISOString() };
+  }
+
+  function normalizeBookingEvent(event) {
+    const props = event.extendedProps || {};
+    return {
+      vehicle_id: props.vehicle_id || props.vehicleId || props.vehicle || null,
+      driver_id: props.driver_id || props.driverId || props.driver || null,
+      start: event.start || event.startStr || props.departure_expected || props.start_at || null,
+      end: event.end || event.endStr || props.return_expected || props.end_at || null,
+    };
+  }
+
+  function updateFleetSnapshot(vehicles = [], drivers = [], events = []) {
+    const activeVehicles = vehicles.filter(v => String(v.status || '').toLowerCase() === 'active');
+    const activeDrivers = drivers.filter(d => String(d.status || '').toLowerCase() === 'active');
+
+    const ongoingEvents = (events || []).map(ev => normalizeBookingEvent(ev)).filter(item => {
+      return getBookingStatus(item.start, item.end) === 'ongoing';
+    });
+
+    const ongoingVehicleIds = new Set(ongoingEvents.map(ev => String(ev.vehicle_id)).filter(Boolean));
+    const ongoingDriverIds = new Set(ongoingEvents.map(ev => String(ev.driver_id)).filter(Boolean));
+
+    const onTrip = activeVehicles.filter(v => ongoingVehicleIds.has(String(v.id))).length;
+    const readyBooking = Math.max(0, activeVehicles.length - onTrip);
+    const availableDrivers = Math.max(0, activeDrivers.length - ongoingDriverIds.size);
+
+    if (totalFleetCountEl) totalFleetCountEl.textContent = String(vehicles.length);
+    if (onTripCountEl) onTripCountEl.textContent = String(onTrip);
+    if (readyBookingCountEl) readyBookingCountEl.textContent = String(readyBooking);
+    if (driverAvailableCountEl) driverAvailableCountEl.textContent = String(availableDrivers);
+
+    if (fleetStatusBadgeEl) {
+      if (readyBooking === 0) {
+        fleetStatusBadgeEl.className = 'inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700';
+        fleetStatusBadgeEl.textContent = 'No vehicle available';
+      } else if (onTrip > 0) {
+        fleetStatusBadgeEl.className = 'inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700';
+        fleetStatusBadgeEl.textContent = 'Partially booked';
+      } else {
+        fleetStatusBadgeEl.className = 'inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700';
+        fleetStatusBadgeEl.textContent = 'Live availability';
+      }
+    }
+  }
+
+  function refreshFleetSnapshot(vehicles = []) {
+    const range = getTodayRange();
+    const bookingParams = new URLSearchParams({ start: range.start, end: range.end });
+
+    const vehiclePromise = Promise.resolve(vehicles);
+    const driverPromise = fetch(driversListUrl + '&t=' + Date.now(), {
+      method: 'GET', headers: {'X-Requested-With': 'XMLHttpRequest'}
+    }).then(parseJsonResponse).then(data => Array.isArray(data.drivers) ? data.drivers : []);
+    const eventsPromise = fetch(listUrl + '&' + bookingParams.toString(), {
+      method: 'GET', headers: {'X-Requested-With': 'XMLHttpRequest'}
+    }).then(parseJsonResponse).then(data => Array.isArray(data.events) ? data.events : []);
+
+    Promise.all([vehiclePromise, driverPromise, eventsPromise])
+      .then(([vehData, driverData, bookingEvents]) => {
+        updateFleetSnapshot(vehData, driverData, bookingEvents);
+      })
+      .catch(err => {
+        console.error('Failed to refresh fleet snapshot:', err);
+        updateFleetSnapshot(vehicles, [], []);
+      });
   }
 
   function createVehicleCard(vehicle) {

@@ -1560,8 +1560,17 @@ public function getDocumentData() {
 
         $userLevel = (int)($_SESSION['user_level'] ?? 3);
 
+        $trackingId = trim($_POST['tracking_id'] ?? '');
+        if ($trackingId === '') {
+            $trackingId = $this->generateTrackingId();
+        } else {
+            if ($this->model->trackingIdExists($trackingId)) {
+                throw new Exception("Tracking ID '{$trackingId}' is already in use.");
+            }
+        }
+
         $data = [
-            'tracking_id'     => $this->generateTrackingId(),
+            'tracking_id'     => $trackingId,
             'title'           => trim($_POST['title'] ?? ''),
             'type'            => $_POST['type'] ?? 'Memo',
             'description'     => trim($_POST['description'] ?? ''),
