@@ -139,6 +139,18 @@ function sidebarActiveClass(bool $active): string
             </span>
           </a>
         </li>
+
+        <li>
+          <a href="index.php?controller=RoomBookings&action=calendar"
+             class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'RoomBookings' && $currentAction == 'calendar') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'RoomBookings' && $currentAction == 'calendar') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+              <?= $roomIcon ?>
+            </span>
+            <span class="min-w-0 sidebar-expanded leading-tight">
+              <span class="text-sm font-medium">Room Schedule</span>
+            </span>
+          </a>
+        </li>
       </ul>
     </div>
 

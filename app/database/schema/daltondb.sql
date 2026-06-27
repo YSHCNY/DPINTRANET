@@ -98,6 +98,53 @@ CREATE TABLE `car_vehicles` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `rooms`
+--
+
+CREATE TABLE `rooms` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `room_name` varchar(120) NOT NULL,
+  `room_code` varchar(32) NOT NULL,
+  `capacity` int(11) NOT NULL DEFAULT 1,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_room_code` (`room_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `room_bookings`
+--
+
+CREATE TABLE `room_bookings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `date_trip` date NOT NULL,
+  `date_requested` date NOT NULL,
+  `purpose` varchar(180) NOT NULL,
+  `attendees` int(11) NOT NULL,
+  `departure_expected` datetime NOT NULL,
+  `return_expected` datetime NOT NULL,
+  `special_instructions` text DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `room_id` int(11) NOT NULL,
+  `status` enum('scheduled','cancelled') NOT NULL DEFAULT 'scheduled',
+  `created_by` int(11) DEFAULT NULL,
+  `start_at` datetime NOT NULL,
+  `end_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_room_booking_range` (`start_at`,`end_at`),
+  KEY `idx_room_booking_room` (`room_id`,`start_at`),
+  CONSTRAINT `fk_room_bookings_room` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `contractsTbl`
 --
 

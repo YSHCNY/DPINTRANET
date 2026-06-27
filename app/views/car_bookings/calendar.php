@@ -91,7 +91,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
                   <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Fleet summary</p>
                   <h2 class="mt-1 text-lg font-semibold text-slate-900">Snapshot</h2>
                 </div>
-                <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">CRM</span>
+                <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Schedules</span>
               </div>
               <div class="mt-4 grid grid-cols-2 gap-3">
                 <div class="rounded-2xl border border-slate-200 bg-white p-3">

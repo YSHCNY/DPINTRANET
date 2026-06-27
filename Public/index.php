@@ -48,7 +48,7 @@ if ($isAjax) {
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
-    <link rel="icon" type="image/png" href=".././app/assets/logo/icon.png" />
+    <link rel="icon" type="image/png" href=".././app/assets/logo/official.png" />
 </head>
 <body>
 

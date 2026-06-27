@@ -22,6 +22,8 @@
             $documentTitle = 'Standard Users';
         } elseif ($currentController === 'CarBookings' && $currentAction === 'calendar') {
             $documentTitle = 'Car Bookings';
+        } elseif ($currentController === 'RoomBookings' && $currentAction === 'calendar') {
+            $documentTitle = 'Room Bookings';
         } else {
             $documentTitle = 'FMS Portal';
         }
