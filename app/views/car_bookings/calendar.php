@@ -306,7 +306,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 <!-- ============================================
      VEHICLE MODAL
      ============================================ -->
-  <div id="vehicleModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="vehicleModalTitle">
+  <div id="vehicleModal" class="fixed inset-0 z-50 hidden bg-white" role="dialog" aria-modal="true" aria-labelledby="vehicleModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="vehicleModalBackdrop"></div>
   <div class="relative mx-auto my-6 w-[95vw] max-w-4xl modal-panel">
     <div class="modal-header card-header">
@@ -482,7 +482,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 <!-- ============================================
      DRIVERS MODAL
      ============================================ -->
-  <div id="driversModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="driversModalTitle">
+  <div id="driversModal" class="fixed inset-0 z-50 hidden bg-white" role="dialog" aria-modal="true" aria-labelledby="driversModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="driversModalBackdrop"></div>
   <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
     <div class="modal-header card-header">
@@ -723,7 +723,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       min-height: 70px;
     }
   }
-</style>
+
 
   /* Toast styles */
   .app-toast {
@@ -993,7 +993,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     border-bottom: 1px solid rgba(15, 23, 42, 0.06);
   }
 </style>
-</style>
+
 
   <!-- Vehicle Details Modal (shows history and clickable bookings) -->
   <div id="vehicleDetailsModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="vehicleDetailsModalTitle">
