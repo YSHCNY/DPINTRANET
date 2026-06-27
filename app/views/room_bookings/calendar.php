@@ -15,119 +15,97 @@ if (!empty($rooms) && is_array($rooms)) {
 }
 ?>
 <!-- HEADER -->
-<div class="min-h-screen bg-slate-50">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
   <div class="max-w-[1500px] mx-auto px-4 py-6">
-    <div class="mb-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-      <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
+    <div class="mb-6 overflow-hidden rounded-[22px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/40 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)]">
+      <div class="border-b border-slate-200/60 bg-gradient-to-r from-slate-50/80 to-slate-50/60 px-6 py-5">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="max-w-2xl">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-emerald-700">Room bookings</p>
-            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Schedule meeting rooms</h1>
-            <p class="mt-2 text-sm text-slate-500">Book room resources with capacity enforcement and conflict checks.</p>
+          <div class="max-w-2xl space-y-1">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-700">Room scheduling</p>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Meeting rooms calendar</h1>
+            <p class="mt-1 text-sm text-slate-600">Schedule room resources with real-time availability, capacity checks, and conflict prevention.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button type="button" id="openRoomBookingModalBtn" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
-              <span>📅</span>
-              <span>Manage Room Booking</span>
+            <button type="button" id="openRoomBookingModalBtn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>New booking</span>
             </button>
-            <button type="button" id="openRoomCreateModalBtn" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
-              <span>➕</span>
-              <span>Manage Rooms</span>
+            <button type="button" id="openRoomCreateModalBtn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>Manage rooms</span>
             </button>
           </div>
         </div>
       </div>
-      <div class="p-5 lg:p-6">
-        <div class="grid gap-5 xl:grid-cols-8">
-          <div class="xl:col-span-5 grid gap-5">
-            <div class="rounded-[26px] border border-slate-200 bg-white shadow-sm overflow-hidden">
-              <div class="border-b border-slate-100 px-4 py-3">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                  <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">View:</label>
-                    <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer">
-                      <option value="dayGridMonth">Month</option>
-                      <option value="timeGridWeek">Week</option>
-                      <option value="timeGridDay">Day</option>
-                    </select>
-                  </div>
-                  <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                    <label class="text-xs font-medium text-slate-600">Room:</label>
-                    <select id="roomFilter" class="bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer">
-                      <option value="">All</option>
-                      <?php foreach (($rooms ?? []) as $room): ?>
-                        <option value="<?= (int)$room['id'] ?>"><?= htmlspecialchars($room['room_name'] . ' (' . $room['room_code'] . ')') ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
+      <div class="p-6 lg:p-6">
+        <div class="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+          <div class="rounded-[16px] border border-slate-200/60 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-200/60 bg-gradient-to-r from-slate-50/40 to-slate-50/20 px-5 py-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                  <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">View:</label>
+                  <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                    <option value="dayGridMonth">Month</option>
+                    <option value="timeGridWeek">Week</option>
+                    <option value="timeGridDay">Day</option>
+                  </select>
+                </div>
+                <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 shadow-sm">
+                  <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Room:</label>
+                  <select id="roomFilter" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                    <option value="">All</option>
+                    <?php foreach (($rooms ?? []) as $room): ?>
+                      <option value="<?= (int)$room['id'] ?>"><?= htmlspecialchars($room['room_name'] . ' (' . $room['room_code'] . ')') ?></option>
+                    <?php endforeach; ?>
+                  </select>
                 </div>
               </div>
-              <div id="roomBookingCalendar" class="min-h-[520px] p-4 sm:p-5"></div>
             </div>
+            <div id="roomBookingCalendar" class="min-h-[520px] p-4 sm:p-5"></div>
           </div>
 
-          <aside class="xl:col-span-3 space-y-5">
-            <div class="rounded-[26px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Room inventory</p>
-                  <h2 class="mt-1 text-lg font-semibold text-slate-900">Resource summary</h2>
-                </div>
-                <span id="roomInventoryStatusBadge" class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Open for booking</span>
+          <aside class="rounded-[16px] border border-slate-200/60 bg-slate-50/80 p-5 shadow-sm">
+            <div class="space-y-4">
+              <div>
+                <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Room resources</p>
+                <h2 class="mt-1 text-[15px] font-medium text-slate-900">Summary</h2>
               </div>
-              <div class="mt-4 grid grid-cols-2 gap-3">
-                <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Total Rooms</p>
-                  <p id="roomSummaryTotal" class="mt-3 text-2xl font-semibold text-slate-900"><?= $roomCount ?></p>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Total Rooms</p>
+                  <p id="roomSummaryTotal" class="mt-2.5 text-2xl font-semibold text-slate-900"><?= $roomCount ?></p>
                 </div>
-                <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Available Now</p>
-                  <p id="roomSummaryAvailable" class="mt-3 text-2xl font-semibold text-emerald-700">0</p>
+                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Available</p>
+                  <p id="roomSummaryAvailable" class="mt-2.5 text-2xl font-semibold text-emerald-700">0</p>
                 </div>
-                <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Occupied Now</p>
-                  <p id="roomSummaryOccupied" class="mt-3 text-2xl font-semibold text-rose-600">0</p>
+                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">In use</p>
+                  <p id="roomSummaryOccupied" class="mt-2.5 text-2xl font-semibold text-violet-700">0</p>
                 </div>
-                <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Upcoming Bookings</p>
-                  <p id="roomSummaryBookings" class="mt-3 text-2xl font-semibold text-slate-900">0</p>
+                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Upcoming</p>
+                  <p id="roomSummaryBookings" class="mt-2.5 text-2xl font-semibold text-slate-900">0</p>
                 </div>
               </div>
-            </div>
-            <div class="rounded-[26px] border border-slate-200 bg-white p-4 shadow-sm">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <h3 class="text-sm font-semibold text-slate-900">Quick actions</h3>
-                  <p class="text-sm text-slate-500 mt-1">Create a booking or view room availability.</p>
-                </div>
-              </div>
-              <div class="mt-4 grid gap-3">
-              
-
-                  <button type="button" id="openRoomBookingModalBtn" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
-              <span>📅</span>
-              <span>New Room Booking</span>
-            </button>
-            <button type="button" id="openRoomCreateModalBtn" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
-              <span>➕</span>
-              <span>Add Room</span>
-            </button>
-
-              <button type="button" id="refreshRoomsBtn" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
-                  <span>🔄</span>
-                  <span>Refresh availability</span>
-                </button>
+              <div class="pt-2 border-t border-slate-200/60">
+                <p id="roomInventoryStatusBadge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                  <span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                  Open for booking
+                </p>
               </div>
             </div>
           </aside>
         </div>
 
-        <div class="mt-5 space-y-4">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 class="text-xl font-semibold text-slate-900">Room fleet summary</h2>
-              <p class="text-sm text-slate-500 mt-1">Active rooms and upcoming reservations.</p>
-            </div>
+        <div class="mt-6 space-y-4">
+          <div class="space-y-1">
+            <h2 class="text-base font-semibold text-slate-900">Meeting rooms</h2>
+            <p class="text-sm text-slate-600">Real-time room status and upcoming reservations</p>
           </div>
           <div id="roomCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
         </div>
@@ -301,17 +279,168 @@ if (!empty($rooms) && is_array($rooms)) {
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
+<!-- Premium CRM Calendar Styling -->
 <style>
+  :root {
+    --text: #0f172a;
+    --bg-page: #fbfbfe;
+    --bg-card: #ffffff;
+    --surface-1: #f6f7f8;
+    --surface-2: #eef0f2;
+    --primary: #059669;
+    --secondary: #22242a;
+    --accent: #888888;
+    --muted: #64748b;
+    --shadow-1: 0 8px 24px rgba(4, 3, 22, 0.06);
+    --shadow-2: 0 12px 36px rgba(4, 3, 22, 0.08);
+  }
+
+  /* FullCalendar base styling */
+  .fc {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .fc .fc-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0;
+    border: none;
+  }
+
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .fc .fc-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    border-color: rgba(15, 23, 42, 0.1);
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .fc .fc-button:hover {
+    background: #f1f5f9;
+    border-color: rgba(15, 23, 42, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .fc .fc-button-primary:not(:disabled).fc-button-active,
+  .fc .fc-button-primary:not(:disabled):hover {
+    background: #059669;
+    border-color: #047857;
+    color: #ffffff;
+  }
+
+  .fc .fc-button-primary {
+    background: #f1f5f9;
+    border-color: rgba(15, 23, 42, 0.1);
+    color: #0f172a;
+  }
+
+  .fc .fc-scrollgrid {
+    border-color: #f1f5f9;
+  }
+
+  .fc .fc-theme-standard td,
+  .fc .fc-theme-standard th {
+    border-color: #f1f5f9;
+  }
+
+  .fc .fc-daygrid-day-frame {
+    min-height: 80px;
+    padding: 0.5rem;
+  }
+
+  .fc .fc-daygrid-day-top {
+    padding: 0.5rem 0.5rem 0;
+  }
+
+  .fc .fc-daygrid-day-number {
+    color: #64748b;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .fc .fc-day-today {
+    background-color: rgba(16, 185, 129, 0.08) !important;
+  }
+
+  .fc .fc-day-today .fc-daygrid-day-number {
+    color: #047857;
+    font-weight: 600;
+  }
+
+  .fc .fc-event {
+    border: none;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.95;
+    transition: all 0.2s ease;
+  }
+
+  .fc .fc-event:hover {
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    transform: translateY(-1px);
+  }
+
+  .fc .fc-event-main-frame {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .fc .fc-event-title {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .fc .fc-more-link {
+    color: #059669;
+    font-size: 0.75rem;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .fc .fc-more-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Toolbar title styling */
+  .fc .fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  /* Modal styling */
   .modal-panel { border-radius:16px; overflow:hidden; background:#ffffff; box-shadow: 0 20px 60px rgba(2,6,23,0.12); }
   .modal-header { padding:20px; border-bottom:1px solid #eef2f7; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
   .modal-body { padding:20px; max-height: calc(100vh - 240px); overflow:auto; }
   .modal-footer { padding:18px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px; justify-content:flex-end; align-items:center; }
-  .modal-close { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:10px; background:transparent; color:#475569; border:none; cursor:pointer; }
-  .modal-close:hover { background:rgba(15,23,42,0.04); color:#0f172a; }
-  .btn-primary { background: #0ea5a4; color: #fff; padding:10px 16px; border-radius:12px; border:none; font-weight:600; display:inline-flex; gap:8px; align-items:center; }
-  .btn-primary:hover { transform: translateY(-1px); background: #059669; }
-  .btn-ghost { background:transparent; border-radius:10px; padding:8px 12px; border:1px solid rgba(148,163,184,0.25); color:#475569; }
-  .btn-danger { background:#fff; border:1px solid rgba(239,68,68,0.12); color:#dc2626; border-radius:10px; padding:8px 12px; }
+  .modal-close { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:10px; background:transparent; color:#64748b; border:none; cursor:pointer; transition: all 0.2s ease; }
+  .modal-close:hover { background:rgba(15,23,42,0.06); color:#0f172a; }
+  
+  /* Button styling */
+  .btn-primary { background: #059669; color: #fff; padding:10px 16px; border-radius:10px; border:none; font-weight:600; box-shadow: 0 4px 12px rgba(5,150,105,0.15); display:inline-flex; gap:8px; align-items:center; transition: all 0.2s ease; cursor:pointer; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(5,150,105,0.2); background: #047857; }
+  .btn-ghost { background:transparent; border-radius:10px; padding:8px 12px; border:1px solid transparent; color:var(--muted); cursor:pointer; transition: all 0.2s ease; }
+  .btn-ghost:hover { background:rgba(15,23,42,0.04); color:var(--text); }
+  .btn-danger { background:#fff; border:1px solid rgba(220,38,38,0.12); color:#dc2626; border-radius:10px; padding:8px 12px; cursor:pointer; transition: all 0.2s ease; }
+  .btn-danger:hover { background:rgba(220,38,38,0.05); border-color:rgba(220,38,38,0.2); }
+
+  /* Toast notifications */
   .app-toast { position: fixed; bottom: 24px; right: 24px; z-index: 99999; display:flex; gap:12px; align-items:center; min-width:220px; max-width:520px; padding:14px 16px; border-radius:14px; color:#0f172a; box-shadow:0 20px 50px rgba(15,23,42,0.12); background:#ffffff; border:1px solid rgba(148,163,184,0.18); }
   .app-toast .toast-icon { width:24px; height:24px; display:grid; place-items:center; flex:0 0 24px; font-weight:700; }
   .app-toast .toast-message { flex:1; font-size:13px; line-height:1.35; }

@@ -49,30 +49,30 @@
 ?>
 
 <div class="min-h-screen theme-palette">
-    <div class="max-w-[1600px] mx-auto px-4 py-8">
-        <div class="mb-8 overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-            <div class="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-white to-slate-50 px-6 py-5">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div class="max-w-[1400px] mx-auto px-3 py-6">
+        <div class="mb-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+            <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div class="max-w-3xl">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-600">Files Repository</p>
-                        <h2 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Official File Repository</h2>
-                        <p class="mt-2 max-w-2xl text-sm leading-7 text-slate-500">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-emerald-600">Files Repository</p>
+                        <h2 class="mt-1 text-xl font-semibold tracking-tight text-slate-900">Official File Repository</h2>
+                        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
                             Upload, classify, and maintain official files in a clean workspace built for fast scanning and minimal friction.
                         </p>
                     </div>
 
                     <div class="flex flex-wrap gap-2">
-                        <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm">
-                            <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+                        <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-medium text-slate-600 shadow-sm">
+                            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                             <span><?= $fileCount ?> file(s)</span>
                         </div>
-                        <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm">
-                            <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-medium text-slate-600 shadow-sm">
+                            <span class="h-2 w-2 rounded-full bg-slate-400"></span>
                             <span><?= count($categoryOptions) ?> category(s)</span>
                         </div>
                         <?php if ($latestUpload): ?>
-                            <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm">
-                                <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+                            <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-medium text-slate-600 shadow-sm">
+                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                                 <span>Latest <?= date('M d, Y', $latestUpload) ?></span>
                             </div>
                         <?php endif; ?>
@@ -80,12 +80,12 @@
                 </div>
             </div>
 
-            <div class="p-6 lg:p-7">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[220px_260px_minmax(0,1fr)] gap-3 flex-1">
+            <div class="p-4 lg:p-5">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[220px_240px_minmax(0,1fr)] gap-3 flex-1">
                         <div>
-                            <label for="categoryFilter" class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Category</label>
-                            <select id="categoryFilter" class="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                            <label for="categoryFilter" class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Category</label>
+                            <select id="categoryFilter" class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
                                 <option value="">All categories</option>
                                 <?php foreach ($categoryOptions as $category): ?>
                                     <option value="<?= htmlspecialchars($category) ?>"><?= htmlspecialchars($category) ?></option>
@@ -93,8 +93,8 @@
                             </select>
                         </div>
                         <div>
-                            <label for="directionFilter" class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Direction</label>
-                            <select id="directionFilter" class="h-11 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                            <label for="directionFilter" class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Direction</label>
+                            <select id="directionFilter" class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
                                 <option value="">All directions</option>
                                 <?php foreach ($directionOptions as $direction): ?>
                                     <option value="<?= htmlspecialchars($direction) ?>"><?= htmlspecialchars($direction) ?></option>
@@ -102,7 +102,7 @@
                             </select>
                         </div>
                         <div class="flex items-end">
-                            <p class="text-xs leading-5 text-slate-500">
+                            <p class="text-[11px] leading-5 text-slate-500">
                                 Filter by category or direction. Search remains available for quick lookup.
                             </p>
                         </div>
@@ -110,12 +110,12 @@
 
                     <?php if ($canManageFiles): ?>
                         <a href="index.php?controller=Files&action=create"
-                           class="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700">
+                           class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
                             <?= $fileIcon ?? '' ?>
                             Upload New File
                         </a>
                     <?php else: ?>
-                        <div class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                        <div class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
                             <span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
                             Viewer access only
                         </div>
@@ -135,17 +135,17 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto p-6">
+            <div class="overflow-x-auto p-5">
                 <table id="filesTable" class="w-full text-sm">
                     <thead class="bg-slate-50 text-slate-500">
                         <tr class="border-y border-slate-200">
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]">File</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]">Description</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]">Category</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]">Direction</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]">Uploader</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]">Uploaded</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em]">Actions</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">File</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Description</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Category</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Direction</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Uploader</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Uploaded</th>
+                            <th class="px-3 py-2.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em]">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -180,7 +180,7 @@
                                                 $isLong = $descLength >= 100;
                                                 $truncated = $isLong ? substr($desc, 0, 100) . '...' : $desc;
                                             ?>
-                                            <p class="leading-6 description-text" data-full-text="<?= htmlspecialchars($desc) ?>" data-is-long="<?= $isLong ? '1' : '0' ?>">
+                                            <p class="leading-6 description-text word-break: break-all " data-full-text="<?= htmlspecialchars($desc) ?>" data-is-long="<?= $isLong ? '1' : '0' ?>">
                                                 <span class="description-display"><?= $truncated ?></span>
                                                 <?php if ($isLong): ?>
                                                     <button type="button" class="ml-1 italic text-emerald-500 hover:text-emerald-600 transition description-toggle" onclick="toggleDescription(event)">

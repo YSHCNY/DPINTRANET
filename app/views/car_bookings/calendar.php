@@ -15,136 +15,113 @@ if (!empty($vehicles) && is_array($vehicles)) {
 $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 ?>
 
-<div class="min-h-screen bg-slate-50">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
   <div class="max-w-[1500px] mx-auto px-4 py-6">
-    <div class="mb-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-      <div class="border-b border-slate-200 bg-slate-50 px-5 py-4">
+    <div class="mb-6 overflow-hidden rounded-[22px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/40 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)]">
+      <div class="border-b border-slate-200/60 bg-gradient-to-r from-slate-50/80 to-slate-50/60 px-6 py-5">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="max-w-2xl">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.26em] text-emerald-700">Vehicle bookings</p>
-            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Manage bookings and fleet</h1>
-            <p class="mt-2 text-sm text-slate-500">Schedule vehicles, manage drivers, and review booking history.</p>
+          <div class="max-w-2xl space-y-1">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-700">Fleet management</p>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Vehicle bookings calendar</h1>
+            <p class="mt-1 text-sm text-slate-600">Schedule vehicles, manage drivers, and review booking history across your fleet.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button type="button" id="openVehicleModalBtn" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
-              <span>🚗</span>
-              <span>Manage Vehicles</span>
+            <button type="button" id="openVehicleModalBtn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Vehicles</span>
             </button>
-            <button type="button" id="openDriversModalBtn" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
-              <span>👤</span>
-              <span>Manage Drivers</span>
+            <button type="button" id="openDriversModalBtn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 19H9a6 6 0 016-6v0a6 6 0 016 6v0z" />
+              </svg>
+              <span>Drivers</span>
             </button>
           </div>
         </div>
       </div>
-      <div class="p-5 lg:p-6">
-        <div class="grid gap-5 xl:grid-cols-8">
-          <div class="xl:col-span-5 grid gap-5">
-            <div class="rounded-[26px] border border-slate-200 bg-white shadow-sm overflow-hidden">
-              <div class="border-b border-slate-100 px-4 py-3">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                  <div class="flex items-center gap-3">
-                    <div id="external-events" class="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm">
-                      <span class="text-slate-400">⟡</span>
-                      <span class="text-slate-600 font-medium">Drag "New booking" to create</span>
-                    </div>
+      <div class="p-6 lg:p-6">
+        <div class="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+          <div class="rounded-[16px] border border-slate-200/60 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-200/60 bg-gradient-to-r from-slate-50/40 to-slate-50/20 px-5 py-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div id="external-events" class="hidden sm:inline-flex items-center gap-2 rounded-full border border-emerald-200/60 bg-emerald-50/40 px-3 py-2 text-sm font-medium text-emerald-700 shadow-sm">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span>Drag to create booking</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                    <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">View:</label>
+                    <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                      <option value="dayGridMonth">Month</option>
+                      <option value="timeGridWeek">Week</option>
+                      <option value="timeGridDay">Day</option>
+                    </select>
                   </div>
-                  <div class="flex flex-wrap items-center gap-2">
-                    <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
-                      <label class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">View:</label>
-                      <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer">
-                        <option value="dayGridMonth">Month</option>
-                        <option value="timeGridWeek">Week</option>
-                        <option value="timeGridDay">Day</option>
-                      </select>
-                    </div>
-                  
+                  <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 shadow-sm">
+                    <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Vehicle:</label>
+                    <select id="vehicleFilter" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                      <option value="">All</option>
+                      <?php foreach (($vehicles ?? []) as $v): ?>
+                        <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
+                      <?php endforeach; ?>
+                    </select>
                   </div>
-                       <div class="hidden sm:flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-            <label class="text-xs font-medium text-slate-600">Vehicle:</label>
-            <select id="vehicleFilter" class="bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer">
-              <option value="">All</option>
-              <?php foreach (($vehicles ?? []) as $v): ?>
-                <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
-              <?php endforeach; ?>
-            </select>
+                  <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 shadow-sm">
+                    <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Driver:</label>
+                    <select id="driverFilter" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                      <option value="">All</option>
+                      <?php foreach (($drivers ?? []) as $d): ?>
+                        <option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['driver_name']) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="carBookingCalendar" class="min-h-[520px] p-4 sm:p-5"></div>
           </div>
 
-          <div class="hidden sm:flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-            <label class="text-xs font-medium text-slate-600">Driver:</label>
-            <select id="driverFilter" class="bg-transparent text-sm text-slate-700 font-medium focus:outline-none cursor-pointer">
-              <option value="">All</option>
-              <?php foreach (($drivers ?? []) as $d): ?>
-                <option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['driver_name']) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
+          <aside class="rounded-[16px] border border-slate-200/60 bg-slate-50/80 p-5 shadow-sm">
+            <div class="space-y-4">
+              <div>
+                <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Fleet overview</p>
+                <h2 class="mt-1 text-[15px] font-medium text-slate-900">Summary</h2>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Total Fleet</p>
+                  <p id="totalFleetCount" class="mt-2.5 text-2xl font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
+                </div>
+                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">On Trip</p>
+                  <p id="onTripCount" class="mt-2.5 text-2xl font-semibold text-emerald-700">0</p>
+                </div>
+                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Ready</p>
+                  <p id="readyBookingCount" class="mt-2.5 text-2xl font-semibold text-emerald-700">0</p>
+                </div>
+                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
+                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Drivers</p>
+                  <p id="driverAvailableCount" class="mt-2.5 text-2xl font-semibold text-slate-900">0</p>
                 </div>
               </div>
-              <div id="carBookingCalendar" class="min-h-[520px] p-4 sm:p-5"></div>
-            </div>
-          </div>
-          <aside class="xl:col-span-3 space-y-5">
-            <div class="rounded-[26px] border border-slate-200 bg-slate-50 p-4 shadow-sm">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Fleet summary</p>
-                  <h2 class="mt-1 text-lg font-semibold text-slate-900">Snapshot</h2>
-                </div>
-                <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Schedules</span>
-              </div>
-              <div class="mt-4 grid grid-cols-2 gap-3">
-                <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Total Fleet</p>
-                  <p id="totalFleetCount" class="mt-3 text-2xl font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
-                </div>
-                <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">On Trip</p>
-                  <p id="onTripCount" class="mt-3 text-2xl font-semibold text-emerald-700">0</p>
-                </div>
-                <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Ready for Booking</p>
-                  <p id="readyBookingCount" class="mt-3 text-2xl font-semibold text-emerald-700">0</p>
-                </div>
-                <div class="rounded-2xl border border-slate-200 bg-white p-3">
-                  <p class="text-[11px] uppercase tracking-[0.24em] text-slate-500">Drivers</p>
-                  <p id="driverAvailableCount" class="mt-3 text-2xl font-semibold text-slate-900">0</p>
-                </div>
-              </div>
-              <div class="mt-4 flex items-center justify-between gap-3">
-                <p id="fleetStatusBadge" class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Live availability</p>
-              </div>
-            </div>
-            <div class="rounded-[26px] border border-slate-200 bg-white p-4 shadow-sm">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <h3 class="text-sm font-semibold text-slate-900">Quick controls</h3>
-                  <p class="text-sm text-slate-500 mt-1">Manage your fleet and refresh data faster.</p>
-                </div>
-              </div>
-              <div class="mt-4 grid gap-3">
-                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition" id="quickRefreshBtn">
-                  <span>🔄</span>
-                  <span>Refresh all</span>
-                </button>
-                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition" id="openDriversQuickBtn">
-                  <span>👥</span>
-                  <span>Open drivers</span>
-                </button>
-                  <button type="button" id="openVehicleModalQuickBtn" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
-              <span>🚗</span>
-              <span>Open Vehicles</span>
-            </button>
+              <div class="pt-2 border-t border-slate-200/60">
+                <p id="fleetStatusBadge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                  <span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                  Live availability
+                </p>
               </div>
             </div>
           </aside>
         </div>
-        <div class="mt-5 space-y-4">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 class="text-xl font-semibold text-slate-900">Vehicle Fleet Summary</h2>
-              <p class="text-sm text-slate-500 mt-1">Recent bookings and current availability</p>
-            </div>
+        <div class="mt-6 space-y-4">
+          <div class="space-y-1">
+            <h2 class="text-base font-semibold text-slate-900">Fleet vehicles</h2>
+            <p class="text-sm text-slate-600">Real-time vehicle status and recent bookings</p>
           </div>
           <div id="vehicleCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"></div>
         </div>
@@ -588,114 +565,434 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
-<!-- UI tweaks for cleaner, ultra-minimal monochrome look -->
+<!-- Premium CRM Calendar Styling -->
 <style>
-  :root{
-    --text: #040316; /* primary text */
-    --bg-page: #fbfbfe; /* overall page background */
-    --bg-card: #ffffff;
-    --surface-1: #f6f7f8; /* very light */
-    --surface-2: #eef0f2;
-    /* --primary: #467c4d; */
-    --secondary: #22242a;
-    --accent: #888888; /* complementary accent */
-    --muted: #6b7280;
-    --shadow-1: 0 8px 24px rgba(4,3,22,0.06);
-    --shadow-2: 0 12px 36px rgba(4,3,22,0.08);
-  }
-
-  .card-header { background: var(--surface-1); border-bottom: 1px solid var(--surface-2); }
-
-
-  /* FullCalendar toolbar buttons: flat, refined, monochrome */
-  .fc .fc-toolbar-chunk .fc-button {
-    background: var(--bg-card);
-    border: 1px solid var(--surface-2);
-    color: var(--text);
-    padding: 8px 12px;
-    border-radius: 10px;
-    box-shadow: var(--shadow-1);
-    font-weight: 600;
-    transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease, color .12s ease;
-  }
-  .fc .fc-toolbar-chunk .fc-button:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-2);
-  }
-  .fc .fc-toolbar-chunk .fc-button-primary {
-    background: var(--accent);
-    color: #ffffff;
-    border-color: rgba(17,24,39,0.95);
-  }
-  .fc .fc-button:focus { outline: none; box-shadow: 0 0 0 6px rgba(17,24,39,0.06); }
-
-  /* Toast styles — type-aware colors for intuitive UX */
-  .app-toast { display:flex; gap:12px; align-items:center; min-width:220px; max-width:520px; padding:12px 14px; border-radius:12px; color:var(--text); box-shadow:var(--shadow-2); font-weight:700; background:var(--bg-card); border:1px solid var(--surface-2); }
-  .app-toast .toast-icon { width:20px; height:20px; flex:0 0 20px; opacity:0.95; }
-  .app-toast .toast-message { flex:1; font-size:13px; line-height:1.15; color:var(--text); }
-  .app-toast .toast-close { margin-left:8px; background:transparent; border:none; color:var(--muted); cursor:pointer; padding:6px; border-radius:8px; font-weight:700; }
-
-  /* Per-type accents: left border + subtle background tint */
-  .app-toast-success { border-left:4px solid var(--success); background: linear-gradient(90deg, rgba(5,150,105,0.06), var(--bg-card)); }
-  .app-toast-error { border-left:4px solid var(--danger); background: linear-gradient(90deg, rgba(220,38,38,0.06), var(--bg-card)); }
-  .app-toast-info { border-left:4px solid #2563eb; background: linear-gradient(90deg, rgba(37,99,235,0.06), var(--bg-card)); }
-  .app-toast-warning { border-left:4px solid #f59e0b; background: linear-gradient(90deg, rgba(245,158,11,0.06), var(--bg-card)); }
-
-  .app-toast-progress { height:3px; background:var(--surface-2); border-radius:4px; overflow:hidden; margin-top:8px; }
-  .app-toast-success .app-toast-progress > i { background:var(--success); }
-  .app-toast-error .app-toast-progress > i { background:var(--danger); }
-  .app-toast-info .app-toast-progress > i { background:#2563eb; }
-  .app-toast-warning .app-toast-progress > i { background:#f59e0b; }
-
-  /* Modal/card refinements */
   :root {
-    --primary: #0ea5a4;
-    --primary-600: #059669;
+    --text: #0f172a;
+    --bg-page: #fbfbfe;
     --bg-card: #ffffff;
+    --surface-1: #f6f7f8;
+    --surface-2: #eef0f2;
+    --primary: #059669;
+    --secondary: #22242a;
+    --accent: #888888;
     --muted: #64748b;
-    --surface-2: rgba(15,23,42,0.06);
+    --shadow-1: 0 8px 24px rgba(4, 3, 22, 0.06);
+    --shadow-2: 0 12px 36px rgba(4, 3, 22, 0.08);
   }
 
-  /* General modal refinements */
-  .modal-panel { border-radius:16px; overflow:hidden; background:var(--bg-card); box-shadow: 0 20px 60px rgba(2,6,23,0.12); }
-  .modal-header { padding:20px; border-bottom:1px solid #eef2f7; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
-  .modal-body { padding:20px; max-height: calc(100vh - 240px); overflow:auto; }
-  .modal-footer { padding:18px 20px; border-top:1px solid #f1f5f9; display:flex; gap:10px; justify-content:flex-end; align-items:center; }
+  /* FullCalendar base styling */
+  .fc {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  .fc .fc-toolbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0;
+    border: none;
+  }
+
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .fc .fc-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    border-color: rgba(15, 23, 42, 0.1);
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .fc .fc-button:hover {
+    background: #f1f5f9;
+    border-color: rgba(15, 23, 42, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .fc .fc-button-primary:not(:disabled).fc-button-active,
+  .fc .fc-button-primary:not(:disabled):hover {
+    background: #059669;
+    border-color: #047857;
+    color: #ffffff;
+  }
+
+  .fc .fc-button-primary {
+    background: #f1f5f9;
+    border-color: rgba(15, 23, 42, 0.1);
+    color: #0f172a;
+  }
+
+  .fc .fc-scrollgrid {
+    border-color: #f1f5f9;
+  }
+
+  .fc .fc-theme-standard td,
+  .fc .fc-theme-standard th {
+    border-color: #f1f5f9;
+  }
+
+  .fc .fc-daygrid-day-frame {
+    min-height: 80px;
+    padding: 0.5rem;
+  }
+
+  .fc .fc-daygrid-day-top {
+    padding: 0.5rem 0.5rem 0;
+  }
+
+  .fc .fc-daygrid-day-number {
+    color: #64748b;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .fc .fc-day-today {
+    background-color: rgba(16, 185, 129, 0.08) !important;
+  }
+
+  .fc .fc-day-today .fc-daygrid-day-number {
+    color: #047857;
+    font-weight: 600;
+  }
+
+  .fc .fc-event {
+    border: none;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.95;
+    transition: all 0.2s ease;
+  }
+
+  .fc .fc-event:hover {
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    transform: translateY(-1px);
+  }
+
+  .fc .fc-event-main-frame {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .fc .fc-event-title {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .fc .fc-more-link {
+    color: #059669;
+    font-size: 0.75rem;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .fc .fc-more-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Toolbar title styling */
+  .fc .fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  @media (max-width: 640px) {
+    .fc {
+      font-size: 0.85rem;
+    }
+
+    .fc .fc-toolbar-title {
+      font-size: 1.2rem;
+    }
+
+    .fc .fc-daygrid-day-frame {
+      min-height: 70px;
+    }
+  }
+</style>
+
+  /* Toast styles */
+  .app-toast {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    min-width: 220px;
+    max-width: 520px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    color: var(--text);
+    box-shadow: var(--shadow-2);
+    font-weight: 700;
+    background: var(--bg-card);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .app-toast .toast-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    opacity: 0.95;
+  }
+
+  .app-toast .toast-message {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.15;
+    color: var(--text);
+  }
+
+  .app-toast .toast-close {
+    margin-left: 8px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    font-weight: 700;
+  }
+
+  .app-toast-success {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.06), var(--bg-card));
+  }
+
+  .app-toast-error {
+    border-left: 4px solid #dc2626;
+    background: linear-gradient(90deg, rgba(220, 38, 38, 0.06), var(--bg-card));
+  }
+
+  .app-toast-info {
+    border-left: 4px solid #2563eb;
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), var(--bg-card));
+  }
+
+  .app-toast-warning {
+    border-left: 4px solid #f59e0b;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.06), var(--bg-card));
+  }
+
+  /* Modal styling */
+  .modal-panel {
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-card);
+    box-shadow: 0 20px 60px rgba(2, 6, 23, 0.12);
+  }
+
+  .modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .modal-body {
+    padding: 20px;
+    max-height: calc(100vh - 240px);
+    overflow: auto;
+  }
+
+  .modal-footer {
+    padding: 18px 20px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
 
   .modal-close {
-    display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:10px; background:transparent; color:#475569; border:none; cursor:pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: transparent;
+    color: #64748b;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
-  .modal-close:hover { background:rgba(15,23,42,0.04); color:#0f172a; }
 
-  .btn-primary { background: var(--primary); color: #fff; padding:10px 16px; border-radius:12px; border:none; font-weight:600; box-shadow: var(--shadow-1); display:inline-flex; gap:8px; align-items:center; }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); background: var(--accent); }
-  .btn-ghost { background:transparent; border-radius:10px; padding:8px 12px; border:1px solid transparent; color:var(--muted); }
-  .btn-danger { background:#fff; border:1px solid rgba(239,68,68,0.12); color:#dc2626; border-radius:10px; padding:8px 12px; }
+  .modal-close:hover {
+    background: rgba(15, 23, 42, 0.06);
+    color: #0f172a;
+  }
 
-  /* Subtle icon-like action buttons used in tables */
-  .btn-icon { background: transparent; border: 1px solid var(--surface-2); color: var(--text); padding:6px 8px; border-radius:8px; font-size:12px; }
-  .btn-icon:hover { background: var(--surface-1); }
-  .btn-icon-danger { color: #b91c1c; border-color: rgba(185,28,28,0.06); }
+  /* Button styling */
+  .btn-primary {
+    background: #059669;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
 
-  /* Form field subtle focus */
-  select:focus, input:focus, textarea:focus { box-shadow: 0 8px 30px rgba(2,6,23,0.08); border-color: var(--surface-2); outline: none; }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(5, 150, 105, 0.2);
+    background: #047857;
+  }
 
-  /* Vehicles table refinements */
-  .vehicles-table thead th { background: transparent; color: var(--muted); font-weight:700; text-transform:none; }
-  .vehicles-table tbody tr { transition: background .12s ease, transform .08s ease; }
-  .vehicles-table tbody tr:hover { background: #fbfcfd; transform: translateY(-1px); }
-  .vehicle-badge { display:inline-block; padding:6px 8px; border-radius:999px; font-size:12px; color:var(--text); background: rgba(15,23,39,0.03); border:1px solid rgba(15,23,39,0.04); }
-  .vehicle-badge.inactive { color: #475569; background: rgba(99,102,241,0.03); }
+  .btn-ghost {
+    background: transparent;
+    border-radius: 10px;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
 
-  /* Tighter table row spacing and subtle separators */
-  table.w-full td, table.w-full th { border-bottom: 1px solid rgba(15,23,42,0.03); }
-  .vehicle-form-card input, .vehicle-form-card select, .vehicle-form-card textarea { background: #ffffff; }
+  .btn-ghost:hover {
+    background: rgba(15, 23, 42, 0.04);
+    color: var(--text);
+  }
 
-  /* Drivers table refinements (share same visual language as vehicles) */
-  .drivers-table thead th { background: transparent; color: var(--muted); font-weight:700; text-transform:none; }
-  .drivers-table tbody tr { transition: background .12s ease, transform .08s ease; }
-  .drivers-table tbody tr:hover { background: #fbfcfd; transform: translateY(-1px); }
-  .driver-badge { display:inline-block; padding:6px 8px; border-radius:999px; font-size:12px; color:var(--text); background: rgba(15,23,39,0.03); border:1px solid rgba(15,23,39,0.04); }
+  .btn-danger {
+    background: #fff;
+    border: 1px solid rgba(220, 38, 38, 0.12);
+    color: #dc2626;
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-danger:hover {
+    background: rgba(220, 38, 38, 0.05);
+    border-color: rgba(220, 38, 38, 0.2);
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    color: var(--text);
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-icon:hover {
+    background: #f1f5f9;
+    border-color: rgba(15, 23, 42, 0.15);
+  }
+
+  .btn-icon-danger {
+    color: #b91c1c;
+    border-color: rgba(185, 28, 28, 0.1);
+  }
+
+  /* Form fields */
+  select:focus,
+  input:focus,
+  textarea:focus {
+    box-shadow: 0 8px 30px rgba(2, 6, 23, 0.08);
+    border-color: rgba(15, 23, 42, 0.15);
+    outline: none;
+  }
+
+  /* Table styling */
+  .vehicles-table thead th {
+    background: transparent;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: none;
+  }
+
+  .vehicles-table tbody tr {
+    transition: background 0.12s ease, transform 0.08s ease;
+  }
+
+  .vehicles-table tbody tr:hover {
+    background: #fbfcfd;
+    transform: translateY(-1px);
+  }
+
+  .vehicle-badge {
+    display: inline-block;
+    padding: 6px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text);
+    background: rgba(15, 23, 39, 0.03);
+    border: 1px solid rgba(15, 23, 39, 0.04);
+  }
+
+  .vehicle-badge.inactive {
+    color: #64748b;
+    background: rgba(99, 102, 241, 0.03);
+  }
+
+  table.w-full td,
+  table.w-full th {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.03);
+  }
+
+  .vehicle-form-card input,
+  .vehicle-form-card select,
+  .vehicle-form-card textarea {
+    background: #ffffff;
+  }
+
+  .drivers-table thead th {
+    background: transparent;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: none;
+  }
+
+  .drivers-table tbody tr {
+    transition: background 0.12s ease, transform 0.08s ease;
+  }
+
+  .drivers-table tbody tr:hover {
+    background: #fbfcfd;
+    transform: translateY(-1px);
+  }
+
+  .driver-badge {
+    display: inline-block;
+    padding: 6px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text);
+    background: rgba(15, 23, 39, 0.03);
+    border: 1px solid rgba(15, 23, 39, 0.04);
+  }
+
+  .card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  }
+</style>
 </style>
 
   <!-- Vehicle Details Modal (shows history and clickable bookings) -->
