@@ -873,7 +873,7 @@ class CorrespondenceController extends Controller {
                 $this->redirect('index.php?controller=correspondence&action=show&id=' . (int)$documentId);
             }
 
-            $targetDir = __DIR__ . '/../../uploads/thread/' . $documentId;
+            $targetDir = __DIR__ . '/../../Public/uploads/thread/' . $documentId;
             if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
 
             for ($i = 0; $i < $count; $i++) {

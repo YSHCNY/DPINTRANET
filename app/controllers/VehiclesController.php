@@ -45,7 +45,7 @@ class VehiclesController extends Controller {
             // handle optional image upload
             $imageFilename = null;
             if (isset($_FILES['vehicle_image']) && is_uploaded_file($_FILES['vehicle_image']['tmp_name'])) {
-                $uploadDir = __DIR__ . '/../../uploads/vehicle/';
+                $uploadDir = __DIR__ . '/../../Public/uploads/vehicle/';
                 if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
                 $ext = strtolower(pathinfo($_FILES['vehicle_image']['name'], PATHINFO_EXTENSION));
                 $allowed = ['jpg','jpeg','png','gif','webp'];
@@ -105,7 +105,7 @@ class VehiclesController extends Controller {
             // handle optional image upload (replace)
             $imageFilename = null;
             if (isset($_FILES['vehicle_image']) && is_uploaded_file($_FILES['vehicle_image']['tmp_name'])) {
-                $uploadDir = __DIR__ . '/../../uploads/vehicle/';
+                $uploadDir = __DIR__ . '/../../Public/uploads/vehicle/';
                 if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
                 $ext = strtolower(pathinfo($_FILES['vehicle_image']['name'], PATHINFO_EXTENSION));
                 $allowed = ['jpg','jpeg','png','gif','webp'];
