@@ -1,8 +1,17 @@
 <?php
-// Application config: force BOOKING_STORE to 'db' so module uses database only.
-if (!defined('BOOKING_STORE')) {
-    define('BOOKING_STORE', 'db');
-}
+if (!defined('BASE_URL')) {
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $scriptDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
 
-// Note: environment overrides are intentionally disabled to ensure
-// bookings are always persisted to the database for production/deadline runs.
+    if ($scriptDir === '' || $scriptDir === '/') {
+        $baseUrl = '/';
+    } else {
+        if (basename($scriptDir) === 'Public') {
+            $scriptDir = dirname($scriptDir);
+        }
+
+        $baseUrl = rtrim($scriptDir, '/') . '/';
+    }
+
+    define('BASE_URL', $baseUrl);
+}

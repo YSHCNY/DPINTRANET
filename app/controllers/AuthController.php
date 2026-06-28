@@ -250,6 +250,7 @@ class AuthController extends Controller {
                 $data['lastName'],
                 $data['position'],
                 $data['userLevel'],
+                $data['email'],
                 $data['profile_picture']
             );
 
@@ -399,6 +400,7 @@ class AuthController extends Controller {
             'password' => $_POST['password'] ?? '',
             'firstName' => trim($_POST['firstName'] ?? ''),
             'lastName' => trim($_POST['lastName'] ?? ''),
+            'email' => trim($_POST['email'] ?? ''),
             'position' => trim($_POST['position'] ?? ''),
             'userLevel' => (int)($_POST['user_level'] ?? 3),
             'profile_picture' => null,
@@ -410,6 +412,10 @@ class AuthController extends Controller {
 
         if ($requirePassword && $data['password'] === '') {
             throw new Exception('Password is required.');
+        }
+
+        if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('Enter a valid email address.');
         }
 
         if (!array_key_exists($data['userLevel'], $this->coreUserLevels())) {

@@ -159,7 +159,7 @@ $statusClass = match (strtolower((string)$status)) {
                         <div class="mt-2 flex flex-wrap gap-1">
                             <?php foreach ($entry['files'] as $f): ?>
                                 <a
-                                    href="<?= htmlspecialchars(str_replace($_SERVER['DOCUMENT_ROOT'], '', $f['file_path'])) ?>"
+                                    href="<?= htmlspecialchars((defined('BASE_URL') ? BASE_URL : '/') . 'uploads/correspondence/' . basename((string)($f['file_path'] ?? ''))) ?>"
                                     download
                                     class="text-[9px] font-medium inline-flex items-center gap-1 px-1.5 md:px-2 py-0.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition"
                                 >

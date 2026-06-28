@@ -84,19 +84,35 @@
           </div>
 
           <!-- Username -->
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1">
-              Username
-            </label>
-            <input
-              type="text"
-              name="username"
-              required
-              placeholder="Choose a username"
-              class="w-full rounded-xl border border-gray-300
-                     px-4 py-3 text-gray-800
-                     focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">
+                Username
+              </label>
+              <input
+                type="text"
+                name="username"
+                required
+                placeholder="Choose a username"
+                class="w-full rounded-xl border border-gray-300
+                       px-4 py-3 text-gray-800
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter email address"
+                class="w-full rounded-xl border border-gray-300
+                       px-4 py-3 text-gray-800
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+            </div>
           </div>
 
           <!-- Password -->

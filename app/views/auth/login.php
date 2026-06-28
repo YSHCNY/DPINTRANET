@@ -12,7 +12,7 @@
 
     <!-- Left Image Panel -->
     <div class="hidden md:block md:w-1/2 bg-blue-600 flex items-center justify-center">
-      <img src=".././app/assets/img/Frame5.png" alt="Login Image" class="object-cover h-full w-full">
+      <img src="<?= BASE_URL ?>uploads/banner/Frame5.png" alt="Login Image" class="object-cover h-full w-full">
     </div>
 
     <!-- Login Form -->
@@ -76,7 +76,7 @@
 
 
       <div class="w-1/3  flex my-8">
-      <img src=".././app/assets/logo/official.png" alt="Login Image" class="object-cover h-1/2 w-1/2">
+      <img src="<?= BASE_URL ?>uploads/logo/official.png" alt="Login Image" class="object-cover h-1/2 w-1/2">
     </div>
 
 

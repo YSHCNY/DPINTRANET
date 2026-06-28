@@ -22,10 +22,10 @@ class User extends Model {
         return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function create($username, $password, $firstName, $lastName, $position, $userLevel, $profilePicture = null) {
+    public function create($username, $password, $firstName, $lastName, $position, $userLevel, $email = '', $profilePicture = null) {
         $stmt = $this->db->prepare(
-            "INSERT INTO UserTbl (`username`, `password`, `firstName`, `lastName`, `position`, `userLevel`, `profile_picture`)
-             VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO UserTbl (`username`, `password`, `firstName`, `lastName`, `email`, `position`, `userLevel`, `profile_picture`)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         );
 
         return $stmt->execute([
@@ -33,6 +33,7 @@ class User extends Model {
             password_hash($password, PASSWORD_DEFAULT),
             $firstName,
             $lastName,
+            $email,
             $position,
             $userLevel,
             $profilePicture
@@ -45,6 +46,7 @@ class User extends Model {
             ':username' => $data['username'],
             ':firstName' => $data['firstName'],
             ':lastName' => $data['lastName'],
+            ':email' => $data['email'] ?? '',
             ':position' => $data['position'],
             ':userLevel' => $data['userLevel'],
             ':profile_picture' => $data['profile_picture'],
@@ -60,6 +62,7 @@ class User extends Model {
                 SET username = :username,
                     firstName = :firstName,
                     lastName = :lastName,
+                    email = :email,
                     position = :position,
                     userLevel = :userLevel,
                     profile_picture = :profile_picture

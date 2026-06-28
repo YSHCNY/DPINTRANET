@@ -4,6 +4,7 @@ require_once '../app/core/Controller.php';
 require_once '../app/models/User.php';
 require_once "../app/models/correspondence.php";
 require_once '../app/models/UserModel.php';
+require_once '../app/config.php';
 
 
 class CorrespondenceController extends Controller {
@@ -1743,7 +1744,7 @@ public function getDocumentData() {
         }
 
         $uploaded = [];
-        $uploadDir = __DIR__ . "/../uploads/correspondence/";
+        $uploadDir = __DIR__ . '/../../Public/uploads/correspondence/';
 
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);

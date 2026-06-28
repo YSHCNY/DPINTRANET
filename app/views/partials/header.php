@@ -9,7 +9,7 @@ $roleLabels = [
   3 => 'Viewer',
 ];
 $avatarFile = $_SESSION['profile_picture'] ?? 'default.png';
-$avatarSrc = '../app/assets/profiles/' . $avatarFile;
+$avatarSrc = BASE_URL . 'uploads/assets/profiles/' . $avatarFile;
 $fullName = trim(($_SESSION['firstName'] ?? '') . ' ' . ($_SESSION['lastName'] ?? '')) ?: 'Guest';
 $position = $_SESSION['position'] ?? 'User';
 
@@ -121,7 +121,9 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
     <div class="relative">
       <button id="profileMenuButton" type="button"
         class="flex items-center gap-2 rounded-lg hover:bg-emerald-600 text-white px-2 py-1 text-left transition focus:outline-none">
-        <img src="<?= htmlspecialchars($avatarSrc) ?>"
+        
+        <img src="<?=BASE_URL ?>uploads/profiles/<?= htmlspecialchars($avatarFile) ?>"
+
              class="h-8 w-8 rounded-full object-cover ring-2 ring-white/30"
              alt="User avatar">
         <div class="header-user-info hidden pr-1 sm:block min-w-0">
@@ -135,7 +137,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
         <!-- Profile Header -->
         <div class="px-3 py-2 bg-emerald-700 text-white">
           <div class="flex items-center gap-2">
-            <img src="<?= htmlspecialchars($avatarSrc) ?>" class="h-10 w-10 rounded-lg object-cover ring-2 ring-white/30" alt="User avatar">
+             <img src="<?=BASE_URL ?>uploads/profiles/<?= htmlspecialchars($avatarFile) ?>" class="h-10 w-10 rounded-lg object-cover ring-2 ring-white/30" alt="User avatar">
             <div class="min-w-0 flex-1">
               <p class="text-sm font-semibold text-white truncate"><?= htmlspecialchars($fullName) ?></p>
               <p class="text-xs text-emerald-100 truncate"><?= htmlspecialchars($position) ?></p>

@@ -1,5 +1,6 @@
 <?php
 ob_start();
+require_once __DIR__ . '/../app/config.php';
 
 // 1. Error Reporting (Keep this during development)
 ini_set('display_errors', 1);

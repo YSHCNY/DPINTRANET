@@ -98,12 +98,20 @@ function coreUserLevelClass($level) {
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5">Username <span class="text-red-500">*</span></label>
                             <input type="text" name="username" required value="<?= coreUserValue($editingUser, 'username') ?>"
                                    class="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
                         </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1.5">Email</label>
+                            <input type="email" name="email" value="<?= coreUserValue($editingUser, 'email') ?>"
+                                   class="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1.5">Password <?= $isEdit ? '<span class="text-gray-400">(optional)</span>' : '<span class="text-red-500">*</span>' ?></label>
                             <input type="password" name="password" <?= $isEdit ? '' : 'required' ?>
@@ -157,6 +165,7 @@ function coreUserLevelClass($level) {
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">User</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Username</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Email</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Position</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500">Access</th>
                         <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500">Actions</th>
@@ -177,6 +186,7 @@ function coreUserLevelClass($level) {
                                 </div>
                             </td>
                             <td class="px-4 py-3 font-mono text-gray-700"><?= htmlspecialchars($user['username']) ?></td>
+                            <td class="px-4 py-3 text-gray-700"><?= htmlspecialchars($user['email'] ?? '') ?></td>
                             <td class="px-4 py-3 text-gray-700"><?= htmlspecialchars($user['position']) ?></td>
                             <td class="px-4 py-3 text-center">
                                 <span class="inline-flex rounded-md border px-2.5 py-1 text-xs font-semibold <?= coreUserLevelClass($user['userLevel']) ?>">

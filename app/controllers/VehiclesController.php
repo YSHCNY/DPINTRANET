@@ -166,7 +166,7 @@ class VehiclesController extends Controller {
         // Keep existing behavior: calendar dropdown needs only active vehicles
         $vehicles = $this->vehiclesModel->getActiveVehicles();
         // Ensure full URL for image preview if available
-        $baseUrl = getBaseUrlForUploads();
+        $baseUrl = rtrim(BASE_URL, '/') . '/';
         foreach ($vehicles as &$v) {
             if (!empty($v['image_filename'])) {
                 $v['image_url'] = $baseUrl . 'uploads/vehicle/' . $v['image_filename'];
@@ -185,28 +185,28 @@ class VehiclesController extends Controller {
         $status = isset($_GET['status']) ? (string)$_GET['status'] : null;
         $vehicles = $this->vehiclesModel->listVehicles($status);
         // Add image_url for each vehicle for convenient previews
-        $baseUrl = getBaseUrlForUploads();
-        foreach ($vehicles as &$v) {
-            if (!empty($v['image_filename'])) {
-                $v['image_url'] = $baseUrl . 'uploads/vehicle/' . $v['image_filename'];
-            } else {
-                $v['image_url'] = $baseUrl . 'uploads/vehicle/default.png';
-            }
+        $baseUrl = rtrim(BASE_URL, '/') . '/';
+       foreach ($vehicles as &$v) {
+        if (!empty($v['image_filename'])) {
+            $v['image_url'] = $baseUrl . 'uploads/vehicle/' . $v['image_filename'];
+        } else {
+            $v['image_url'] = $baseUrl . 'uploads/vehicle/default.png';
         }
+    }
         echo json_encode(['success' => true, 'vehicles' => $vehicles]);
         exit;
     }
 }
 
 // helper may be used to build upload URLs (best-effort)
-function getBaseUrlForUploads() {
-    // Try to compute base from script location
-    $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $script = dirname($_SERVER['SCRIPT_NAME'] ?? '/');
-    // uploads are stored at project_root/uploads, which is the parent of the Public script dir
-    $projectRoot = dirname($script);
-    return rtrim($proto . '://' . $host . $projectRoot, '/') . '/';
-}
+// function getBaseUrlForUploads() {
+//     // Try to compute base from script location
+//     $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+//     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+//     $script = dirname($_SERVER['SCRIPT_NAME'] ?? '/');
+//     // uploads are stored at project_root/uploads, which is the parent of the Public script dir
+//     $projectRoot = dirname($script);
+//     return rtrim($proto . '://' . $host . $projectRoot, '/') . '/';
+// }
 
 
