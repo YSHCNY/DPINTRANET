@@ -8,6 +8,8 @@ $documentDetailsStatus = $documentDetailsStatus ?? $status;
 $receivedCount = $receivedCount ?? 0;
 $totalRecipients = $totalRecipients ?? 0;
 
+// $base = rtrim(defined('BASE_URL') ? BASE_URL : '/', '/') . '/';
+
 $isDeleted = !empty($doc['is_deleted']);
 $priorityClass = match ($doc['priority'] ?? 'Medium') {
     'Urgent' => 'bg-red-50 text-red-700',
@@ -157,14 +159,27 @@ $statusClass = match (strtolower((string)$status)) {
                     <!-- Files -->
                     <?php if (!empty($entry['files'])): ?>
                         <div class="mt-2 flex flex-wrap gap-1">
-                            <?php foreach ($entry['files'] as $f): ?>
+                            <?php
+                                $projectRoot = rtrim(str_replace('\\', '/', dirname(__DIR__, 3)), '/');
+                                foreach ($entry['files'] as $f):
+                                    $storedPath = str_replace('\\', '/', (string)($f['file_path'] ?? ''));
+                                    $relativePath = $projectRoot !== '' && strpos($storedPath, $projectRoot . '/') === 0
+                                        ? substr($storedPath, strlen($projectRoot) + 1)
+                                        : basename($storedPath);
+                                    $downloadUrl = rtrim((defined('BASE_URL') ? BASE_URL : '/'), '/') . '/' . ltrim($relativePath, '/');
+                            ?>
                                 <a
-                                    href="<?= htmlspecialchars((defined('BASE_URL') ? BASE_URL : '/') . 'uploads/correspondence/' . basename((string)($f['file_path'] ?? ''))) ?>"
+                                    href="<?= htmlspecialchars($downloadUrl) ?>"
                                     download
                                     class="text-[9px] font-medium inline-flex items-center gap-1 px-1.5 md:px-2 py-0.5 rounded-md border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition"
                                 >
-                                    <svg class="w-2.5 md:w-3 h-2.5 md:h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path></svg>
-                                    <span class="truncate max-w-[120px] md:max-w-[160px]"><?= htmlspecialchars($f['file_name']) ?></span>
+                                    <svg class="w-2.5 md:w-3 h-2.5 md:h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+                                    </svg>
+
+                                    <span class="truncate max-w-[120px] md:max-w-[160px]">
+                                        <?= htmlspecialchars($f['file_name']) ?>
+                                    </span>
                                 </a>
                             <?php endforeach; ?>
                         </div>

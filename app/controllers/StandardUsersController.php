@@ -9,7 +9,7 @@ class StandardUsersController extends Controller {
 
     public function __construct() {
         $this->userModel = new UserModel();
-        $this->uploadDir = __DIR__ . '/../uploads/standard_users/';
+        $this->uploadDir = __DIR__ . '/../../uploads/standard_users/';
     }
 
     public function index() {

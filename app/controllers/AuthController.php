@@ -452,7 +452,7 @@ class AuthController extends Controller {
             throw new Exception('Profile picture must be a JPG, PNG, or WEBP image.');
         }
 
-        $uploadDir = __DIR__ . '/../../Public/uploads/profiles/';
+        $uploadDir = dirname(__DIR__, 2) . '/uploads/profile/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }

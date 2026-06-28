@@ -873,7 +873,7 @@ class CorrespondenceController extends Controller {
                 $this->redirect('index.php?controller=correspondence&action=show&id=' . (int)$documentId);
             }
 
-            $targetDir = __DIR__ . '/../../Public/uploads/thread/' . $documentId;
+            $targetDir = dirname(__DIR__, 2) . '/uploads/thread/' . $documentId;
             if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
 
             for ($i = 0; $i < $count; $i++) {
@@ -1691,6 +1691,46 @@ public function getDocumentData() {
         return 'DPEARP-' . str_pad($number, 5, '0', STR_PAD_LEFT);
     }
 
+    private function getCorrespondenceUploadDirectory(): string {
+        $uploadDir = dirname(__DIR__, 2) . '/uploads/correspondence/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        return $uploadDir;
+    }
+
+    private function buildCorrespondenceAttachmentUrl(string $filename): string {
+        $baseUrl = rtrim(BASE_URL, '/') . '/';
+        return $baseUrl . 'uploads/correspondence/' . ltrim(basename($filename), '/');
+    }
+
+    private function resolveStoredAttachmentPath(string $path): string {
+        if ($path === '') {
+            return '';
+        }
+
+        if (file_exists($path)) {
+            return $path;
+        }
+
+        $rootDir = $this->getCorrespondenceUploadDirectory();
+        $candidate = $path;
+
+        if (strpos($candidate, '/') === false) {
+            $candidate = $rootDir . $candidate;
+        } elseif (strpos($candidate, '/uploads/correspondence/') === false && strpos($candidate, 'correspondence/') !== false) {
+            $candidate = $rootDir . basename($candidate);
+        }
+
+        if (file_exists($candidate)) {
+            return $candidate;
+        }
+
+
+        return $path;
+    }
+
     /**
      * Handle multiple file uploads
      */
@@ -1744,11 +1784,7 @@ public function getDocumentData() {
         }
 
         $uploaded = [];
-        $uploadDir = __DIR__ . '/../../Public/uploads/correspondence/';
-
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
+        $uploadDir = $this->getCorrespondenceUploadDirectory();
 
         foreach ($attachments as $attachment) {
             $name = $attachment['name'];
@@ -1853,7 +1889,7 @@ public function getDocumentData() {
     }
 
     private function streamAttachment(array $attachment): void {
-        $fullPath = $attachment['file_path'] ?? '';
+        $fullPath = $this->resolveStoredAttachmentPath((string)($attachment['file_path'] ?? ''));
 
         if ($fullPath === '' || !file_exists($fullPath)) {
             $_SESSION['message'] = "File not found on server.";

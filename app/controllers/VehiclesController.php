@@ -21,6 +21,69 @@ class VehiclesController extends Controller {
         }
     }
 
+    private function getVehicleUploadDirectory(): string {
+        $uploadDir = dirname(__DIR__, 2) . '/uploads/vehicle/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        return $uploadDir;
+    }
+
+    private function buildVehicleImageUrl(string $filename): string {
+        return rtrim(BASE_URL, '/') . '/uploads/vehicle/' . ltrim($filename, '/');
+    }
+
+    private function storeVehicleImageUpload(): string {
+        if (!isset($_FILES['vehicle_image']) || !is_uploaded_file($_FILES['vehicle_image']['tmp_name'])) {
+            throw new Exception('No vehicle image uploaded.');
+        }
+
+        $uploadDir = $this->getVehicleUploadDirectory();
+        $ext = strtolower(pathinfo($_FILES['vehicle_image']['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+        if (!in_array($ext, $allowed, true)) {
+            throw new Exception('Unsupported image type. Allowed: jpg,jpeg,png,gif,webp');
+        }
+
+        if ($_FILES['vehicle_image']['size'] > 2 * 1024 * 1024) {
+            throw new Exception('Image too large (max 2MB)');
+        }
+
+        $imageFilename = uniqid('veh_', true) . '.' . $ext;
+        $dest = $uploadDir . $imageFilename;
+
+        if (!move_uploaded_file($_FILES['vehicle_image']['tmp_name'], $dest)) {
+            throw new Exception('Failed to move uploaded file');
+        }
+
+        return $imageFilename;
+    }
+
+    private function ensureVehicleImageAvailable(?string $filename): ?string {
+        if ($filename === null || $filename === '') {
+            return null;
+        }
+
+        $uploadDir = $this->getVehicleUploadDirectory();
+        $targetPath = $uploadDir . $filename;
+
+        if (file_exists($targetPath)) {
+            return $targetPath;
+        }
+
+        $legacyPath = __DIR__ . '/../../Public/uploads/vehicle/' . $filename;
+        if (file_exists($legacyPath)) {
+            @copy($legacyPath, $targetPath);
+            if (file_exists($targetPath)) {
+                return $targetPath;
+            }
+        }
+
+        return null;
+    }
+
     public function create() {
         $this->requireLogin();
         $this->requireVehicleWritePermission();
@@ -45,17 +108,7 @@ class VehiclesController extends Controller {
             // handle optional image upload
             $imageFilename = null;
             if (isset($_FILES['vehicle_image']) && is_uploaded_file($_FILES['vehicle_image']['tmp_name'])) {
-                $uploadDir = __DIR__ . '/../../Public/uploads/vehicle/';
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-                $ext = strtolower(pathinfo($_FILES['vehicle_image']['name'], PATHINFO_EXTENSION));
-                $allowed = ['jpg','jpeg','png','gif','webp'];
-                if (!in_array($ext, $allowed, true)) throw new Exception('Unsupported image type. Allowed: jpg,jpeg,png,gif,webp');
-                if ($_FILES['vehicle_image']['size'] > 2 * 1024 * 1024) throw new Exception('Image too large (max 2MB)');
-                $imageFilename = uniqid('veh_', true) . '.' . $ext;
-                $dest = $uploadDir . $imageFilename;
-                if (!move_uploaded_file($_FILES['vehicle_image']['tmp_name'], $dest)) {
-                    throw new Exception('Failed to move uploaded file');
-                }
+                $imageFilename = $this->storeVehicleImageUpload();
             }
 
             $id = $this->vehiclesModel->createVehicle([
@@ -105,17 +158,7 @@ class VehiclesController extends Controller {
             // handle optional image upload (replace)
             $imageFilename = null;
             if (isset($_FILES['vehicle_image']) && is_uploaded_file($_FILES['vehicle_image']['tmp_name'])) {
-                $uploadDir = __DIR__ . '/../../Public/uploads/vehicle/';
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-                $ext = strtolower(pathinfo($_FILES['vehicle_image']['name'], PATHINFO_EXTENSION));
-                $allowed = ['jpg','jpeg','png','gif','webp'];
-                if (!in_array($ext, $allowed, true)) throw new Exception('Unsupported image type. Allowed: jpg,jpeg,png,gif,webp');
-                if ($_FILES['vehicle_image']['size'] > 2 * 1024 * 1024) throw new Exception('Image too large (max 2MB)');
-                $imageFilename = uniqid('veh_', true) . '.' . $ext;
-                $dest = $uploadDir . $imageFilename;
-                if (!move_uploaded_file($_FILES['vehicle_image']['tmp_name'], $dest)) {
-                    throw new Exception('Failed to move uploaded file');
-                }
+                $imageFilename = $this->storeVehicleImageUpload();
             }
 
             $payload = [
@@ -166,12 +209,12 @@ class VehiclesController extends Controller {
         // Keep existing behavior: calendar dropdown needs only active vehicles
         $vehicles = $this->vehiclesModel->getActiveVehicles();
         // Ensure full URL for image preview if available
-        $baseUrl = rtrim(BASE_URL, '/') . '/';
         foreach ($vehicles as &$v) {
             if (!empty($v['image_filename'])) {
-                $v['image_url'] = $baseUrl . 'uploads/vehicle/' . $v['image_filename'];
+                $this->ensureVehicleImageAvailable($v['image_filename']);
+                $v['image_url'] = $this->buildVehicleImageUrl($v['image_filename']);
             } else {
-                $v['image_url'] = $baseUrl . 'uploads/vehicle/default.png';
+                $v['image_url'] = $this->buildVehicleImageUrl('default.png');
             }
         }
         echo json_encode(['success' => true, 'vehicles' => $vehicles]);
@@ -185,12 +228,12 @@ class VehiclesController extends Controller {
         $status = isset($_GET['status']) ? (string)$_GET['status'] : null;
         $vehicles = $this->vehiclesModel->listVehicles($status);
         // Add image_url for each vehicle for convenient previews
-        $baseUrl = rtrim(BASE_URL, '/') . '/';
        foreach ($vehicles as &$v) {
         if (!empty($v['image_filename'])) {
-            $v['image_url'] = $baseUrl . 'uploads/vehicle/' . $v['image_filename'];
+            $this->ensureVehicleImageAvailable($v['image_filename']);
+            $v['image_url'] = $this->buildVehicleImageUrl($v['image_filename']);
         } else {
-            $v['image_url'] = $baseUrl . 'uploads/vehicle/default.png';
+            $v['image_url'] = $this->buildVehicleImageUrl('default.png');
         }
     }
         echo json_encode(['success' => true, 'vehicles' => $vehicles]);
