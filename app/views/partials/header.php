@@ -11,16 +11,6 @@ $roleLabels = [
   6 => 'User / GRP Head',
   3 => 'Viewer',
 ];
-$
-// Compute a display label grouped by access level so similar roles share the same visible label
-$displayRole = 'Viewer';
-if (in_array($currentLevel, [0], true)) {
-  $displayRole = 'Super Admin';
-} elseif (in_array($currentLevel, [1, 4, 5], true)) {
-  $displayRole = 'Admin';
-} elseif (in_array($currentLevel, [2, 6], true)) {
-  $displayRole = 'Encoder';
-}
 $avatarFile = $_SESSION['profile_picture'] ?? 'default.png';
 $avatarSrc = BASE_URL . 'uploads/assets/profiles/' . $avatarFile;
 $fullName = trim(($_SESSION['firstName'] ?? '') . ' ' . ($_SESSION['lastName'] ?? '')) ?: 'Guest';
@@ -141,7 +131,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
              alt="User avatar">
         <div class="header-user-info hidden pr-1 sm:block min-w-0">
           <p class="text-sm font-medium leading-4 text-white truncate"><?= htmlspecialchars($fullName) ?></p>
-          <p class="text-[10px] uppercase tracking-wide text-emerald-100"><?= htmlspecialchars($displayRole) ?></p>
+          <p class="text-[10px] uppercase tracking-wide text-emerald-100"><?= htmlspecialchars($roleLabels[$currentLevel] ?? 'Viewer') ?></p>
         </div>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-200" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
       </button>
@@ -157,7 +147,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
             </div>
           </div>
           <div class="mt-2 inline-flex rounded-md bg-emerald-600 text-white px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
-            <?= htmlspecialchars($displayRole) ?>
+            <?= htmlspecialchars($roleLabels[$currentLevel] ?? 'Viewer') ?>
           </div>
         </div>
 
