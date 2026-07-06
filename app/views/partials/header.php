@@ -11,6 +11,8 @@ $roleLabels = [
   6 => 'User / GRP Head',
   3 => 'Viewer',
 ];
+// Ensure a display role variable exists to avoid undefined variable warnings
+$displayRole = $displayRole ?? ($roleLabels[$currentLevel] ?? 'Viewer');
 $avatarFile = $_SESSION['profile_picture'] ?? 'default.png';
 $avatarSrc = BASE_URL . 'uploads/assets/profiles/' . $avatarFile;
 $fullName = trim(($_SESSION['firstName'] ?? '') . ' ' . ($_SESSION['lastName'] ?? '')) ?: 'Guest';
