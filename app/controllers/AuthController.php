@@ -383,7 +383,10 @@ class AuthController extends Controller {
     private function coreUserLevels() {
         $levels = [
             1 => 'Admin',
+            4 => 'PROJECT MANAGER (PM)',
+            5 => 'DEPUTY PROJECT MANAGER (DPM)',
             2 => 'Encoder',
+            6 => 'User / GRP Head',
             3 => 'Viewer',
         ];
 

@@ -3,7 +3,16 @@ $isEdit = !empty($editingUser);
 $formAction = $isEdit
     ? 'index.php?controller=Auth&action=update&id=' . (int)$editingUser['id']
     : 'index.php?controller=Auth&action=register';
-$accessLevels = $accessLevels ?? [1 => 'Admin', 2 => 'Encoder', 3 => 'Viewer'];
+// Default access levels (include new roles PM, DPM, GRP Head)
+$accessLevels = $accessLevels ?? [
+    0 => 'Super Admin',
+    1 => 'Admin',
+    4 => 'PROJECT MANAGER (PM)',
+    5 => 'DEPUTY PROJECT MANAGER (DPM)',
+    2 => 'Encoder',
+    6 => 'User / GRP Head',
+    3 => 'Viewer'
+];
 
 function coreUserValue($editingUser, $key, $default = '') {
     return htmlspecialchars($editingUser[$key] ?? $default);
@@ -13,7 +22,10 @@ function coreUserLevelLabel($level) {
     $labels = [
         0 => 'Super Admin',
         1 => 'Admin',
+        4 => 'PROJECT MANAGER (PM)',
+        5 => 'DEPUTY PROJECT MANAGER (DPM)',
         2 => 'Encoder',
+        6 => 'User / GRP Head',
         3 => 'Viewer',
     ];
 
@@ -23,8 +35,8 @@ function coreUserLevelLabel($level) {
 function coreUserLevelClass($level) {
     return match ((int)$level) {
         0 => 'bg-purple-50 text-purple-700 border-purple-100',
-        1 => 'bg-green-50 text-green-700 border-green-100',
-        2 => 'bg-blue-50 text-blue-700 border-blue-100',
+        1, 4, 5 => 'bg-green-50 text-green-700 border-green-100',
+        2, 6 => 'bg-blue-50 text-blue-700 border-blue-100',
         default => 'bg-gray-50 text-gray-700 border-gray-100',
     };
 }

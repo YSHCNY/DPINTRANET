@@ -18,7 +18,7 @@ class VehiclesController extends Controller {
 
     private function requireVehicleWritePermission(): void {
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0, 1, 2], true)) {
+        if (!in_array($level, [0, 1, 2, 4, 5, 6], true)) {
             header('Content-Type: application/json');
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'You do not have permission to modify vehicles.']);

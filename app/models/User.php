@@ -77,7 +77,10 @@ class User extends Model {
         $labels = [
             0 => 'Super Admin',
             1 => 'Admin',
+            4 => 'PROJECT MANAGER (PM)',
+            5 => 'DEPUTY PROJECT MANAGER (DPM)',
             2 => 'Encoder',
+            6 => 'User / GRP Head',
             3 => 'Viewer',
         ];
 

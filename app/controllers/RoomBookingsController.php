@@ -76,7 +76,7 @@ class RoomBookingsController extends Controller {
     public function createRoom() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0, 1, 2], true)) {
+        if (!in_array($level, [0, 1, 2, 4, 5, 6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to create rooms.']);
             exit;
@@ -97,7 +97,7 @@ class RoomBookingsController extends Controller {
     public function updateRoom() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0, 1, 2], true)) {
+        if (!in_array($level, [0, 1, 2, 4, 5, 6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to update rooms.']);
             exit;
@@ -122,7 +122,7 @@ class RoomBookingsController extends Controller {
     public function deleteRoom() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0, 1, 2], true)) {
+        if (!in_array($level, [0, 1, 2, 4, 5, 6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to delete rooms.']);
             exit;
@@ -188,7 +188,7 @@ class RoomBookingsController extends Controller {
     public function create() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0, 1, 2], true)) {
+        if (!in_array($level, [0, 1, 2, 4, 5, 6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to create room bookings.']);
             exit;
@@ -210,7 +210,7 @@ class RoomBookingsController extends Controller {
     public function update() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0, 1, 2], true)) {
+        if (!in_array($level, [0, 1, 2, 4, 5, 6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to modify room bookings.']);
             exit;
@@ -244,7 +244,7 @@ class RoomBookingsController extends Controller {
     public function delete() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0, 1, 2], true)) {
+        if (!in_array($level, [0, 1, 2, 4, 5, 6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to delete room bookings.']);
             exit;

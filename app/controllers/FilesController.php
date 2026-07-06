@@ -174,7 +174,7 @@ class FilesController extends Controller {
 
     // Show form
     public function create() {
-        $this->requireAnyRole([0, 1, 2], 'You do not have permission to upload files.');
+        $this->requireAnyRole([0, 1, 2, 4, 5], 'You do not have permission to upload files.');
 
         // Get categories
         $filesCateg = $this->filesCategModel->getAllCateg();
@@ -185,7 +185,7 @@ class FilesController extends Controller {
 
     // Store new files (multiple upload support)
     public function store() {
-        $this->requireAnyRole([0, 1, 2], 'You do not have permission to upload files.');
+        $this->requireAnyRole([0, 1, 2, 4, 5], 'You do not have permission to upload files.');
 
         if (!isset($_FILES['files']) || empty($_FILES['files']['name'][0])) {
             $_SESSION['message'] = "No files selected.";
@@ -297,7 +297,7 @@ class FilesController extends Controller {
 
     // Edit form
     public function edit($id) {
-        $this->requireAnyRole([0, 1, 2], 'You do not have permission to edit files.');
+        $this->requireAnyRole([0, 1, 2, 4, 5], 'You do not have permission to edit files.');
 
         $file = $this->model->getById($id);
         $filesCateg = $this->filesCategModel->getAllCateg();
@@ -308,7 +308,7 @@ class FilesController extends Controller {
 
     // Update file
     public function update($id) {
-        $this->requireAnyRole([0, 1, 2], 'You do not have permission to edit files.');
+        $this->requireAnyRole([0, 1, 2, 4, 5], 'You do not have permission to edit files.');
 
         $file = $this->model->getById($id);
         $filename = $file['filename'];
@@ -365,7 +365,7 @@ class FilesController extends Controller {
 
     // Delete file
     public function delete($id) {
-        $this->requireAnyRole([0, 1, 2], 'You do not have permission to delete files.');
+        $this->requireAnyRole([0, 1, 2, 4, 5], 'You do not have permission to delete files.');
 
         $first = $_SESSION['firstName'] ?? '';
         $last  = $_SESSION['lastName'] ?? '';
@@ -453,6 +453,6 @@ class FilesController extends Controller {
     }
 
     private function canManageFiles(): bool {
-        return $this->hasAnyRole([0, 1, 2]);
+        return $this->hasAnyRole([0, 1, 2, 4, 5]);
     }
 }

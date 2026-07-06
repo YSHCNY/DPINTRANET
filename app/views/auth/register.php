@@ -160,7 +160,10 @@
                      focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               <option value="1">Admin</option>
+              <option value="4">PROJECT MANAGER (PM)</option>
+              <option value="5">DEPUTY PROJECT MANAGER (DPM)</option>
               <option value="2">Encoder</option>
+              <option value="6">User / GRP Head</option>
               <option value="3">Viewer</option>
             </select>
           </div>

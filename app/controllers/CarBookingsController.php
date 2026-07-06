@@ -128,7 +128,7 @@ class CarBookingsController extends Controller {
 
         // Role gate: allow Admin/Editor/SuperAdmin (levels 0/1/2). Viewers cannot create.
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0, 1, 2], true)) {
+        if (!in_array($level, [0, 1, 2, 4, 5, 6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to create bookings.']);
             exit;
@@ -175,7 +175,7 @@ class CarBookingsController extends Controller {
     public function jsonCreate() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0,1,2], true)) {
+        if (!in_array($level, [0,1,2,4,5,6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to create bookings.']);
             exit;
@@ -195,7 +195,7 @@ class CarBookingsController extends Controller {
     public function jsonUpdate() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0,1,2], true)) {
+        if (!in_array($level, [0,1,2,4,5,6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to modify bookings.']);
             exit;
@@ -223,7 +223,7 @@ class CarBookingsController extends Controller {
     public function jsonDelete() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0,1,2], true)) {
+        if (!in_array($level, [0,1,2,4,5,6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to delete bookings.']);
             exit;
@@ -289,7 +289,7 @@ class CarBookingsController extends Controller {
     public function update() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0,1,2], true)) {
+        if (!in_array($level, [0,1,2,4,5,6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to modify bookings.']);
             exit;
@@ -342,7 +342,7 @@ class CarBookingsController extends Controller {
     public function delete() {
         $this->requireLogin();
         $level = $this->currentUserLevel();
-        if (!in_array($level, [0,1,2], true)) {
+        if (!in_array($level, [0,1,2,4,5,6], true)) {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'You do not have permission to delete bookings.']);
             exit;

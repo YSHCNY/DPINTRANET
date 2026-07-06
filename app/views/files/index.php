@@ -237,7 +237,7 @@
                                                 </a>
                                             <?php endif; ?>
 
-                                            <?php if (in_array((string)($_SESSION['user_level'] ?? ''), ['0', '1'], true)): ?>
+                                            <?php if (in_array((string)($_SESSION['user_level'] ?? ''), ['0', '1', '4', '5'], true)): ?>
                                                 <a href="index.php?controller=Files&action=delete&id=<?= (int)$file['id'] ?>"
                                                    onclick="return confirm('Delete this file?')"
                                                    class="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-700 transition hover:bg-rose-600 hover:text-white"

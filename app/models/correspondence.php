@@ -579,7 +579,7 @@ class CorrespondenceModel {
     public function notifyAdminsOfDraft($documentId) {
         // Find admin users (userLevel 0 or 1) and create notifications
         try {
-            $stmt = $this->conn->prepare("SELECT id, firstName, lastName, userLevel FROM UserTbl WHERE userLevel IN (0,1)");
+            $stmt = $this->conn->prepare("SELECT id, firstName, lastName, userLevel FROM UserTbl WHERE userLevel IN (0,1,4,5)");
             $stmt->execute();
             $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

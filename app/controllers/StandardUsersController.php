@@ -13,7 +13,7 @@ class StandardUsersController extends Controller {
     }
 
     public function index() {
-        $this->requireAnyRole([0, 1], 'Standard Users are available to Super Admin and Admin only.');
+        $this->requireAnyRole([0, 1, 4, 5], 'Standard Users are available to Super Admin and Admin only.');
 
         $content = $this->renderView('standard_users/index', $this->viewData());
 
@@ -21,7 +21,7 @@ class StandardUsersController extends Controller {
     }
 
     public function edit($id) {
-        $this->requireAnyRole([0, 1], 'Standard Users are available to Super Admin and Admin only.');
+        $this->requireAnyRole([0, 1, 4, 5], 'Standard Users are available to Super Admin and Admin only.');
 
         $editingUser = $this->userModel->getUserById($id);
         if (!$editingUser) {
@@ -36,7 +36,7 @@ class StandardUsersController extends Controller {
     }
 
     public function store() {
-        $this->requireAnyRole([0, 1], 'Standard Users are available to Super Admin and Admin only.');
+        $this->requireAnyRole([0, 1, 4, 5], 'Standard Users are available to Super Admin and Admin only.');
 
         try {
             $data = $this->validatedData();
@@ -67,7 +67,7 @@ class StandardUsersController extends Controller {
     }
 
     public function update($id) {
-        $this->requireAnyRole([0, 1], 'Standard Users are available to Super Admin and Admin only.');
+        $this->requireAnyRole([0, 1, 4, 5], 'Standard Users are available to Super Admin and Admin only.');
 
         try {
             $existing = $this->userModel->getUserById($id);
@@ -101,7 +101,7 @@ class StandardUsersController extends Controller {
     }
 
     public function delete($id) {
-        $this->requireAnyRole([0, 1], 'Standard Users are available to Super Admin and Admin only.');
+        $this->requireAnyRole([0, 1, 4, 5], 'Standard Users are available to Super Admin and Admin only.');
 
         try {
             $this->userModel->deleteStandardUser($id);

@@ -1,5 +1,13 @@
 <?php
 class Controller {
+    // Role level constants
+    public const LEVEL_SUPER_ADMIN = 0;
+    public const LEVEL_ADMIN = 1;
+    public const LEVEL_ENCODER = 2;
+    public const LEVEL_VIEWER = 3;
+    public const LEVEL_PROJECT_MANAGER = 4;
+    public const LEVEL_DEPUTY_PROJECT_MANAGER = 5;
+    public const LEVEL_GRP_HEAD = 6; // "User / GRP Head" — same as encoder
     protected function view($view, $data = []) {
         extract($data);
         require "../app/views/$view.php";
@@ -39,15 +47,17 @@ class Controller {
     }
 
     protected function isSuperAdmin(): bool {
-        return $this->currentUserLevel() === 0;
+        return $this->currentUserLevel() === self::LEVEL_SUPER_ADMIN;
     }
 
     protected function isAdmin(): bool {
-        return $this->currentUserLevel() === 1;
+        $lvl = $this->currentUserLevel();
+        return $lvl === self::LEVEL_ADMIN || $lvl === self::LEVEL_PROJECT_MANAGER || $lvl === self::LEVEL_DEPUTY_PROJECT_MANAGER;
     }
 
     protected function isEditor(): bool {
-        return $this->currentUserLevel() === 2;
+        $lvl = $this->currentUserLevel();
+        return $lvl === self::LEVEL_ENCODER || $lvl === self::LEVEL_GRP_HEAD;
     }
 
     protected function isViewer(): bool {

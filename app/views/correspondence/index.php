@@ -5,12 +5,12 @@
         <?php
             $currentUserLevel = (int)($_SESSION['user_level'] ?? 3);
             $isSuperAdmin = $currentUserLevel === 0;
-            $canCreateCorrespondence = !empty($canCreateCorrespondence) || in_array($currentUserLevel, [0, 1, 2], true);
-            $canEditCorrespondence = !empty($canEditCorrespondence) || in_array($currentUserLevel, [0, 1, 2], true);
-            $canDeleteCorrespondence = !empty($canDeleteCorrespondence) || in_array($currentUserLevel, [0, 1], true);
+            $canCreateCorrespondence = !empty($canCreateCorrespondence) || in_array($currentUserLevel, [0, 1, 2, 4, 5, 6], true);
+            $canEditCorrespondence = !empty($canEditCorrespondence) || in_array($currentUserLevel, [0, 1, 2, 4, 5, 6], true);
+            $canDeleteCorrespondence = !empty($canDeleteCorrespondence) || in_array($currentUserLevel, [0, 1, 4, 5], true);
             $canHardDeleteCorrespondence = !empty($canHardDeleteCorrespondence) || $isSuperAdmin;
-            // Only admin (1) and super-admin (0) may finalize drafts
-            $canFinalize = in_array($currentUserLevel, [0,1], true);
+            // Only admin (1), PM/DPM and super-admin (0) may finalize drafts
+            $canFinalize = in_array($currentUserLevel, [0,1,4,5], true);
             $selectableUsers = $users ?? [];
 
             usort($selectableUsers, function ($left, $right) {

@@ -3,7 +3,7 @@ $currentController = $_GET['controller'] ?? '';
 $currentAction = $_GET['action'] ?? '';
 $currentUserLevel = (int)($_SESSION['user_level'] ?? 3);
 $isSuperAdmin = $currentUserLevel === 0;
-$isAdmin = $currentUserLevel === 1;
+$isAdmin = in_array($currentUserLevel, [1, 4, 5], true);
 $fullName = trim(($_SESSION['firstName'] ?? '') . ' ' . ($_SESSION['lastName'] ?? '')) ?: 'Guest';
 $position = $_SESSION['position'] ?? 'User';
 $avatarFile = $_SESSION['profile_picture'] ?? 'default.png';

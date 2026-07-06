@@ -5,7 +5,10 @@ $currentLevel = (int)($_SESSION['user_level'] ?? 3);
 $roleLabels = [
   0 => 'Super Admin',
   1 => 'Admin',
-  2 => 'Editor',
+  4 => 'PROJECT MANAGER (PM)',
+  5 => 'DEPUTY PROJECT MANAGER (DPM)',
+  2 => 'Encoder',
+  6 => 'User / GRP Head',
   3 => 'Viewer',
 ];
 $avatarFile = $_SESSION['profile_picture'] ?? 'default.png';

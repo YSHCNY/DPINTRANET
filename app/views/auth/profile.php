@@ -5,10 +5,13 @@ $fullName = trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?
 $avatarFile = $user['profile_picture'] ?? ($_SESSION['profile_picture'] ?? 'default.png');
 // $avatarSrc = BASE_URL . 'uploads/profile/' . htmlspecialchars($avatarFile);
 $roleLabels = [
-    0 => 'Super Admin',
-    1 => 'Admin',
-    2 => 'Editor',
-    3 => 'Viewer',
+  0 => 'Super Admin',
+  1 => 'Admin',
+  4 => 'PROJECT MANAGER (PM)',
+  5 => 'DEPUTY PROJECT MANAGER (DPM)',
+  2 => 'Encoder',
+  6 => 'User / GRP Head',
+  3 => 'Viewer',
 ];
 $roleLabel = $roleLabels[(int)($user['userLevel'] ?? 3)] ?? 'Viewer';
 ?>

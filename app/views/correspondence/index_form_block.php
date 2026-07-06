@@ -215,12 +215,12 @@
                     <button type="button" onclick="window.location.href='index.php?controller=correspondence&action=correspondence'"
                         class="h-8 md:h-9 px-2 md:px-3 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
                     <button type="submit"
-                        class="h-8 md:h-9 px-3 md:px-4 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-sm transition hover:bg-blue-700"><?= $isFinalizeMode ? 'Finalize' : (($currentUserLevel === 2) ? 'Draft & Notify' : 'Circulate') ?></button>
+                        class="h-8 md:h-9 px-3 md:px-4 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-sm transition hover:bg-blue-700"><?= $isFinalizeMode ? 'Finalize' : (in_array($currentUserLevel, [2,6], true) ? 'Draft & Notify' : 'Circulate') ?></button>
                 <?php else: ?>
                     <button type="button" onclick="resetForm()"
                         class="h-8 md:h-9 px-2 md:px-3 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Reset</button>
                     <button type="submit"
-                        class="h-8 md:h-9 px-3 md:px-4 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-sm transition hover:bg-blue-700"><?php echo ($currentUserLevel === 2) ? 'Draft & Notify' : 'Circulate'; ?></button>
+                        class="h-8 md:h-9 px-3 md:px-4 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-sm transition hover:bg-blue-700"><?php echo in_array($currentUserLevel, [2,6], true) ? 'Draft & Notify' : 'Circulate'; ?></button>
                 <?php endif; ?>
             </div>
         </aside>

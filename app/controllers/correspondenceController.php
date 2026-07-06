@@ -623,8 +623,8 @@ class CorrespondenceController extends Controller {
         }
 
         $userLevel = (int)($_SESSION['user_level'] ?? 3);
-        if ($userLevel > 1) {
-            // non-admins should not access the full page
+        if (!in_array($userLevel, [0, 1, 4, 5], true)) {
+            // non-admins (including PM/DPM) should not access the full page
             $_SESSION['message'] = 'You do not have permission to view this page.';
             $_SESSION['msg_type'] = 'error';
             $this->redirect('index.php?controller=correspondence&action=correspondence');
@@ -826,7 +826,7 @@ class CorrespondenceController extends Controller {
         }
 
         $userLevel = (int)($_SESSION['user_level'] ?? 3);
-        if ($userLevel > 1) {
+        if (!in_array($userLevel, [0, 1, 4, 5], true)) {
             $_SESSION['message'] = 'You do not have permission to perform this action.';
             $_SESSION['msg_type'] = 'error';
             $this->redirect('index.php?controller=correspondence&action=correspondence');
@@ -929,7 +929,7 @@ public function toggleOpenClose()
         return $this->redirect('index.php?controller=Auth&action=login');
     }
 
-    if ((int)($_SESSION['user_level'] ?? 3) > 1) {
+    if (!in_array((int)($_SESSION['user_level'] ?? 3), [0, 1, 4, 5], true)) {
         $_SESSION['message'] = 'Insufficient permissions';
         $_SESSION['msg_type'] = 'error';
         return $this->redirect('index.php?controller=correspondence&action=correspondence');
@@ -1326,7 +1326,7 @@ public function getDocumentData() {
             if (!empty($_POST['finalize'])) {
                 // permission: only admin (1) or super-admin (0) can finalize
                 $userLevel = (int)($_SESSION['user_level'] ?? 3);
-                if ($userLevel > 1) {
+                if (!in_array($userLevel, [0, 1, 4, 5], true)) {
                     $_SESSION['message'] = 'You do not have permission to finalize drafts.';
                     $_SESSION['msg_type'] = 'error';
                     header("Location: index.php?controller=correspondence&action=correspondence");
@@ -1504,15 +1504,15 @@ public function getDocumentData() {
     }
 
     private function canCreateCorrespondence(): bool {
-        return $this->hasAnyRole([0, 1, 2]);
+        return $this->hasAnyRole([0, 1, 2, 4, 5, 6]);
     }
 
     private function canEditCorrespondence(): bool {
-        return $this->hasAnyRole([0, 1, 2]);
+        return $this->hasAnyRole([0, 1, 2, 4, 5, 6]);
     }
 
     private function canDeleteCorrespondence(): bool {
-        return $this->hasAnyRole([0, 1]);
+        return $this->hasAnyRole([0, 1, 4, 5]);
     }
 
     private function canHardDeleteCorrespondence(): bool {
@@ -1574,7 +1574,7 @@ public function getDocumentData() {
             'due_date'        => trim($_POST['due_date'] ?? '') !== '' ? $_POST['due_date'] : null,
             'is_confidential' => isset($_POST['is_confidential']) ? 1 : 0,
             'notes'           => trim($_POST['notes'] ?? ''),
-            'is_draft'        => ($userLevel === 2) ? 1 : 0,
+            'is_draft'        => in_array($userLevel, [2,6], true) ? 1 : 0,
             'recipients'      => $recipientsRaw,
             'cc'              => $ccRaw
         ];
@@ -1593,8 +1593,8 @@ public function getDocumentData() {
 
         $movedFiles = $this->handleFileUploads($documentId, $attachments);
 
-        // If user is encoder (level 2) treat as draft: persist recipients/cc on document record and notify admins
-        if ($userLevel === 2) {
+        // If user is encoder (level 2) or GRP Head (6) treat as draft: persist recipients/cc on document record and notify admins
+        if (in_array($userLevel, [2,6], true)) {
             // Do NOT insert into document_circulations to prevent circulation to recipients.
             // Recipients/CC are stored in the documents.draft_recipients and draft_cc columns by createDocument().
             $this->model->notifyAdminsOfDraft($documentId);
