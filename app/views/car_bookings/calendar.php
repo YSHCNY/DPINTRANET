@@ -1023,36 +1023,37 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   const hasCalendar = Boolean(calendarEl);
 
   // ==================== CONSTANTS ====================
-  // Build the base URL dynamically to handle any routing setup
-  const getBaseUrl = () => {
-    const path = window.location.pathname;
-    const parts = path.split('/');
-    // Find 'Public' in the path and construct the base
-    const publicIndex = parts.indexOf('Public');
-    if (publicIndex !== -1) {
-      return parts.slice(0, publicIndex + 1).join('/') + '/';
+  // Use the server-side BASE_URL if available, but fall back to client path detection when needed.
+  const baseUrl = (() => {
+    const serverUrl = <?= json_encode(defined('BASE_URL') ? rtrim(BASE_URL, '/') . '/' : '') ?>;
+    if (serverUrl && serverUrl !== './') {
+      return serverUrl;
     }
-    // Fallback to just using root-relative path
-    return '/Public/';
-  };
-  
-  const baseUrl = getBaseUrl();
-  
-  const listUrl = baseUrl + 'index.php?controller=CarBookings&action=list';
-  const createBookingUrl = baseUrl + 'index.php?controller=CarBookings&action=create';
-  const vehicleHistoryUrl = baseUrl + 'index.php?controller=CarBookings&action=vehicleHistory';
-  const getBookingUrl = baseUrl + 'index.php?controller=CarBookings&action=get';
-  const updateBookingUrl = baseUrl + 'index.php?controller=CarBookings&action=update';
-  const deleteBookingUrl = baseUrl + 'index.php?controller=CarBookings&action=delete';
-  const createVehicleUrl = baseUrl + 'index.php?controller=Vehicles&action=create';
-  const updateVehicleUrl = baseUrl + 'index.php?controller=Vehicles&action=update';
-  const deleteVehicleUrl = baseUrl + 'index.php?controller=Vehicles&action=delete';
-  const vehicleOptionsUrl = baseUrl + 'index.php?controller=Vehicles&action=listAjax';
-  const vehicleListAllUrl = baseUrl + 'index.php?controller=Vehicles&action=listAllAjax';
-  const driversListUrl = baseUrl + 'index.php?controller=Drivers&action=listAjax';
-  const createDriverUrl = baseUrl + 'index.php?controller=Drivers&action=create';
-  const updateDriverUrl = baseUrl + 'index.php?controller=Drivers&action=update';
-  const deleteDriverUrl = baseUrl + 'index.php?controller=Drivers&action=delete';
+    const path = window.location.pathname;
+    if (path.endsWith('index.php')) {
+      return path.substring(0, path.lastIndexOf('/') + 1) || '/';
+    }
+    if (path.endsWith('/')) {
+      return path;
+    }
+    return path.substring(0, path.lastIndexOf('/') + 1) + '/';
+  })();
+
+  const listUrl = 'index.php?controller=CarBookings&action=list';
+  const createBookingUrl = 'index.php?controller=CarBookings&action=create';
+  const vehicleHistoryUrl = 'index.php?controller=CarBookings&action=vehicleHistory';
+  const getBookingUrl = 'index.php?controller=CarBookings&action=get';
+  const updateBookingUrl = 'index.php?controller=CarBookings&action=update';
+  const deleteBookingUrl = 'index.php?controller=CarBookings&action=delete';
+  const createVehicleUrl = 'index.php?controller=Vehicles&action=create';
+  const updateVehicleUrl = 'index.php?controller=Vehicles&action=update';
+  const deleteVehicleUrl = 'index.php?controller=Vehicles&action=delete';
+  const vehicleOptionsUrl = 'index.php?controller=Vehicles&action=listAjax';
+  const vehicleListAllUrl = 'index.php?controller=Vehicles&action=listAllAjax';
+  const driversListUrl = 'index.php?controller=Drivers&action=listAjax';
+  const createDriverUrl = 'index.php?controller=Drivers&action=create';
+  const updateDriverUrl = 'index.php?controller=Drivers&action=update';
+  const deleteDriverUrl = 'index.php?controller=Drivers&action=delete';
 
   // ==================== DOM ELEMENTS ====================
   const bookingModalEl = document.getElementById('bookingModal');

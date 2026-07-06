@@ -167,8 +167,18 @@
                                 ?>
                                 <tr class="transition hover:bg-slate-50/70">
                                     <td class="px-4 py-4 min-w-[240px]">
-                                        <div class="space-y-1">
-                                            <p class="font-semibold text-slate-900"><?= htmlspecialchars($file['filename'] ?? '') ?></p>
+                                        <div class="space-y-1 max-w-[360px]">
+                                            <?php
+                                                $filename = htmlspecialchars($file['filename'] ?? '');
+                                                $isFileLong = mb_strlen($filename) > 15;
+                                                $truncatedFile = $isFileLong ? htmlspecialchars(mb_substr($filename, 0, 15)) . '...' : $filename;
+                                            ?>
+                                            <p class="font-semibold text-slate-900 word-break: break-all file-name-text" data-full-file="<?= htmlspecialchars($filename) ?>" data-is-long="<?= $isFileLong ? '1' : '0' ?>">
+                                                <span class="file-name-display"><?= $truncatedFile ?></span>
+                                                <?php if ($isFileLong): ?>
+                                                    <button type="button" class="ml-2 text-[10px] font-semibold text-emerald-500 hover:text-emerald-600 transition file-name-toggle" onclick="toggleFileName(event)">See more</button>
+                                                <?php endif; ?>
+                                            </p>
                                             <p class="font-mono text-xs text-slate-500">Upload #<?= htmlspecialchars($file['id'] ?? '') ?></p>
                                         </div>
                                     </td>
@@ -273,7 +283,37 @@ function toggleDescription(event) {
   }
 }
 
-$(document).ready(function () {
+function toggleFileName(event) {
+  event.preventDefault();
+  const fileElement = event.target.closest('.file-name-text');
+  if (!fileElement) return;
+
+  const displaySpan = fileElement.querySelector('.file-name-display');
+  const toggleBtn = event.target;
+  const fullFile = fileElement.dataset.fullFile || '';
+  const isLong = fileElement.dataset.isLong === '1';
+
+  if (!isLong) return;
+
+  if (toggleBtn.textContent.trim() === 'See more') {
+    displaySpan.textContent = fullFile;
+    toggleBtn.textContent = 'See less';
+  } else {
+    const truncated = fullFile.substring(0, 15) + '...';
+    displaySpan.textContent = truncated;
+    toggleBtn.textContent = 'See more';
+  }
+}
+
+$(document).ready(function () { 
+  const hasDataRows = $('#filesTable tbody tr').filter(function () {
+    return $(this).find('td').length === 7;
+  }).length > 0;
+
+  if (!hasDataRows) {
+    return;
+  }
+
   const table = $('#filesTable').DataTable({
     pageLength: 25,
     order: [[5, 'desc']],

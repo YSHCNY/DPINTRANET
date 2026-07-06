@@ -254,9 +254,15 @@
                                     <?php if (!empty($entry['files'])): ?>
                                         <div class="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                                             <?php foreach ($entry['files'] as $f): ?>
-                                                <a href="<?= htmlspecialchars(str_replace($_SERVER['DOCUMENT_ROOT'], '', $f['file_path'])) ?>"
-                                                   target="_blank"
-                                                   class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100">
+                                                <?php
+                                                    $projectRoot = rtrim(str_replace('\\', '/', dirname(__DIR__, 3)), '/');
+                                                    $storedPath = str_replace('\\', '/', (string)($f['file_path'] ?? ''));
+                                                    $relativePath = $projectRoot !== '' && strpos($storedPath, $projectRoot . '/') === 0
+                                                        ? substr($storedPath, strlen($projectRoot) + 1)
+                                                        : basename($storedPath);
+                                                    $downloadUrl = rtrim((defined('BASE_URL') ? BASE_URL : '/'), '/') . '/' . ltrim($relativePath, '/');
+                                                ?>
+                                                <a href="<?= htmlspecialchars($downloadUrl) ?>" target="_blank" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100">
                                                     <svg class="h-3.5 w-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13"></path>
                                                     </svg>

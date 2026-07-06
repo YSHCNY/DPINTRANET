@@ -501,27 +501,18 @@ if (!empty($rooms) && is_array($rooms)) {
 
   const roomData = <?= json_encode($rooms ?? []) ?>;
 
-  const getBaseUrl = () => {
-    const path = window.location.pathname;
-    const parts = path.split('/');
-    const publicIndex = parts.indexOf('Public');
-    if (publicIndex !== -1) {
-      return parts.slice(0, publicIndex + 1).join('/') + '/';
-    }
-    return '/Public/';
-  };
-
-  const baseUrl = getBaseUrl();
-  const listUrl = baseUrl + 'index.php?controller=RoomBookings&action=list';
-  const createBookingUrl = baseUrl + 'index.php?controller=RoomBookings&action=create';
-  const getBookingUrl = baseUrl + 'index.php?controller=RoomBookings&action=get';
-  const updateBookingUrl = baseUrl + 'index.php?controller=RoomBookings&action=update';
-  const deleteBookingUrl = baseUrl + 'index.php?controller=RoomBookings&action=delete';
-  const roomHistoryUrl = baseUrl + 'index.php?controller=RoomBookings&action=roomHistory';
-  const roomListUrl = baseUrl + 'index.php?controller=RoomBookings&action=rooms';
-  const createRoomUrl = baseUrl + 'index.php?controller=RoomBookings&action=createRoom';
-  const updateRoomUrl = baseUrl + 'index.php?controller=RoomBookings&action=updateRoom';
-  const deleteRoomUrl = baseUrl + 'index.php?controller=RoomBookings&action=deleteRoom';
+  // Use server-side BASE_URL to make controller AJAX paths reliable.
+  const baseUrl = <?= json_encode(rtrim(BASE_URL, '/') . '/') ?>;
+  const listUrl = 'index.php?controller=RoomBookings&action=list';
+  const createBookingUrl = 'index.php?controller=RoomBookings&action=create';
+  const getBookingUrl = 'index.php?controller=RoomBookings&action=get';
+  const updateBookingUrl = 'index.php?controller=RoomBookings&action=update';
+  const deleteBookingUrl = 'index.php?controller=RoomBookings&action=delete';
+  const roomHistoryUrl = 'index.php?controller=RoomBookings&action=roomHistory';
+  const roomListUrl = 'index.php?controller=RoomBookings&action=rooms';
+  const createRoomUrl = 'index.php?controller=RoomBookings&action=createRoom';
+  const updateRoomUrl = 'index.php?controller=RoomBookings&action=updateRoom';
+  const deleteRoomUrl = 'index.php?controller=RoomBookings&action=deleteRoom';
 
   const roomCreateModal = document.getElementById('roomCreateModal');
   const roomCreateModalBackdrop = document.getElementById('roomCreateModalBackdrop');

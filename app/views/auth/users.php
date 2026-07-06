@@ -9,12 +9,6 @@ function coreUserValue($editingUser, $key, $default = '') {
     return htmlspecialchars($editingUser[$key] ?? $default);
 }
 
-function coreUserAvatar($profilePicture) {
-    return !empty($profilePicture)
-        ? '../app/assets/profiles/' . htmlspecialchars($profilePicture)
-        : '../app/assets/profiles/default.png';
-}
-
 function coreUserLevelLabel($level) {
     $labels = [
         0 => 'Super Admin',
@@ -63,7 +57,7 @@ function coreUserLevelClass($level) {
                 <div class="space-y-4">
                     <div class="border border-gray-200 rounded-lg bg-gray-50 p-4">
                         <img id="coreAvatarPreview"
-                             src="<?= coreUserAvatar($editingUser['profile_picture'] ?? null) ?>"
+                             src="<?= BASE_URL . '/uploads/profile/' . htmlspecialchars((!empty(trim($editingUser['profile_picture'] ?? '')) ? trim($editingUser['profile_picture']) : 'default.png')) ?>"
                              class="w-24 h-24 rounded-full object-cover border border-gray-200 bg-white mx-auto"
                              alt="Core user avatar">
 
@@ -176,7 +170,7 @@ function coreUserLevelClass($level) {
                         <tr class="hover:bg-blue-50/60 transition-colors">
                             <td class="px-4 py-3 min-w-[230px]">
                                 <div class="flex items-center gap-3">
-                                    <img src="<?= coreUserAvatar($user['profile_picture'] ?? null) ?>" class="w-10 h-10 rounded-full object-cover border border-gray-200" alt="Profile">
+                                    <img src="<?= BASE_URL . '/uploads/profile/' . htmlspecialchars((!empty(trim($user['profile_picture'] ?? '')) ? trim($user['profile_picture']) : 'default.png')) ?>" class="w-10 h-10 rounded-full object-cover border border-gray-200" alt="Profile">
                                     <div>
                                         <p class="font-semibold text-gray-900">
                                             <?= htmlspecialchars(trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? ''))) ?>

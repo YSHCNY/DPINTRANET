@@ -122,7 +122,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
       <button id="profileMenuButton" type="button"
         class="flex items-center gap-2 rounded-lg hover:bg-emerald-600 text-white px-2 py-1 text-left transition focus:outline-none">
         
-        <img src="<?=BASE_URL ?>uploads/profiles/<?= htmlspecialchars($avatarFile) ?>"
+        <img src="<?=BASE_URL ?>uploads/profile/<?= $avatarFile ?>"
 
              class="h-8 w-8 rounded-full object-cover ring-2 ring-white/30"
              alt="User avatar">
@@ -137,7 +137,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
         <!-- Profile Header -->
         <div class="px-3 py-2 bg-emerald-700 text-white">
           <div class="flex items-center gap-2">
-             <img src="<?=BASE_URL ?>uploads/profiles/<?= htmlspecialchars($avatarFile) ?>" class="h-10 w-10 rounded-lg object-cover ring-2 ring-white/30" alt="User avatar">
+             <img src="<?=BASE_URL ?>uploads/profile/<?= htmlspecialchars($avatarFile) ?>" class="h-10 w-10 rounded-lg object-cover ring-2 ring-white/30" alt="User avatar">
             <div class="min-w-0 flex-1">
               <p class="text-sm font-semibold text-white truncate"><?= htmlspecialchars($fullName) ?></p>
               <p class="text-xs text-emerald-100 truncate"><?= htmlspecialchars($position) ?></p>

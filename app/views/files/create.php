@@ -190,7 +190,9 @@ function validateAndDisplay(files) {
   }
 
   sizeWarning.classList.add('hidden');
-  fileInput.files = files;
+  const dataTransfer = new DataTransfer();
+  fileArray.forEach(file => dataTransfer.items.add(file));
+  fileInput.files = dataTransfer.files;
 
   // Display file preview
   filePreview.innerHTML = '';
@@ -203,7 +205,7 @@ function validateAndDisplay(files) {
           ${file.name.split('.').pop().toUpperCase()}
         </span>
         <div>
-          <p class="text-sm font-medium text-slate-900">${file.name}</p>
+          <p class="text-sm font-medium break-words text-balance text-slate-900">${file.name}</p>
           <p class="text-xs text-slate-500">${formatFileSize(file.size)}</p>
         </div>
       </div>

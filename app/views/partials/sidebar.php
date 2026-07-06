@@ -76,7 +76,7 @@ function sidebarActiveClass(bool $active): string
   <div class="border-b border-slate-200 px-3 py-2">
     <div class="flex items-center gap-2 rounded-lg px-2 py-1.5">
       <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 flex-shrink-0">
-        <img src="../app/assets/logo/official.png" class="h-6 w-auto object-contain" alt="Brand">
+        <img src="<?= BASE_URL ?>uploads/logo/official.png" class="h-6 w-auto object-contain" alt="Brand">
       </div>
       <div class="min-w-0 sidebar-expanded">
         <p class="sidebar-truncate text-xs font-bold text-slate-900 leading-tight">DPEARP</p>

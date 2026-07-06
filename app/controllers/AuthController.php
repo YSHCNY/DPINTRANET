@@ -196,7 +196,7 @@ class AuthController extends Controller {
             $this->userModel->update($userId, $data);
 
             if (!empty($uploadedPicture) && !empty($existing['profile_picture']) && $existing['profile_picture'] !== 'default.png') {
-                $oldFile = __DIR__ . '/../assets/profiles/' . $existing['profile_picture'];
+                $oldFile = BASE_URL . 'uploads/profile/' . $existing['profile_picture'];
                 if (is_file($oldFile)) {
                     @unlink($oldFile);
                 }

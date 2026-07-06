@@ -743,22 +743,34 @@ class CorrespondenceController extends Controller {
         // Compute recipient counts from circulations
         $totalRecipients = 0;
         $receivedCount = 0;
-        $openCloseState = 'inprogress'; // desired UI state: inprogress | suspended | done
-
         foreach ($circulations as $c) {
             $totalRecipients++;
             $st = strtolower((string)($c['status'] ?? ''));
             if ($st === 'received') {
                 $receivedCount++;
             }
-            // infer open/close state from admin toggle
-            // NOTE: mapping: 'open' in DB => UI 'done'; 'close' in DB => UI 'suspended'
-            if ($st === 'done' || $st === 'completed' || $st === 'open') {
-                $openCloseState = 'done';
-            } elseif ($st === 'suspended' || $st === 'close') {
-                // only override if we haven't seen done yet
-                if ($openCloseState !== 'done') $openCloseState = 'suspended';
-            }
+        }
+
+        // Use the stored document status as the source of truth for the show page,
+        // so it matches the same status displayed in the document table.
+        $status = trim((string)($doc['status'] ?? 'Pending'));
+        if ($status === '') {
+            $status = 'Pending';
+        }
+        $documentDetailsStatus = $status;
+
+        // Backwards compatibility: if the underlying status still uses legacy open/close
+        // values, normalize them to the same display values used in the table.
+        $lowerStatus = strtolower($status);
+        if ($lowerStatus === 'open') {
+            $status = 'Done';
+            $documentDetailsStatus = 'Done';
+        } elseif ($lowerStatus === 'close') {
+            $status = 'Suspended';
+            $documentDetailsStatus = 'Suspended';
+        } elseif ($lowerStatus === 'inprogress') {
+            $status = 'Inprogress';
+            $documentDetailsStatus = 'Inprogress';
         }
 
         // Resolve creator name
@@ -775,27 +787,9 @@ class CorrespondenceController extends Controller {
         }
         if ($createdByName) $doc['created_by_name'] = $createdByName;
 
-        // UI / overall status badge requirements:
-        // OPEN    => document_circulations.status = open
-        //           UI shows "done" and recipients table shows "done"
-        //           document details shows "completed"
-        // CLOSE   => document_circulations.status = close
-        //           UI shows "suspended" and recipients table shows "suspended"
-        //           document details shows "rejected"
-        //
-        // IMPORTANT: this page uses $status for the header badge.
-        $status = match ($openCloseState) {
-            'done' => 'done',
-            'suspended' => 'suspended',
-            default => 'inprogress',
-        };
+        // The show page uses the stored document status directly as the source of truth.
+        // No further override is needed here.
 
-        // Separate document-details status used by the "document details" section (mapper requested in ticket).
-        $documentDetailsStatus = match ($openCloseState) {
-            'done' => 'completed',
-            'suspended' => 'rejected',
-            default => 'inprogress',
-        };
 
         $content = $this->renderView('correspondence/show', [
             'document' => $doc,

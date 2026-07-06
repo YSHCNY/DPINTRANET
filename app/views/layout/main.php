@@ -55,7 +55,7 @@
         --shadow-md: 0 10px 30px rgba(15,23,42,0.06);
         --radius-lg: 10px;
       } */
-
+ 
       
     </style>
 
@@ -70,7 +70,7 @@
     <!-- ColReorderWithResize plugin -->
     <script src="https://cdn.jsdelivr.net/gh/akottr/ColReorderWithResize/ColReorderWithResize.js"></script>
     <!-- Tailwind overrides for DataTables -->
-    <link rel="stylesheet" href="../../assets/css/datatables-tailwind.css">
+    <link rel="stylesheet" href="<?= rtrim(BASE_URL, '/') ?>/app/assets/css/datatables-tailwind.css">
 
 </head>
 

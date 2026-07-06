@@ -1023,21 +1023,9 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   const hasCalendar = Boolean(calendarEl);
 
   // ==================== CONSTANTS ====================
-  // Build the base URL dynamically to handle any routing setup
-  const getBaseUrl = () => {
-    const path = window.location.pathname;
-    const parts = path.split('/');
-    // Find 'Public' in the path and construct the base
-    const publicIndex = parts.indexOf('Public');
-    if (publicIndex !== -1) {
-      return parts.slice(0, publicIndex + 1).join('/') + '/';
-    }
-    // Fallback to just using root-relative path
-    return '/Public/';
-  };
-  
-  const baseUrl = getBaseUrl();
-  
+  // Force the server-defined BASE_URL so AJAX endpoints resolve to the app entrypoint.
+  const baseUrl = <?= json_encode(defined('BASE_URL') ? rtrim(BASE_URL, '/') . '/' : '/') ?>;
+
   const listUrl = baseUrl + 'index.php?controller=CarBookings&action=list';
   const createBookingUrl = baseUrl + 'index.php?controller=CarBookings&action=create';
   const vehicleHistoryUrl = baseUrl + 'index.php?controller=CarBookings&action=vehicleHistory';

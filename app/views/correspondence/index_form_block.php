@@ -107,8 +107,8 @@
                 <div class="mt-2 md:mt-3">
                     <label class="mb-1 block text-[10px] md:text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Body</label>
                     <div id="description" contenteditable="true"
-                        class="min-h-[100px] md:min-h-[140px] lg:min-h-[200px] rounded-md border border-slate-300 bg-slate-50 p-2 md:p-2.5 text-xs md:text-sm leading-5 md:leading-6 text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-100 prose max-w-none"><?= !empty($draftDocument['description']) ? htmlspecialchars($draftDocument['description']) : '' ?></div>
-                    <input type="hidden" name="description" id="description-hidden" value="<?= htmlspecialchars($draftDocument['description'] ?? '') ?>">
+                        class="min-h-[100px] md:min-h-[140px] lg:min-h-[200px] rounded-md border border-slate-300 bg-slate-50 p-2 md:p-2.5 text-xs md:text-sm leading-5 md:leading-6 text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-1 focus:ring-blue-100 prose max-w-none"><?= !empty($draftDocument['description']) ? $draftDocument['description'] : '' ?></div>
+                    <input type="hidden" name="description" id="description-hidden" value="<?= $draftDocument['description'] ?? '' ?>">
                 </div>
             </section>
 

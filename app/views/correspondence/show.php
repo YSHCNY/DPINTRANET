@@ -79,7 +79,7 @@ $statusClass = match (strtolower((string)$status)) {
             <section class="rounded-lg md:rounded-xl border border-slate-200 bg-white p-2 md:p-3 lg:p-4 shadow-sm">
                 <h3 class="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-600">Description</h3>
                 <div class="mt-2 md:mt-3 text-xs md:text-sm text-slate-700 leading-6 line-clamp-4 md:line-clamp-none">
-                    <?= nl2br(htmlspecialchars($doc['description'] ?? '—')) ?>
+                    <?= nl2br(htmlspecialchars(strip_tags($document['description'] ?? '--'))) ?>
                 </div>
             </section>
 
@@ -224,10 +224,13 @@ $statusClass = match (strtolower((string)$status)) {
                     <span class="hidden md:inline">Attach</span>
                     <input type="file"
                            name="thread_files[]"
-                           multiple
-                           class="hidden" />
+                           multiple                           data-max-files="4"
+                           data-max-total="41943040"                           class="hidden" />
                 </label>
             </div>
+
+            <!-- File status helper -->
+            <div id="thread-attachment-status" class="text-[10px] text-slate-500 mt-1 ml-1 hidden"></div>
 
             <!-- Textarea -->
             <div class="rounded-lg border border-slate-200 bg-white shadow-sm focus-within:ring-1 focus-within:ring-slate-400 focus-within:border-slate-400 overflow-hidden">
@@ -252,6 +255,72 @@ $statusClass = match (strtolower((string)$status)) {
         </div>
     </form>
     <?php endif; ?>
+
+    <script>
+        (function() {
+            const threadInput = document.querySelector('input[name="thread_files[]"]');
+            const statusEl = document.getElementById('thread-attachment-status');
+
+            if (!threadInput || !statusEl) {
+                return;
+            }
+
+            const maxFiles = parseInt(threadInput.dataset.maxFiles || '4', 10);
+            const maxTotal = parseInt(threadInput.dataset.maxTotal || '41943040', 10);
+
+            function formatBytes(bytes) {
+                if (bytes >= 1024 * 1024) {
+                    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                }
+                if (bytes >= 1024) {
+                    return (bytes / 1024).toFixed(1) + ' KB';
+                }
+                return bytes + ' bytes';
+            }
+
+            function updateThreadAttachmentStatus() {
+                const files = Array.from(threadInput.files || []);
+                const totalSize = files.reduce((sum, file) => sum + (file.size || 0), 0);
+
+                let text = '';
+                let valid = true;
+
+                if (files.length === 0) {
+                    text = `No attachments selected. Max ${maxFiles} files, ${formatBytes(maxTotal)} total.`;
+                    statusEl.className = 'text-[10px] text-slate-500 mt-1 ml-1';
+                } else {
+                    text = `${files.length} file(s) selected • ${formatBytes(totalSize)} total of ${formatBytes(maxTotal)}`;
+                    if (files.length > maxFiles) {
+                        text = `Too many files selected: ${files.length}/${maxFiles}. ${text}`;
+                        statusEl.className = 'text-[10px] text-rose-600 mt-1 ml-1';
+                        valid = false;
+                    } else if (totalSize > maxTotal) {
+                        text = `Total size limit exceeded: ${formatBytes(totalSize)} / ${formatBytes(maxTotal)}. ${text}`;
+                        statusEl.className = 'text-[10px] text-rose-600 mt-1 ml-1';
+                        valid = false;
+                    } else {
+                        statusEl.className = 'text-[10px] text-emerald-600 mt-1 ml-1';
+                    }
+                }
+
+                statusEl.textContent = text;
+                statusEl.classList.remove('hidden');
+                return valid;
+            }
+
+            threadInput.addEventListener('change', updateThreadAttachmentStatus);
+            updateThreadAttachmentStatus();
+
+            const composerForm = threadInput.closest('form');
+            if (composerForm) {
+                composerForm.addEventListener('submit', function(event) {
+                    if (!updateThreadAttachmentStatus()) {
+                        event.preventDefault();
+                    }
+                });
+            }
+        })();
+    </script>
 </section>
 
         <!-- Change History -->

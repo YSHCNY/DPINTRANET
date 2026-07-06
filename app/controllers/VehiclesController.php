@@ -2,6 +2,11 @@
 session_start();
 require_once '../app/core/Controller.php';
 require_once '../app/models/CarVehicles.php';
+if (file_exists(__DIR__ . '/../config.php')) {
+    require_once __DIR__ . '/../config.php';
+} elseif (file_exists(__DIR__ . '/../../app/config.php')) {
+    require_once __DIR__ . '/../../app/config.php';
+}
 
 class VehiclesController extends Controller {
 
@@ -22,7 +27,7 @@ class VehiclesController extends Controller {
     }
 
     private function getVehicleUploadDirectory(): string {
-        $uploadDir = dirname(__DIR__, 2) . '/uploads/vehicle/';
+        $uploadDir = __DIR__ . '/../../uploads/vehicle/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }

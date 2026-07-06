@@ -3,7 +3,7 @@
 $user = $user ?? [];
 $fullName = trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: 'User';
 $avatarFile = $user['profile_picture'] ?? ($_SESSION['profile_picture'] ?? 'default.png');
-// $avatarSrc = '../app/assets/profiles/' . $avatarFile;
+// $avatarSrc = BASE_URL . 'uploads/profile/' . htmlspecialchars($avatarFile);
 $roleLabels = [
     0 => 'Super Admin',
     1 => 'Admin',
@@ -38,7 +38,8 @@ $roleLabel = $roleLabels[(int)($user['userLevel'] ?? 3)] ?? 'Viewer';
                 <div class="bg-gradient-to-br from-sky-600 via-sky-500 to-cyan-500 px-6 py-6 text-white">
                   <div class="flex items-center gap-4">
                     <img id="avatarPreview"
-                         src="<?=BASE_URL ?>uploads/profiles/<?= htmlspecialchars($avatarFile) ?>"
+                      src="<?=BASE_URL ?>uploads/profile/<?= htmlspecialchars($avatarFile) ?>"
+                       
                          class="h-20 w-20 rounded-full border border-white/30 object-cover shadow-lg"
                          alt="Profile avatar">
                     <div class="min-w-0">

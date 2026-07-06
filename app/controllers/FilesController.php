@@ -4,6 +4,11 @@ require_once '../app/core/Controller.php';
 require_once '../app/models/User.php';
 require_once "../app/models/Files.php";
 require_once "../app/models/FilesCateg.php";
+if (file_exists(__DIR__ . '/../config.php')) {
+    require_once __DIR__ . '/../config.php';
+} elseif (file_exists(__DIR__ . '/../../app/config.php')) {
+    require_once __DIR__ . '/../../app/config.php';
+}
 
 class FilesController extends Controller {
 
@@ -13,6 +18,143 @@ class FilesController extends Controller {
     public function __construct() {
         $this->model = new FileModel();
         $this->filesCategModel = new FilesCategModel();
+    }
+
+    private function getProjectRootDirectory(): string {
+        $projectRoot = realpath(__DIR__ . '/../../');
+        return $projectRoot !== false
+            ? rtrim($projectRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
+            : rtrim(__DIR__ . '/../../', DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+    }
+
+    private function getCandidateUploadDirectories(): array {
+        $candidates = [];
+        $roots = [
+            realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..') ?: (__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..'),
+            realpath(__DIR__ . DIRECTORY_SEPARATOR . '..') ?: (__DIR__ . DIRECTORY_SEPARATOR . '..'),
+        ];
+
+        foreach ($roots as $root) {
+            if ($root !== '' && $root !== false) {
+                $candidates[] = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR;
+            }
+        }
+
+        $envRoots = [
+            getenv('UPLOADS_DIR'),
+            getenv('APP_ROOT'),
+            getenv('DOCUMENT_ROOT'),
+            $_ENV['UPLOADS_DIR'] ?? null,
+            $_ENV['APP_ROOT'] ?? null,
+            $_ENV['DOCUMENT_ROOT'] ?? null,
+        ];
+
+        foreach ($envRoots as $envRoot) {
+            if (!empty($envRoot)) {
+                $envRoot = trim($envRoot);
+                if ($envRoot === '') {
+                    continue;
+                }
+
+                $cleanRoot = rtrim($envRoot, DIRECTORY_SEPARATOR);
+                if (basename($cleanRoot) === 'files') {
+                    $candidates[] = $cleanRoot . DIRECTORY_SEPARATOR;
+                } else {
+                    $candidates[] = $cleanRoot . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR;
+                }
+            }
+        }
+
+        $candidates[] = '/var/www/html/uploads/files/';
+        $candidates[] = '/app/uploads/files/';
+        $candidates[] = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'dpintranet_uploads' . DIRECTORY_SEPARATOR;
+
+        return array_values(array_unique($candidates));
+    }
+
+    private function getUploadDirectory(): string {
+        foreach ($this->getCandidateUploadDirectories() as $candidateDir) {
+            if (!is_dir($candidateDir) && !mkdir($candidateDir, 0755, true) && !is_dir($candidateDir)) {
+                continue;
+            }
+
+            if (is_dir($candidateDir) && is_writable($candidateDir)) {
+                return $candidateDir;
+            }
+        }
+
+        return $this->getProjectRootDirectory() . 'uploads' . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR;
+    }
+
+    private function getBaseUrl(): string {
+        return defined('BASE_URL') && BASE_URL !== ''
+            ? rtrim(BASE_URL, '/') . '/'
+            : '/';
+    }
+
+    private function getUploadBaseUrl(): string {
+        return $this->getBaseUrl() . 'uploads/files/';
+    }
+
+    private function getUploadErrorMessage(int $errorCode): string {
+        $errors = [
+            UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini.',
+            UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form.',
+            UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded.',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder for file upload.',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write the uploaded file to disk.',
+            UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.',
+        ];
+
+        return $errors[$errorCode] ?? 'Unknown upload error.';
+    }
+
+    private function setUploadFailure(string $message, string $targetDir = '', int $errorCode = 0): void {
+        $detail = $message;
+        if ($errorCode > 0) {
+            $detail .= ' (PHP upload error ' . $errorCode . ': ' . $this->getUploadErrorMessage($errorCode) . ')';
+        }
+
+        if ($targetDir !== '') {
+            $detail .= ' | target: ' . $targetDir;
+        }
+
+        error_log('[FilesController] ' . $detail);
+        $_SESSION['message'] = $detail;
+        $_SESSION['msg_type'] = 'error';
+    }
+
+    private function buildSafeFileName(string $fileName): string {
+        $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+        $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+        $safeBaseName = preg_replace('/[^A-Za-z0-9._-]/', '_', $baseName) ?: 'file';
+        $safeBaseName = trim($safeBaseName, '._-') ?: 'file';
+
+        return $safeBaseName . '_' . time() . '_' . uniqid() . ($extension ? '.' . $extension : '');
+    }
+
+    private function resolveStoredFilePath(string $filepath): string {
+        $trimmedPath = trim($filepath);
+        if ($trimmedPath === '') {
+            return '';
+        }
+
+        if (preg_match('/^[A-Za-z]:[\\\/]/', $trimmedPath) || strpos($trimmedPath, DIRECTORY_SEPARATOR) === 0) {
+            return $trimmedPath;
+        }
+
+        $rootRelativePath = $this->getProjectRootDirectory() . ltrim($trimmedPath, '/');
+        if (file_exists($rootRelativePath)) {
+            return $rootRelativePath;
+        }
+
+        $legacyPath = $this->getProjectRootDirectory() . 'uploads' . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . basename($trimmedPath);
+        if (file_exists($legacyPath)) {
+            return $legacyPath;
+        }
+
+        return $trimmedPath;
     }
 
     public function files() {
@@ -64,10 +206,7 @@ class FilesController extends Controller {
         $uploader = trim($first . ' ' . $last) ?: 'System';
         $userID   = $_SESSION['id'] ?? 'guest';
 
-        $targetDir = __DIR__ . "/../uploads/";
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0755, true);
-        }
+        $targetDir = $this->getUploadDirectory();
 
         // Validate total file size (40MB max)
         $totalSize = 0;
@@ -83,25 +222,44 @@ class FilesController extends Controller {
             exit;
         }
 
+        if (!is_dir($targetDir) || !is_writable($targetDir)) {
+            $this->setUploadFailure('Upload directory is not writable.', $targetDir);
+            header("Location: index.php?controller=Files&action=files");
+            exit;
+        }
+
         $successCount = 0;
         $failureCount = 0;
+        $failureDetail = null;
+        $failureErrorCode = 0;
         $uploadedFiles = [];
 
         // Process each file
         for ($i = 0; $i < count($_FILES['files']['name']); $i++) {
-            if ($_FILES['files']['error'][$i] !== UPLOAD_ERR_OK) {
-                $failureCount++;
-                continue;
-            }
-
             $fileName = $_FILES['files']['name'][$i];
             $tmpName = $_FILES['files']['tmp_name'][$i];
             $fileSize = $_FILES['files']['size'][$i];
+            $uploadError = $_FILES['files']['error'][$i];
+
+            if ($uploadError !== UPLOAD_ERR_OK) {
+                $failureCount++;
+                if ($failureDetail === null) {
+                    $failureDetail = 'Upload failed for ' . $fileName . '.';
+                    $failureErrorCode = $uploadError;
+                }
+                continue;
+            }
+
+            if (!is_uploaded_file($tmpName)) {
+                $failureCount++;
+                if ($failureDetail === null) {
+                    $failureDetail = 'Temporary upload file was not accepted for ' . $fileName . '.';
+                }
+                continue;
+            }
 
             // Generate unique filename to prevent conflicts
-            $fileExtension = pathinfo($fileName, PATHINFO_EXTENSION);
-            $fileBaseName = pathinfo($fileName, PATHINFO_FILENAME);
-            $uniqueFileName = $fileBaseName . '_' . time() . '_' . uniqid() . '.' . $fileExtension;
+            $uniqueFileName = $this->buildSafeFileName($fileName);
             $targetFile = $targetDir . $uniqueFileName;
 
             if (move_uploaded_file($tmpName, $targetFile)) {
@@ -112,6 +270,9 @@ class FilesController extends Controller {
                 $uploadedFiles[] = $uniqueFileName;
             } else {
                 $failureCount++;
+                if ($failureDetail === null) {
+                    $failureDetail = 'Failed to move uploaded file to storage for ' . $fileName . '.';
+                }
             }
         }
 
@@ -123,8 +284,11 @@ class FilesController extends Controller {
             $_SESSION['message'] = $successCount . " file(s) uploaded. " . $failureCount . " file(s) failed.";
             $_SESSION['msg_type'] = "warning";
         } else {
-            $_SESSION['message'] = "Failed to upload files.";
-            $_SESSION['msg_type'] = "error";
+            if ($failureDetail !== null) {
+                $this->setUploadFailure($failureDetail, $targetDir, $failureErrorCode);
+            } else {
+                $this->setUploadFailure('Failed to upload files. Please check upload size, file type, and folder permissions.', $targetDir);
+            }
         }
 
         header("Location: index.php?controller=Files&action=files");
@@ -163,21 +327,31 @@ class FilesController extends Controller {
             $directionFrom = '';
             $directionTo = '';
         }
-
+// changes
         $first = $_SESSION['firstName'] ?? '';
         $last  = $_SESSION['lastName'] ?? '';
         $userID = $_SESSION['id'] ?? 'guest';
         $uploader = trim($first . ' ' . $last) ?: 'System';
 
         // Check if a new file is uploaded
-        if (isset($_FILES['file']) && $_FILES['file']['name'] != "") {
-            if (file_exists($filepath)) {
-                unlink($filepath);
+        if (isset($_FILES['file']) && !empty($_FILES['file']['name'])) {
+            $storedPath = $this->resolveStoredFilePath($filepath);
+            if ($storedPath !== '' && file_exists($storedPath)) {
+                unlink($storedPath);
             }
 
-            $filename = $_FILES['file']['name'];
-            $filepath = "uploads/" . $filename;
-            move_uploaded_file($_FILES['file']['tmp_name'], $filepath);
+            $targetDir = $this->getUploadDirectory();
+            $newFileName = $this->buildSafeFileName($_FILES['file']['name']);
+            $targetFile = $targetDir . $newFileName;
+
+            if (!move_uploaded_file($_FILES['file']['tmp_name'], $targetFile)) {
+                $this->setUploadFailure('Failed to upload the replacement file.', $targetDir);
+                header("Location: index.php?controller=Files&action=files");
+                exit;
+            }
+
+            $filename = $newFileName;
+            $filepath = $targetFile;
         }
 
         $this->model->update($id, $filename, $filepath, $description, $fileCategory, $directionFrom, $directionTo);
@@ -205,8 +379,9 @@ class FilesController extends Controller {
         $description  = $file['desc'] ?? '';
         $fileCategory = $file['category'] ?? '';
 
-        if (file_exists($filepath)) {
-            unlink($filepath);
+        $storedPath = $this->resolveStoredFilePath($filepath);
+        if ($storedPath !== '' && file_exists($storedPath)) {
+            unlink($storedPath);
         }
 
         $this->model->deleteLog($id, $userID, $filename, $filepath, $description, $fileCategory, $uploader);
@@ -226,10 +401,22 @@ class FilesController extends Controller {
         }
 
         $fileName = basename(urldecode($_GET['file']));
-        $uploadDir = __DIR__ . "/../uploads/";
-        $fullPath = $uploadDir . $fileName;
+        $candidateDirs = [
+            $this->getUploadDirectory(),
+            $this->getProjectRootDirectory() . 'uploads' . DIRECTORY_SEPARATOR,
+            __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR,
+        ];
 
-        if (!file_exists($fullPath)) {
+        $fullPath = null;
+        foreach ($candidateDirs as $candidateDir) {
+            $possiblePath = rtrim($candidateDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $fileName;
+            if (file_exists($possiblePath)) {
+                $fullPath = $possiblePath;
+                break;
+            }
+        }
+
+        if ($fullPath === null || !file_exists($fullPath)) {
             die("File not found.");
         }
 
