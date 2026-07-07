@@ -573,6 +573,31 @@ class CorrespondenceModel {
         ]);
     }
 
+    public function replaceDocumentCirculations($documentId, $recipientsCsv = null, $ccCsv = null) {
+        try {
+            $this->conn->beginTransaction();
+
+            $stmt = $this->conn->prepare("DELETE FROM document_circulations WHERE document_id = ?");
+            $stmt->execute([$documentId]);
+
+            if (!empty($recipientsCsv)) {
+                $this->addRecipients($documentId, $recipientsCsv, false);
+            }
+            if (!empty($ccCsv)) {
+                $this->addRecipients($documentId, $ccCsv, true);
+            }
+
+            $this->conn->commit();
+            return true;
+        } catch (Throwable $e) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            error_log('replaceDocumentCirculations failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     /**
      * Mark draft as notified to admin-level users and create logs
      */
@@ -844,12 +869,16 @@ class CorrespondenceModel {
         $stmt->execute([$status, $documentId]);
 
         // Optional document touch/update
+        $actorName = $this->getActorName();
         $doc = $this->conn->prepare("
             UPDATE documents
-            SET updated_at = NOW(), status = ?
+            SET updated_at = NOW(),
+                status = ?,
+                closed_by = CASE WHEN LOWER(?) = 'done' THEN ? ELSE NULL END,
+                closed_at = CASE WHEN LOWER(?) = 'done' THEN NOW() ELSE NULL END
             WHERE id = ?
         ");
-        $doc->execute([$status, $documentId]);
+        $doc->execute([$status, $status, $actorName, $status, $documentId]);
 
         // Optional log
         $this->logCorrespondenceAction("All circulations set to {$status}", $documentId);
@@ -910,6 +939,23 @@ class CorrespondenceModel {
 	        $stmt->execute([$attachmentId]);
 	        return $stmt->fetch(PDO::FETCH_ASSOC);
 	    }
+    public function deleteAttachmentById(int $attachmentId) {
+        $attachment = $this->getAttachmentById($attachmentId);
+        if (!$attachment) {
+            return false;
+        }
+
+        $filePath = $attachment["file_path"] ?? "";
+        $stmt = $this->conn->prepare("DELETE FROM document_attachments WHERE id = ?");
+        $result = $stmt->execute([$attachmentId]);
+
+        if ($result && !empty($filePath) && file_exists($filePath)) {
+            @unlink($filePath);
+        }
+
+        return $result;
+    }
+
 
 
     private function ensureThreadForDocument(int $documentId): int {

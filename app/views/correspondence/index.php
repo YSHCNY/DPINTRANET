@@ -30,151 +30,212 @@
             <?php unset($_SESSION['message'], $_SESSION['msg_type']); ?>
         <?php endif; ?>
 
-        <!-- ====================== NEW CIRCULATION CTA (moved to separate page) ====================== -->
-        <?php if ($canCreateCorrespondence): ?>
-            <div class="mb-6 overflow-hidden rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-semibold uppercase text-blue-600">New Circulation</p>
-                        <h2 class="text-base font-semibold text-slate-900 mt-1">Create a new circulation</h2>
-                        <p class="mt-1 text-xs text-slate-500">Open the dedicated form to create a circulation entry.</p>
-                    </div>
-                    <div>
-                                <a href="index.php?controller=correspondence&action=newCirculation" class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">New Circulation</a>
-                    </div>
-                </div>
-            </div>
-        <?php else: ?>
-            <div class="mb-6 rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
-                <div class="rounded-lg border border-slate-300 bg-slate-50 px-3 py-3">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">View Only</p>
-                    <h2 class="mt-1 text-lg font-semibold text-slate-900">New Circulation is disabled for your account</h2>
-                    <p class="mt-2 max-w-3xl text-xs leading-6 text-slate-600">
-                        You can review correspondence history and repository records, but creating, editing, and deleting circulation entries are restricted by your role.
-                    </p>
-                </div>
-            </div>
-        <?php endif; ?>
+     
 
         <!-- ====================== DOCUMENT REPOSITORY ====================== -->
         <?php require __DIR__ . '/_shared.php'; ?>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-3 py-3 border-b border-gray-200 bg-white">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div>
-                        <p class="text-xs font-semibold uppercase text-blue-600">Repository</p>
-                        <h2 class="text-xs sm:text-sm md:text-base font-semibold text-gray-900 mt-0.5">Document Repository</h2>
-                    </div>
-                    <span class="inline-flex w-fit items-center rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600">
-                        <?= count($documents) ?> document(s)
+        <div class="rounded-lg  overflow-hidden">
+            <div class="">
+               <div class="mb-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+
+
+            <div class="border-b bg-slate-50 border-slate-200  px-5 py-4">
+                <div class=" flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+
+            <!-- Left -->
+
+               <div class="max-w-3xl ">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-blue-600">
+                    Correspondence
+                </p>
+
+                <h2 class=" text-xl font-semibold tracking-tight text-slate-900">Correspondence Dashboard</h2>
+
+                 <p class=" max-w-2xl text-sm leading-6 text-slate-500">
+                    Manage correspondence, drafts, and repository documents from one workspace
+                        </p>
+
+            </div>
+
+            <!-- Right Stats -->
+
+            <div class="flex flex-wrap items-center gap-3">
+
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 shadow-sm">
+                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="text-[11px] font-medium text-slate-700">
+                        <?= count($documents) ?> file(s)
                     </span>
                 </div>
 
-                <div class="mt-4 rounded-md border border-slate-300 bg-slate-50/80 p-3 shadow-sm shadow-slate-100">
-                    <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[200px_200px_minmax(0,1fr)] gap-3 flex-1">
-                            <div>
-                                <label for="priorityFilter" class="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Priority</label>
-                                <select id="priorityFilter" class="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-100">
-                                    <option value="">All priorities</option>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                    <option value="Urgent">Urgent</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="statusFilter" class="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Status</label>
-                                <select id="statusFilter" class="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-100">
-                                <option value="">All status</option>
-                                <option value="Suspended">Suspended</option>
-                                <option value="Inprogress">Inprogress</option>
-                                <option value="Done">Done</option>
-                                <option value="draft">draft</option>
-
-                                </select>
-                            </div>
-                            <div class="flex items-end">
-                                <p class="text-xs leading-5 text-slate-500">
-                                    Filters apply instantly. Keep the table clean by narrowing to priority, status, or removed items.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="xl:min-w-[220px]">
-                            <label class="inline-flex w-full items-center justify-between gap-3 rounded-full border border-slate-300 bg-white px-4 py-2.5 shadow-sm shadow-slate-100 transition hover:border-slate-400">
-                                <span class="inline-flex items-center gap-2 min-w-0">
-                                    <span class="h-2.5 w-2.5 rounded-full <?= !empty($showRemovedItems) ? 'bg-amber-500' : 'bg-slate-400' ?>"></span>
-                                    <span class="truncate text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Show removed</span>
-                                </span>
-                                <input type="checkbox" id="showRemovedItems" <?= !empty($showRemovedItems) ? 'checked' : '' ?> class="h-4 w-4 rounded border-slate-400 text-blue-600 focus:ring-blue-500">
-                            </label>
-                        </div>
-                    </div>
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 shadow-sm">
+                    <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+                    <span class="text-[11px] font-medium text-slate-700">
+                        <?= $draftsCount ?? 0 ?> draft(s)
+                    </span>
                 </div>
+
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 shadow-sm">
+                    <span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>
+                    <span class="text-[11px] font-medium text-slate-700">
+                        <?= $removedCount ?? 0 ?> removed
+                    </span>
+                </div>
+
             </div>
 
-            <div class="p-5">
-                <!-- Top bar: title, search, filters, compact toggle -->
-                <div class="mb-4 flex flex-col gap-3 sm:flex-row lg:hidden sm:block  sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-xs font-semibold uppercase text-blue-600">Repository</p>
-                        <h2 class="text-sm sm:text-base font-semibold text-gray-900">Document Repository</h2>
-                    </div>
+        </div>
 
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <div class="relative">
-                            <input id="repoSearch" type="search" placeholder="Search documents" class="h-10 w-64 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-                        </div>
+    </div>
 
+    <!-- ========================= -->
+    <!-- Controls -->
+    <!-- ========================= -->
+
+    <div class="px-6 py-6">
+
+        <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+
+            <!-- Left Filters -->
+
+                <div class="flex flex-1 flex-wrap items-end gap-4">
+
+                <!-- <div class="w-full md:w-80">
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Search
+                    </label>
+
+                    <input
+                        id="repoSearch"
+                        type="search"
+                        placeholder="Search correspondence..."
+                        class="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+                </div> -->
+
+                <div class="w-52">
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Priority
+                    </label>
+
+                    <select id="priorityFilter"
+                        class="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+
+                        <option value="">All priorities</option>
+                        <option>Low</option>
+                        <option>Medium</option>
+                        <option>High</option>
+                        <option>Urgent</option>
+
+                    </select>
+                </div>
+
+                <div class="w-52">
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Status
+                    </label>
+
+                    <select id="statusFilter"
+                        class="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+
+                        <option value="">All status</option>
+                        <option>Inprogress</option>
+                        <option>Done</option>
+                        <option>Suspended</option>
+                        <option>Draft</option>
+
+                    </select>
+                </div>
+
+            <label class="flex h-12 items-center gap-3 rounded-2xl border border-slate-300 bg-white px-5">
+
+                    <span class="h-2.5 w-2.5 rounded-full <?= !empty($showRemovedItems) ? 'bg-amber-500' : 'bg-slate-400' ?>"></span>
+
+                    <span class="text-sm font-medium text-slate-700">
+                        Show Removed
+                    </span>
+
+                    <input
+                        id="showRemovedItems"
+                        type="checkbox"
+                        <?= !empty($showRemovedItems) ? 'checked' : '' ?>
+                        class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+
+                </label>
+            </div>
+
+            <!-- Right Actions -->
+
+            <div class="flex items-center gap-4">
+
+              
+
+                <a href="index.php?controller=correspondence&action=newCirculation"
+                    class="inline-flex h-12 items-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+
+                    Create Correspondence
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-4">
+                
+
+                                <div class="border-b border-slate-200 px-4 py-4 md:px-6">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <select id="statusFilter" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none">
-                                <option value="">All status</option>
-                                <option value="Suspended">Suspended</option>
-                                <option value="Inprogress">Inprogress</option>
-                                <option value="Done">Done</option>
-                                <option value="draft">draft</option>
-
-                            </select>
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Document circulation repo</p>
+                            <h3 class="mt-1 text-base font-semibold text-slate-900">All circulations</h3>
                         </div>
-
-                        <div class="hidden sm:block">
-                            <!-- reuse existing priorityFilter if present, otherwise show small select -->
-                            <?php if (!empty($documents)): ?>
-                                <select id="priorityFilterMobile" class="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none">
-                                    <option value="">All priorities</option>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                    <option value="Urgent">Urgent</option>
-                                </select>
-                            <?php endif; ?>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                                <?= count($documents) ?> documents
+                            </span>
                         </div>
-
-                        <!-- <label class="inline-flex items-center gap-2 text-sm">
-                            <input id="compactViewToggle" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-blue-600">
-                            <span class="text-sm text-slate-600">Compact View</span>
-                        </label> -->
                     </div>
                 </div>
 
+                    <div class="p-5">
+                <!-- Toolbar -->
+                <div class="mb-4 flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
+                    <div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        <span>Repository</span>
+                        <span class="text-slate-300">•</span>
+                        <span class="font-medium text-slate-400">Search and filter</span>
+                    </div>
+
+                    <label class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 shadow-sm transition focus-within:border-slate-400 focus-within:shadow-md md:w-80">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
+                        <input id="repoSearch" type="search" placeholder="Search documents" class="w-full border-0 bg-transparent p-0 text-sm text-slate-700 outline-none placeholder:text-slate-400">
+                    </label>
+                </div>
+
+                <div id="dropdown-root" class="pointer-events-none fixed inset-0 z-[9999]"></div>
+
                 <!-- Desktop: table view -->
-                <div class="hidden md:block overflow-x-auto">
+                <div class="hidden md:block overflow-auto ">
                     <table id="documentTable" class="w-full text-sm compact">
-                    <thead class="bg-gray-50 border-y border-gray-200">
+                    <thead class="bg-white">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Tracking ID</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Document Title</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Sender</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500">Received</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500">Status</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Circulated</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Due Date</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500">Priority</th>
-                            <th class="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-500 w-32">Actions</th>
+                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tracking</th>
+                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Document</th>
+                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Received</th>
+                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Status</th>
+                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Closed</th>
+                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Circulated</th>
+                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Due</th>
+                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Priority</th>
+                            <th class="w-24 px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Actions</th>
                             <th class="hidden">State</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody>
                         <?php foreach ($documents as $doc): ?>
                         <?php
                             $receivedCount = (int)($doc['received_count'] ?? 0);
@@ -183,6 +244,7 @@
                             // Status is driven by Open/Close which marks circulations as 'Done'
                             $status =  $doc['status'];
                             $isDeleted = !empty($doc['is_deleted']);
+                            $isDraftDocument = !empty($doc['is_draft']) || strtolower(trim((string)($status ?? ''))) === 'draft';
                             $isEdited = !empty($doc['is_edited']);
                             $canManage = false;
                             if (!empty($doc['created_by']) && (int)$doc['created_by'] === (int)($_SESSION['id'] ?? 0) && !$isDeleted && !empty($doc['created_at'])) {
@@ -191,99 +253,137 @@
                             }
                             $manageUntil = !empty($doc['created_at']) ? date('M d, Y g:i A', strtotime($doc['created_at'] . ' +7 days')) : null;
                             $st = strtolower(trim((string)($status ?? 'inprogress')));
+                            $isClosedDocument = in_array($st, ['done', 'completed'], true);
+                            $closedDisplay = $isClosedDocument
+                                ? (!empty($doc['closed_at']) ? date('M d, Y', strtotime($doc['closed_at'])) : '—')
+                                : 'Open';
                    // STATUS COLORS = document state
                     switch ($st) {
                         case 'done':
                         case 'completed':
-                            $statusClass = 'border border-emerald-200 bg-emerald-50 text-emerald-700';
+                            $statusDotClass = 'bg-emerald-500';
                             break;
 
                         case 'suspended':
-                            $statusClass = 'border border-rose-200 bg-rose-50 text-rose-700';
+                            $statusDotClass = 'bg-rose-500';
                             break;
 
                         case 'draft':
-                            $statusClass = 'border border-sky-200 bg-sky-50 text-sky-700';
+                            $statusDotClass = 'bg-sky-500';
                             break;
 
                         case 'pending':
                         case 'in progress':
                         case 'in_progress':
                         default:
-                            $statusClass = 'border border-slate-200 bg-slate-50 text-slate-700';
+                            $statusDotClass = 'bg-slate-400';
                             break;
                     }
 
                     // PRIORITY COLORS = urgency
                     $priority = strtolower(trim((string)($doc['priority'] ?? '')));
-
-                    $priorityClass = match ($priority) {
-                        'urgent' => 'border border-red-200 bg-red-50 text-red-700',
-                        'high'   => 'border border-amber-200 bg-amber-50 text-amber-700',
-                        'medium' => 'border border-violet-200 bg-violet-50 text-violet-700',
-                        'low'    => 'border border-zinc-200 bg-zinc-50 text-zinc-700',
-                        default  => 'border border-slate-200 bg-slate-50 text-slate-700',
+                    $priorityDotClass = match ($priority) {
+                        'urgent' => 'bg-rose-500',
+                        'high'   => 'bg-amber-500',
+                        'medium' => 'bg-violet-500',
+                        'low'    => 'bg-slate-400',
+                        default  => 'bg-slate-400',
                     };
                         ?>
-                        <tr onclick="viewDocument(<?= $doc['id'] ?>)"
-                            class="<?= $isDeleted ? 'bg-slate-50 text-slate-500' : '' ?> hover:bg-slate-50 cursor-pointer transition-colors">
-                            <td class="px-4 py-3 font-mono <?= $isDeleted ? 'text-slate-400' : 'text-blue-700' ?> whitespace-nowrap"><?= htmlspecialchars($doc['tracking_id']) ?></td>
-                            <td class="px-4 py-3 font-medium min-w-[220px] <?= $isDeleted ? 'text-slate-500' : 'text-gray-900' ?>">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="<?= $isDeleted ? 'text-slate-400' : '' ?>"><?= htmlspecialchars($doc['title']) ?></span>
-                                    <?php if ($isEdited): ?>
-                                        <span class="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">Edited</span>
-                                    <?php endif; ?>
-                                    <?php if ($isDeleted): ?>
-                                        <span class="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">Removed</span>
-                                    <?php endif; ?>
+                        <tr class="border-b border-slate-100 bg-white align-middle transition-colors hover:bg-slate-50 <?= $isDeleted ? 'text-slate-500' : 'text-slate-900' ?>">
+                            <td class="px-3 py-3 align-middle whitespace-nowrap">
+                                <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
+                                    <?= htmlspecialchars($doc['tracking_id']) ?>
+                                </span>
+                            </td>
+                            <td class="min-w-[260px] px-3 py-3 align-middle">
+                                <div class="min-w-0">
+                                    <?php $titleText = (string)($doc['title'] ?? ''); $isLongTitle = mb_strlen($titleText) > 60; $previewTitle = $isLongTitle ? mb_substr($titleText, 0, 60) : $titleText; ?>
+                                    <div class="title-container break-words whitespace-normal text-sm font-semibold text-slate-900" style="max-width:56ch;">
+                                        <span class="title-preview"><?= htmlspecialchars($isLongTitle ? $previewTitle . '...' : $previewTitle) ?></span>
+                                        <?php if ($isLongTitle): ?>
+                                            <span class="title-full hidden"><?= htmlspecialchars($titleText) ?></span>
+                                            <button type="button" data-title-toggle aria-expanded="false" class="ml-2 text-[11px] font-medium text-slate-500 transition hover:text-slate-700">See more</button>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                        <span class="font-medium text-slate-400"><?= htmlspecialchars($doc['tracking_id']) ?></span>
+                                        <span class="text-slate-300">•</span>
+                                        <span><?= !empty($doc['created_at']) ? date('M d, Y', strtotime($doc['created_at'])) : '—' ?></span>
+                                        <?php if (!empty($doc['notes'])): ?>
+                                            <span class="text-slate-300">•</span>
+                                            <span class="truncate"><?= htmlspecialchars($doc['notes']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                             
                             </td>
-                            <td class="px-4 py-3 <?= $isDeleted ? 'text-slate-400' : 'text-slate-600' ?> min-w-[180px]"><?= htmlspecialchars($doc['sender_email']) ?></td>
-                            <td class="px-4 py-3 text-center font-semibold <?= $isDeleted ? 'text-slate-400' : 'text-emerald-700' ?> whitespace-nowrap">
-                                <?= $receivedCount ?>/<?= $totalRecipients ?>
+                            <td class="px-3 py-3 align-middle text-center whitespace-nowrap">
+                                <?php $percent = $totalRecipients ? (int) floor(($receivedCount / $totalRecipients) * 100) : 0; ?>
+                                <div class="text-sm font-semibold <?= $isDeleted ? 'text-slate-400' : 'text-slate-700' ?>"><?= $receivedCount ?>/<?= $totalRecipients ?></div>
+                                <div class="mx-auto mt-1.5 h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
+                                    <div class="h-1.5 rounded-full bg-emerald-500" style="width:<?= $percent ?>%"></div>
+                                </div>
                             </td>
-                            <td class="px-4 py-3 text-center" data-search="<?= htmlspecialchars($status) ?>">
-                                <span class="inline-flex items-center justify-center rounded-md border px-2.5 py-1 text-xs font-semibold <?= $statusClass ?>">
-                                    <?= htmlspecialchars($status) ?>
+                            <td class="px-3 py-3 align-middle" data-search="<?= htmlspecialchars($status) ?>">
+                                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
+                                    <span class="h-2 w-2 rounded-full <?= $statusDotClass ?>"></span>
+                                    <span><?= htmlspecialchars($status ?: 'Pending') ?></span>
                                 </span>
                             </td>
-                            <td class="px-4 py-3 <?= $isDeleted ? 'text-slate-400' : 'text-slate-500' ?> whitespace-nowrap"><?= date('M d, Y', strtotime($doc['created_at'])) ?></td>
-                            <td class="px-4 py-3 <?= $isDeleted ? 'text-slate-400' : 'text-slate-500' ?> whitespace-nowrap"><?= $doc['due_date'] ? date('M d, Y', strtotime($doc['due_date'])) : '—' ?></td>
-                            <td class="px-4 py-3 text-center" data-search="<?= htmlspecialchars($doc['priority']) ?>">
-                                <span class="inline-flex items-center justify-center rounded-md border px-2.5 py-1 text-xs font-semibold <?= $priorityClass ?>">
-                                    <?= htmlspecialchars($doc['priority']) ?>
+                            <td class="px-3 py-3 align-middle whitespace-nowrap">
+                                <span class="text-sm <?= $isClosedDocument ? 'text-slate-700' : 'text-slate-400' ?>"><?= htmlspecialchars($closedDisplay) ?></span>
+                            </td>
+                            <td class="px-3 py-3 align-middle whitespace-nowrap text-sm text-slate-600"><?= !empty($doc['created_at']) ? date('M d, Y', strtotime($doc['created_at'])) : '—' ?></td>
+                            <td class="px-3 py-3 align-middle whitespace-nowrap text-sm text-slate-600">
+                                <?php if ($doc['due_date']): ?>
+                                    <?= date('M d, Y', strtotime($doc['due_date'])) ?>
+                                <?php else: ?>
+                                    <span class="text-slate-400">No due date</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="px-3 py-3 align-middle" data-search="<?= htmlspecialchars($doc['priority']) ?>">
+                                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
+                                    <span class="h-2 w-2 rounded-full <?= $priorityDotClass ?>"></span>
+                                    <span><?= htmlspecialchars($doc['priority'] ?: 'Not set') ?></span>
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-center">
-                                <div class="inline-flex flex-wrap items-center justify-center gap-2" onclick="event.stopPropagation()">
-                                     <button type="button"  onclick='openEditDocument(<?= $doc["id"] ?>, <?= json_encode($doc["title"], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
-                                        <?= (!$canEditCorrespondence || $isDeleted) ? 'disabled' : '' ?>
-                                        class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-300  px-3 text-xs font-semibold text-slate-700 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-700 transition"
-                                        title="Edit document">
-                                       Edit
-                                    </button>
-                                    <?php if (!empty($doc['is_draft']) && $canEditCorrespondence && !$isDeleted && $canFinalize): ?>
-                                        <button type="button" onclick='openFinalizeDraft(<?= $doc["id"] ?>)'
-                                            class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 text-xs font-semibold text-sky-700 hover:bg-sky-100 transition"
-                                            title="Finalize draft">
-                                           Finalize
+                            <td class="px-3 py-3 align-middle text-center">
+                                <div class="inline-flex items-center justify-center gap-1.5">
+                                    <?php if ($isDraftDocument && $canFinalize): ?>
+                                        <button type="button"
+                                    class="relative z-10 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-110 hover:border-blue-300 hover:bg-blue-100 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 active:scale-80 animate-bounce"
+                                            title="Draft document"
+                                            aria-label="Draft document"
+                                            data-draft-action
+                                            data-document-id="<?= (int)$doc['id'] ?>"
+                                            onclick="window.location.href='index.php?controller=correspondence&action=newCirculation&draftId=<?= (int)$doc['id'] ?>&fromFinalize=1'">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 21V7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5V21l-4.5-3-4.5 3-4.5-3L3 21Z"/>
+                                            </svg>
                                         </button>
                                     <?php endif; ?>
-                                    <button type="button" onclick='openDeleteConfirm(<?= $doc["id"] ?>, <?= json_encode($doc["title"], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
-                                        <?= (!$canDeleteCorrespondence || $isDeleted) ? 'disabled' : '' ?>
-                                        class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition "
-                                        title="Delete document">
-                                        Delete
+                                    <button type="button"
+                                        data-view-action
+                                        aria-label="View document"
+                                        data-document-id="<?= (int)$doc['id'] ?>"
+                                        class="relative z-10 h-10 w-10 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400 active:translate-y-0"
+                                        title="View">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                     </button>
-                                    <?php if ($canHardDeleteCorrespondence): ?>
-                                        <button type="button" onclick='openHardDeleteConfirm(<?= $doc["id"] ?>, <?= json_encode($doc["title"], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
-                                            class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-rose-300 bg-rose-100 px-3 text-xs font-semibold text-rose-800 hover:bg-rose-200 transition"
-                                            title="Permanently remove document">
-                                            Hard Delete
-                                        </button>
-                                    <?php endif; ?>
+                                    <button type="button"
+                                        data-actions-toggle
+                                        aria-haspopup="menu"
+                                        aria-expanded="false"
+                                        data-document-id="<?= (int)$doc['id'] ?>"
+                                        data-document-title="<?= htmlspecialchars((string)($doc['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                        data-can-edit="<?= $canEditCorrespondence && !$isDeleted ? '1' : '0' ?>"
+                                        data-can-delete="<?= $canDeleteCorrespondence && !$isDeleted ? '1' : '0' ?>"
+                                        data-can-hard-delete="<?= $canHardDeleteCorrespondence ? '1' : '0' ?>"
+                                        data-is-deleted="<?= $isDeleted ? '1' : '0' ?>"
+                                        class="relative z-10 h-10 w-10 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400 active:translate-y-0"
+                                        title="More options">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M12 6v.01M12 12v.01M12 18v.01"/></svg>
+                                    </button>
                                 </div>
                             </td>
                             <td class="hidden"><?= $isDeleted ? 'Removed' : 'Active' ?></td>
@@ -317,13 +417,24 @@
                             'Medium' => 'bg-blue-50 text-blue-700',
                             default => 'bg-gray-50 text-gray-700',
                         };
+                        $isClosedDocument = in_array(strtolower(trim((string)($doc['status'] ?? ''))), ['done', 'completed'], true);
+                        $closedDisplay = $isClosedDocument
+                            ? (!empty($doc['closed_at']) ? date('M d, Y', strtotime($doc['closed_at'])) : '—')
+                            : 'Open';
                     ?>
-                    <article data-state="<?= $cardState ?>" onclick="viewDocument(<?= $doc['id'] ?>)" class="group cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+                    <article data-state="<?= $cardState ?>" class="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
                                     <span class="font-mono text-xs text-blue-700"><?= htmlspecialchars($doc['tracking_id']) ?></span>
-                                    <h3 class="truncate text-sm font-semibold text-slate-900"><?= htmlspecialchars($doc['title']) ?></h3>
+                                    <?php $mt = (string)($doc['title'] ?? ''); $mtLong = mb_strlen($mt) > 80; $mtPreview = $mtLong ? mb_substr($mt, 0, 80) : $mt; ?>
+                                    <h3 class="title-container truncate text-sm font-semibold text-slate-900 break-words whitespace-normal" style="max-width:80ch;">
+                                        <span class="title-preview"><?= htmlspecialchars($mtLong ? $mtPreview . '...' : $mtPreview) ?></span>
+                                        <?php if ($mtLong): ?>
+                                            <span class="title-full hidden"><?= htmlspecialchars($mt) ?></span>
+                                            <button type="button" data-title-toggle aria-expanded="false" class="ml-2 text-xs text-blue-600 hover:underline">See more</button>
+                                        <?php endif; ?>
+                                    </h3>
                                 </div>
                                 <p class="mt-1 text-xs text-slate-500 truncate"><?= htmlspecialchars($doc['sender_email']) ?></p>
                             </div>
@@ -336,17 +447,23 @@
                             <div class="flex items-center gap-2 text-xs text-slate-500">
                                 <span>Due: <?= $doc['due_date'] ? date('M d, Y', strtotime($doc['due_date'])) : '—' ?></span>
                             </div>
-                            <div class="inline-flex items-center gap-2" onclick="event.stopPropagation()">
-                                <button type="button" onclick='openEditDocument(<?= $doc["id"] ?>, <?= json_encode($doc["title"], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
+                            <div class="inline-flex items-center gap-2">
+                                <button type="button" data-row-action="edit" data-document-id="<?= (int)$doc['id'] ?>" data-document-title="<?= htmlspecialchars((string)($doc['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                     <?= (!$canEditCorrespondence || $isDeleted) ? 'disabled' : '' ?>
                                     class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
                                     ✎
                                 </button>
-                                <button type="button" onclick='openDeleteConfirm(<?= $doc["id"] ?>, <?= json_encode($doc["title"], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
+                                <button type="button" data-row-action="delete" data-document-id="<?= (int)$doc['id'] ?>" data-document-title="<?= htmlspecialchars((string)($doc['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                     <?= (!$canDeleteCorrespondence || $isDeleted) ? 'disabled' : '' ?>
                                     class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100">
                                     🗑
                                 </button>
+                                    <?php if ($canHardDeleteCorrespondence): ?>
+                                        <button type="button" data-row-action="hard-delete" data-document-id="<?= (int)$doc['id'] ?>" data-document-title="<?= htmlspecialchars((string)($doc['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-rose-600 bg-rose-600 text-white hover:bg-rose-700">
+                                            🗡
+                                        </button>
+                                    <?php endif; ?>
                             </div>
                         </div>
                     </article>
@@ -385,16 +502,38 @@
     #documentTable tbody tr:hover {
         transform: translateY(-1px);
     }
-    /* Correspondence UI overrides: minimalist, muted, premium look */
-    .correspondence-ui {
-        --cb-bg: #f8faf9;
-        --cb-surface: #ffffff;
-        --cb-border: #e6e9ee;
-        --cb-muted: #6b7280;
-        --cb-accent: #2563eb;
-        color: #0f172a;
-        background-color: var(--cb-bg);
+
+    .correspondence-ui .dataTables_wrapper .dataTables_length select,
+    .correspondence-ui .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid rgba(15, 23, 42, 0.12) !important;
+        border-radius: 0.75rem !important;
+        background: white !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+        padding: 0.5rem 0.75rem !important;
+        min-height: 2.25rem !important;
+        font-size: 0.875rem !important;
     }
+
+    .correspondence-ui .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border: 1px solid rgba(15, 23, 42, 0.1) !important;
+        border-radius: 0.6rem !important;
+        background: white !important;
+        color: #475569 !important;
+        padding: 0.45rem 0.7rem !important;
+        margin: 0 0.2rem !important;
+        transition: all 160ms ease !important;
+    }
+
+    .correspondence-ui .dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+    .correspondence-ui .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #f8fafc !important;
+        border-color: rgba(15, 23, 42, 0.18) !important;
+        color: #0f172a !important;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06) !important;
+    }
+    /* Correspondence UI overrides: minimalist, muted, premium look */
+
 
     /* Card breathing room (reduced for denser layout) */
     .correspondence-ui .rounded-3xl { border-radius: 12px; }
@@ -433,11 +572,6 @@
     .correspondence-ui label.group { border: none !important; }
 
     /* Controls and buttons: keep subtle but clear */
-    .correspondence-ui .inline-flex.items-center.rounded-lg,
-    .correspondence-ui .inline-flex.h-8.items-center { background: transparent !important; border: 1px solid transparent !important; }
-    .correspondence-ui button.bg-blue-600,
-    .correspondence-ui .bg-blue-600 { background: var(--cb-accent) !important; border-color: transparent !important; box-shadow: 0 6px 24px rgba(37,99,235,0.06); }
-
     .correspondence-ui button[disabled],
     .correspondence-ui .disabled\:opacity-40 { opacity: 0.55 !important; }
 
@@ -469,6 +603,46 @@
 
     /* Row hover — subtle elevation */
     #documentTable tbody tr:hover { background: rgba(15,23,42,0.02); }
+
+    .floating-actions-menu {
+        position: fixed;
+        min-width: 12rem;
+        border-radius: 0.9rem;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background: white;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+        overflow: hidden;
+        z-index: 99999;
+        pointer-events: auto;
+    }
+
+    .floating-actions-menu button {
+        display: block;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        padding: 0.7rem 0.9rem;
+        text-align: left;
+        font-size: 0.875rem;
+        color: #334155;
+        cursor: pointer;
+        transition: background-color 140ms ease, color 140ms ease;
+    }
+
+    .floating-actions-menu button:hover,
+    .floating-actions-menu button:focus-visible {
+        background-color: #f8fafc;
+        color: #0f172a;
+        outline: none;
+    }
+
+    .floating-actions-menu button[data-action="delete"] {
+        color: #b91c1c;
+    }
+
+    .floating-actions-menu button[data-action="hard-delete"] {
+        color: #991b1b;
+    }
 
     /* Subtle badges */
     .correspondence-ui .inline-flex.items-center.justify-center.rounded-md { background: rgba(15,23,42,0.03); border: none; }
@@ -514,7 +688,7 @@
 $(document).ready(function() {
     const documentTable = $('#documentTable').DataTable({
         pageLength: 25,
-        order: [[5, 'desc']],
+        order: [[4, 'desc']],
         columnDefs: [
             { targets: 9, visible: false, searchable: true }
         ],
@@ -525,27 +699,60 @@ $(document).ready(function() {
         }
     });
 
+    
+    // expose instance globally for other handlers
+    window.documentTableInstance = documentTable;
+
     const showRemovedItems = <?= !empty($showRemovedItems) ? 'true' : 'false' ?>;
     $('#showRemovedItems').prop('checked', showRemovedItems);
-    documentTable.column(9).search(showRemovedItems ? '' : '^Active$', true, false).draw();
+    function applyShowRemoved(enabled) {
+        const dt = window.documentTableInstance;
+        if (dt && typeof dt.column === 'function') {
+            dt.column(9).search(enabled ? '' : '^Active$', true, false).draw();
+        }
+        // mirror to mobile cards
+        if (document.getElementById('mobileCards')) {
+            document.querySelectorAll('#mobileCards article[data-state="Removed"]').forEach(el => {
+                el.style.display = enabled ? '' : 'none';
+            });
+        }
+    }
+
+    applyShowRemoved(showRemovedItems);
 
     $('#priorityFilter').on('change', function() {
         documentTable.column(7).search(this.value ? '^' + this.value + '$' : '', true, false).draw();
     });
 
     $('#statusFilter').on('change', function() {
-        documentTable.column(4).search(this.value ? '^' + this.value + '$' : '', true, false).draw();
+        documentTable.column(3).search(this.value ? '^' + this.value + '$' : '', true, false).draw();
+    });
+
+    // Sort selector moved to header: map friendly options to DataTables ordering
+    $('#sortSelect').on('change', function() {
+        const v = this.value;
+        switch (v) {
+            case 'newest':
+                    documentTable.order([4, 'desc']).draw();
+                    break;
+                case 'oldest':
+                    documentTable.order([4, 'asc']).draw();
+                break;
+            case 'title_asc':
+                documentTable.order([1, 'asc']).draw();
+                break;
+            case 'title_desc':
+                documentTable.order([1, 'desc']).draw();
+                break;
+            default:
+                // keep current ordering
+                break;
+        }
     });
 
     $('#showRemovedItems').on('change', function() {
         const enabled = this.checked;
-        documentTable.column(9).search(enabled ? '' : '^Active$', true, false).draw();
-
-        // also update mobile card list visibility
-        if (document.getElementById('mobileCards')) {
-            // show removed when enabled, hide removed when not
-            $('#mobileCards article[data-state="Removed"]').toggle(enabled);
-        }
+        applyShowRemoved(enabled);
 
         fetch('index.php?controller=correspondence&action=setRemovedItemsPreference', {
             method: 'POST',
@@ -587,6 +794,202 @@ if (document.getElementById('circulationForm')) {
     <?php include __DIR__ . '/_form_js.php'; ?>
 }
 
+const dropdownRoot = document.getElementById('dropdown-root');
+let activeActionMenu = null;
+let activeActionTrigger = null;
+
+function closeFloatingActionsMenu() {
+    if (activeActionMenu) {
+        activeActionMenu.remove();
+    }
+    if (activeActionTrigger) {
+        activeActionTrigger.setAttribute('aria-expanded', 'false');
+    }
+    activeActionMenu = null;
+    activeActionTrigger = null;
+}
+
+function positionFloatingActionsMenu(menu, trigger) {
+    const rect = trigger.getBoundingClientRect();
+    const width = 192;
+    const height = 180;
+    const padding = 12;
+    let left = rect.right - width;
+    let top = rect.bottom + 8;
+
+    if (left < padding) {
+        left = padding;
+    }
+
+    if (left + width > window.innerWidth - padding) {
+        left = window.innerWidth - width - padding;
+    }
+
+    if (top + height > window.innerHeight - padding) {
+        top = Math.max(padding, rect.top - height - 8);
+    }
+
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+}
+
+function openFloatingActionsMenu(trigger) {
+    closeFloatingActionsMenu();
+
+    const id = trigger.getAttribute('data-document-id');
+    const title = trigger.getAttribute('data-document-title') || '';
+    const canEdit = trigger.getAttribute('data-can-edit') === '1';
+    const canDelete = trigger.getAttribute('data-can-delete') === '1';
+    const canHardDelete = trigger.getAttribute('data-can-hard-delete') === '1';
+    const isDeleted = trigger.getAttribute('data-is-deleted') === '1';
+
+    if (!id) return;
+
+    const menu = document.createElement('div');
+    menu.className = 'floating-actions-menu';
+    menu.setAttribute('role', 'menu');
+    menu.setAttribute('aria-label', 'Document actions');
+
+    const actions = [
+        { key: 'view', label: 'View', className: 'text-slate-700' }
+    ];
+
+    if (canEdit && !isDeleted) {
+        actions.push({ key: 'edit', label: 'Edit', className: 'text-slate-700' });
+    }
+
+    if (canDelete && !isDeleted) {
+        actions.push({ key: 'delete', label: 'Delete', className: 'text-rose-700' });
+    }
+
+    if (canHardDelete) {
+        actions.push({ key: 'hard-delete', label: 'Hard delete', className: 'text-rose-800' });
+    }
+
+    actions.forEach(action => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('role', 'menuitem');
+        button.setAttribute('data-action', action.key);
+        button.setAttribute('data-document-id', id);
+        button.setAttribute('data-document-title', title);
+        button.className = action.className;
+        button.textContent = action.label;
+        menu.appendChild(button);
+    });
+
+    if (dropdownRoot) {
+        dropdownRoot.appendChild(menu);
+    } else {
+        document.body.appendChild(menu);
+    }
+
+    positionFloatingActionsMenu(menu, trigger);
+    activeActionMenu = menu;
+    activeActionTrigger = trigger;
+    trigger.setAttribute('aria-expanded', 'true');
+
+    const firstAction = menu.querySelector('button');
+    if (firstAction) {
+        firstAction.focus();
+    }
+}
+
+document.addEventListener('click', function (e) {
+    const viewTrigger = e.target.closest('[data-view-action]');
+    if (viewTrigger) {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = viewTrigger.getAttribute('data-document-id');
+        if (id) {
+            viewDocument(Number(id));
+        }
+        return;
+    }
+
+    const trigger = e.target.closest('[data-actions-toggle]');
+    if (trigger) {
+        e.stopPropagation();
+        if (activeActionTrigger === trigger && activeActionMenu && !activeActionMenu.classList.contains('hidden')) {
+            closeFloatingActionsMenu();
+            return;
+        }
+        openFloatingActionsMenu(trigger);
+        return;
+    }
+
+    if (e.target.closest('.floating-actions-menu')) {
+        return;
+    }
+
+    closeFloatingActionsMenu();
+});
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        closeFloatingActionsMenu();
+    }
+});
+
+document.addEventListener('click', function (e) {
+    const actionButton = e.target.closest('.floating-actions-menu button');
+    if (!actionButton) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const action = actionButton.getAttribute('data-action');
+    const id = actionButton.getAttribute('data-document-id');
+    const title = actionButton.getAttribute('data-document-title') || '';
+
+    closeFloatingActionsMenu();
+
+    if (!id) return;
+
+    switch (action) {
+        case 'view':
+            viewDocument(Number(id));
+            break;
+        case 'edit':
+            openEditDocument(Number(id), title);
+            break;
+        case 'delete':
+            openDeleteConfirm(Number(id), title);
+            break;
+        case 'hard-delete':
+            openHardDeleteConfirm(Number(id), title);
+            break;
+    }
+});
+
+window.addEventListener('resize', closeFloatingActionsMenu);
+window.addEventListener('scroll', closeFloatingActionsMenu, true);
+
+// Title see more/less toggle (delegated)
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-title-toggle]');
+    if (!btn) return;
+    e.stopPropagation();
+    const container = btn.closest('.title-container');
+    if (!container) return;
+    const preview = container.querySelector('.title-preview');
+    const full = container.querySelector('.title-full');
+    const expanded = btn.getAttribute('aria-expanded') === 'true';
+    if (expanded) {
+        // collapse
+        if (preview) preview.classList.remove('hidden');
+        if (full) full.classList.add('hidden');
+        btn.textContent = 'See more';
+        btn.setAttribute('aria-expanded', 'false');
+    } else {
+        // expand
+        if (preview) preview.classList.add('hidden');
+        if (full) full.classList.remove('hidden');
+        btn.textContent = 'See less';
+        btn.setAttribute('aria-expanded', 'true');
+    }
+});
+
 // Collapsible panels: toggle handlers
 const recipientsToggle = document.getElementById('recipients-toggle');
 const recipientsPanel = document.getElementById('recipients-panel');
@@ -621,18 +1024,31 @@ const recipientDrawerOverlay = document.getElementById('recipientDrawerOverlay')
 const drawerSearch = document.getElementById('drawer-search');
 let drawerMode = 'recipients';
 
+function getActiveRecipientTarget() {
+    const editModal = document.getElementById('editDocumentModal');
+    const activeEditForm = editModal && !editModal.classList.contains('hidden')
+        ? editModal.querySelector('form#editDocumentForm')
+        : null;
+    return activeEditForm || document.getElementById('circulationForm');
+}
+
+function getRecipientContainers() {
+    const recipientsContainer = document.getElementById('recipients-chips-edit') || document.getElementById('recipients-chips');
+    const ccContainer = document.getElementById('cc-chips-edit') || document.getElementById('cc-chips');
+    return { recipientsContainer, ccContainer };
+}
+
 function openRecipientDrawer(mode) {
     drawerMode = mode === 'cc' ? 'cc' : 'recipients';
     document.getElementById('drawerTitleSmall').textContent = mode === 'cc' ? 'Add CC' : 'Add Recipients';
     document.getElementById('drawerTitle').textContent = mode === 'cc' ? 'Select CC recipients' : 'Select recipients';
-    // pre-check boxes based on existing hidden inputs
-    const existing = Array.from(document.querySelectorAll(`input[name="${mode}[]"]`)).map(i => String(i.value));
+    const targetForm = getActiveRecipientTarget();
+    const existing = Array.from(targetForm ? targetForm.querySelectorAll(`input[name="${mode}[]"]`) : document.querySelectorAll(`input[name="${mode}[]"]`)).map(i => String(i.value));
     document.querySelectorAll('[data-drawer-id]').forEach(cb => {
         cb.checked = existing.includes(String(cb.dataset.drawerId));
     });
     recipientDrawer.classList.remove('hidden');
     recipientDrawerOverlay.classList.remove('hidden');
-    // slide in
     requestAnimationFrame(() => {
         recipientDrawer.classList.remove('translate-x-full');
         if (drawerSearch) drawerSearch.focus();
@@ -656,17 +1072,16 @@ if (drawerSearch) {
 }
 
 function applyRecipientDrawer() {
-    // gather checked
     const checked = Array.from(document.querySelectorAll('#drawerList input[type="checkbox"]:checked'));
-    // remove existing inputs for current mode
-    document.querySelectorAll(`input[name="${drawerMode}[]"]`).forEach(n => n.remove());
+    const targetForm = getActiveRecipientTarget();
+    if (!targetForm) return;
 
-    const recipientsContainer = document.getElementById('recipients-chips');
-    const ccContainer = document.getElementById('cc-chips');
-    // only clear the container for the active drawer mode
+    targetForm.querySelectorAll(`input[name="${drawerMode}[]"]`).forEach(n => n.remove());
+
+    const { recipientsContainer, ccContainer } = getRecipientContainers();
     if (drawerMode === 'recipients') {
-        recipientsContainer.innerHTML = '';
-    } else {
+        if (recipientsContainer) recipientsContainer.innerHTML = '';
+    } else if (ccContainer) {
         ccContainer.innerHTML = '';
     }
 
@@ -674,7 +1089,6 @@ function applyRecipientDrawer() {
         const id = cb.dataset.drawerId;
         const name = cb.dataset.drawerName || cb.dataset.drawerEmail || id;
 
-        // create a hidden checkbox input (so it participates in selection logic)
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.name = `${drawerMode}[]`;
@@ -683,25 +1097,27 @@ function applyRecipientDrawer() {
         input.style.display = 'none';
         input.setAttribute('data-selection-section', drawerMode);
         input.setAttribute('data-user-id', id);
-        document.getElementById('circulationForm').appendChild(input);
+        targetForm.appendChild(input);
 
-        // create chip
         const chip = document.createElement('span');
         chip.className = 'inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700';
         chip.textContent = name;
         const container = drawerMode === 'cc' ? ccContainer : recipientsContainer;
-        // remove placeholder if exists
-        const placeholder = container.querySelector('.text-sm.text-slate-500');
-        if (placeholder) placeholder.remove();
-        container.appendChild(chip);
+        if (container) {
+            const placeholder = container.querySelector('.text-sm.text-slate-500');
+            if (placeholder) placeholder.remove();
+            container.appendChild(chip);
+        }
     });
 
-    // if nothing selected, restore placeholder
-    if (!recipientsContainer.children.length) recipientsContainer.innerHTML = '<span id="recipients-placeholder" class="text-sm text-slate-500">No recipients selected</span>';
-    if (!ccContainer.children.length) ccContainer.innerHTML = '<span id="cc-placeholder" class="text-sm text-slate-500">No CC selected</span>';
+    if (recipientsContainer && !recipientsContainer.children.length) {
+        recipientsContainer.innerHTML = '<span class="text-sm text-slate-500">No recipients selected</span>';
+    }
+    if (ccContainer && !ccContainer.children.length) {
+        ccContainer.innerHTML = '<span class="text-sm text-slate-500">No CC selected</span>';
+    }
 
     closeRecipientDrawer();
-    // refresh UI counts and chips
     syncSelectionState();
     updateRecipientBadge();
     updateSummaryPanel();

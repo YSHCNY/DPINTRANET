@@ -274,14 +274,7 @@
             <div id="upcomingReservationsList" class="space-y-4"></div>
           </div>
 
-          <div class="mt-4 border-t border-slate-200/60 pt-4">
-            <div class="flex items-center gap-4 text-[11px] text-slate-500">
-              <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-              <span>Vehicle</span>
-              <span class="inline-flex h-2 w-2 rounded-full bg-violet-500"></span>
-              <span>Room</span>
-            </div>
-          </div>
+         
         </div>
       </aside>
     </div>

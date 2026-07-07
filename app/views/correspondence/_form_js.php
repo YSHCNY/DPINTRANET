@@ -16,6 +16,8 @@ function syncSelectionState() {
         ccCount.textContent = `${selectedCc.size} selected`;
     }
 
+    updateRecipientTitleCounts();
+
     document.querySelectorAll('input[data-selection-section]').forEach(cb => {
         const section = cb.dataset.selectionSection;
         const userId = String(cb.dataset.userId || '');
@@ -124,9 +126,32 @@ document.querySelectorAll('input[data-selection-section]').forEach(cb => {
     });
 });
 
+function bindChipRemoval() {
+    document.querySelectorAll('.chip-remove').forEach(btn => {
+        btn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const userId = this.dataset.userId;
+            const section = this.dataset.selectionSection;
+            const input = document.querySelector(`input[data-selection-section="${section}"][data-user-id="${userId}"]`);
+            if (input) {
+                input.checked = false;
+            }
+            const chip = this.closest('span[data-user-id]');
+            if (chip) {
+                chip.remove();
+            }
+            syncSelectionState();
+            updateSummaryPanel();
+            updateRecipientBadge();
+            updateRecipientTitleCounts();
+        });
+    });
+}
+
 bindSelectionFilter('recipients');
 bindSelectionFilter('cc');
 syncSelectionState();
+bindChipRemoval();
 
 // Drawer for recipient/CC picker
 const recipientDrawer = document.getElementById('recipientDrawer');
@@ -171,54 +196,71 @@ if (drawerSearch) {
 function applyRecipientDrawer() {
     // gather checked
     const checked = Array.from(document.querySelectorAll('#drawerList input[type="checkbox"]:checked'));
-    // remove existing inputs for current mode
-    document.querySelectorAll(`input[name="${drawerMode}[]"]`).forEach(n => n.remove());
+    const hiddenContainer = document.getElementById(drawerMode === 'recipients' ? 'hidden-recipient-inputs' : 'hidden-cc-inputs');
+    const visibleContainer = document.getElementById(drawerMode === 'recipients' ? 'recipients-chips' : 'cc-chips');
 
-    const recipientsContainer = document.getElementById('recipients-chips');
-    const ccContainer = document.getElementById('cc-chips');
-    // only clear the container for the active drawer mode
-    if (drawerMode === 'recipients') {
-        recipientsContainer.innerHTML = '';
-    } else {
-        ccContainer.innerHTML = '';
-    }
+    if (!hiddenContainer || !visibleContainer) return;
+
+    // remove existing hidden inputs for current mode
+    hiddenContainer.querySelectorAll(`input[name="${drawerMode}[]"]`).forEach(n => n.remove());
+    visibleContainer.innerHTML = '';
 
     checked.forEach(cb => {
         const id = cb.dataset.drawerId;
         const name = cb.dataset.drawerName || cb.dataset.drawerEmail || id;
 
-        // create a hidden checkbox input (so it participates in selection logic)
+        // create a hidden checkbox input for form submission
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.name = `${drawerMode}[]`;
         input.value = id;
         input.checked = true;
-        input.style.display = 'none';
+        input.hidden = true;
         input.setAttribute('data-selection-section', drawerMode);
         input.setAttribute('data-user-id', id);
-        document.getElementById('circulationForm').appendChild(input);
+        hiddenContainer.appendChild(input);
 
-        // create chip
+        // create chip with remove button
         const chip = document.createElement('span');
-        chip.className = 'inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700';
-        chip.textContent = name;
-        const container = drawerMode === 'cc' ? ccContainer : recipientsContainer;
-        // remove placeholder if exists
-        const placeholder = container.querySelector('.text-sm.text-slate-500');
-        if (placeholder) placeholder.remove();
-        container.appendChild(chip);
+        chip.className = 'inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700';
+        chip.setAttribute('data-user-id', id);
+        chip.setAttribute('data-selection-section', drawerMode);
+        chip.innerHTML = `
+            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-semibold uppercase text-slate-700">${name.charAt(0)}</span>
+            <span>${name}</span>
+            <button type="button" class="chip-remove ml-1 h-5 w-5 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700" aria-label="Remove ${drawerMode} recipient" data-user-id="${id}" data-selection-section="${drawerMode}">×</button>
+        `;
+        visibleContainer.appendChild(chip);
     });
 
-    // if nothing selected, restore placeholder
-    if (!recipientsContainer.children.length) recipientsContainer.innerHTML = '<span id="recipients-placeholder" class="text-sm text-slate-500">No recipients selected</span>';
-    if (!ccContainer.children.length) ccContainer.innerHTML = '<span id="cc-placeholder" class="text-sm text-slate-500">No CC selected</span>';
+    if (!visibleContainer.children.length) {
+        visibleContainer.innerHTML = drawerMode === 'recipients'
+            ? '<span id="recipients-placeholder" class="text-sm text-slate-500">No recipients selected.</span>'
+            : '<span id="cc-placeholder" class="text-sm text-slate-500">No CC selected.</span>';
+    }
 
     closeRecipientDrawer();
-    // refresh UI counts and chips
     syncSelectionState();
     updateRecipientBadge();
     updateSummaryPanel();
+    updateRecipientTitleCounts();
+    bindChipRemoval();
 }
+
+function updateRecipientTitleCounts() {
+    const recipientsCount = document.querySelectorAll('input[name="recipients[]"]').length;
+    const ccCount = document.querySelectorAll('input[name="cc[]"]').length;
+    const recipientsTitle = document.getElementById('recipients-count-title');
+    const ccTitle = document.getElementById('cc-count-title');
+
+    if (recipientsTitle) {
+        recipientsTitle.textContent = `(${recipientsCount})`;
+    }
+    if (ccTitle) {
+        ccTitle.textContent = `(${ccCount})`;
+    }
+}
+
 
 function updateRecipientBadge() {
     const badge = document.getElementById('recipients-count-badge');
@@ -307,12 +349,37 @@ function resetForm() {
 function saveDraftFromFinalize() {
     const form = document.getElementById('circulationForm');
     if (!form) return;
+
     // remove finalize marker so update() treats this as a save-draft
-    const fin = document.getElementById('finalizeInput'); if (fin) fin.remove();
+    const fin = document.getElementById('finalizeInput');
+    if (fin) fin.remove();
+
+    const desc = document.getElementById('description');
+    if (desc) {
+        const hiddenDesc = document.getElementById('description-hidden');
+        if (hiddenDesc) hiddenDesc.value = desc.innerHTML;
+    }
+
+    if (!updateAttachmentFeedback()) {
+        return;
+    }
+
     // ensure save flag exists
     let save = document.getElementById('saveDraftInput');
-    if (!save) { save = document.createElement('input'); save.type = 'hidden'; save.name = 'save_draft'; save.id = 'saveDraftInput'; save.value = '1'; form.appendChild(save); }
-    form.submit();
+    if (!save) {
+        save = document.createElement('input');
+        save.type = 'hidden';
+        save.name = 'save_draft';
+        save.id = 'saveDraftInput';
+        save.value = '1';
+        form.appendChild(save);
+    }
+
+    if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+    } else {
+        form.submit();
+    }
 }
 
 function updateAttachmentFeedback() {
@@ -354,6 +421,30 @@ const attachmentInput = document.querySelector('input[name="attachments[]"]');
 if (attachmentInput) {
     attachmentInput.addEventListener('change', updateAttachmentFeedback);
 }
+
+document.body.addEventListener('click', function(e) {
+    const target = e.target.closest('.remove-attachment');
+    if (!target) return;
+    e.preventDefault();
+
+    const attachmentRow = target.closest('[data-attachment-row]');
+    if (!attachmentRow) return;
+
+    const attachmentId = target.dataset.attachmentId;
+    if (!attachmentId) return;
+
+    const removedContainer = document.getElementById('removed-attachments-inputs');
+    if (!removedContainer) return;
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'removed_attachments[]';
+    hiddenInput.value = attachmentId;
+    removedContainer.appendChild(hiddenInput);
+
+    attachmentRow.remove();
+    updateAttachmentFeedback();
+});
 
 if (circulationForm) {
     circulationForm.addEventListener('submit', function(e) {

@@ -32,12 +32,21 @@ class CorrespondenceController extends Controller {
         $documents = $this->model->getAllDocuments(true);
         $users     = $userModel->getAllUsers();           // For Recipients & CC
         $showRemovedItems = $this->getRemovedItemsPreference();
+        $draftsCount = count(array_filter($documents, function ($doc) {
+            $status = strtolower(trim((string)($doc['status'] ?? '')));
+            return !empty($doc['is_draft']) || $status === 'draft';
+        }));
+        $removedCount = count(array_filter($documents, function ($doc) {
+            return !empty($doc['is_deleted']);
+        }));
 
         $content = $this->renderView('correspondence/index', [
             'documents' => $documents,
             'users'     => $users,
             'nextTrackingId' => $nextTrackingId,
             'showRemovedItems' => $showRemovedItems,
+            'draftsCount' => $draftsCount,
+            'removedCount' => $removedCount,
             'canCreateCorrespondence' => $this->canCreateCorrespondence(),
             'canEditCorrespondence' => $this->canEditCorrespondence(),
             'canDeleteCorrespondence' => $this->canDeleteCorrespondence(),
@@ -103,6 +112,7 @@ class CorrespondenceController extends Controller {
                     $draftAttachments[] = [
                         'id' => (int)($a['id'] ?? 0),
                         'file_name' => $a['file_name'] ?? ($a['file'] ?? 'file'),
+                        'size' => (int)($a['file_size'] ?? 0),
                         'download_url' => "index.php?controller=correspondence&action=download&attachment_id=" . (int)($a['id'] ?? 0)
                     ];
                 }
@@ -1090,187 +1100,210 @@ public function getDocumentData() {
         $isDeleted = !empty($doc['is_deleted']);
         $canEditDocument = $this->canEditCorrespondence() && !$isDeleted;
         ?>
-        <form id="editDocumentForm" method="POST" action="index.php?controller=correspondence&action=update&id=<?= (int)$doc['id'] ?>" class="space-y-6">
+        <form id="editDocumentForm" method="POST" action="index.php?controller=correspondence&action=update&id=<?= (int)$doc['id'] ?>" class="space-y-0">
             <input type="hidden" name="id" value="<?= (int)$doc['id'] ?>">
-                <?php
-                    // Render recipients/CC for edit form: prefer existing circulations, fall back to draft fields
-                    $circs = $this->model->getCirculationDetails($doc['id']);
-                    $editRecipients = [];
-                    $editCc = [];
-                    if (!empty($circs)) {
-                        foreach ($circs as $c) {
-                            if (!empty($c['cc'])) $editCc[] = $c;
-                            else $editRecipients[] = $c;
-                        }
-                    } elseif (!empty($doc['is_draft'])) {
-                        try {
-                            require_once __DIR__ . '/../models/UserModel.php';
-                            $userModel = new UserModel();
-                            $draftRecipients = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
-                            $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
-                            foreach ($draftRecipients as $rid) {
-                                $user = $userModel->getUserById((int)$rid);
-                                $editRecipients[] = [ 'recipient_id' => (int)$rid, 'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? null), 'email' => $user['email'] ?? null ];
-                            }
-                            foreach ($draftCc as $rid) {
-                                $user = $userModel->getUserById((int)$rid);
-                                $editCc[] = [ 'recipient_id' => (int)$rid, 'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? null), 'email' => $user['email'] ?? null ];
-                            }
-                        } catch (Throwable $e) {
-                            // ignore
-                        }
+            <?php
+                // Render recipients/CC for edit form: prefer existing circulations, fall back to draft fields
+                $circs = $this->model->getCirculationDetails($doc['id']);
+                $editRecipients = [];
+                $editCc = [];
+                if (!empty($circs)) {
+                    foreach ($circs as $c) {
+                        if (!empty($c['cc'])) $editCc[] = $c;
+                        else $editRecipients[] = $c;
                     }
-                ?>
+                } elseif (!empty($doc['is_draft'])) {
+                    try {
+                        require_once __DIR__ . '/../models/UserModel.php';
+                        $userModel = new UserModel();
+                        $draftRecipients = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
+                        $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+                        foreach ($draftRecipients as $rid) {
+                            $user = $userModel->getUserById((int)$rid);
+                            $editRecipients[] = [ 'recipient_id' => (int)$rid, 'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? null), 'email' => $user['email'] ?? null ];
+                        }
+                        foreach ($draftCc as $rid) {
+                            $user = $userModel->getUserById((int)$rid);
+                            $editCc[] = [ 'recipient_id' => (int)$rid, 'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? null), 'email' => $user['email'] ?? null ];
+                        }
+                    } catch (Throwable $e) {
+                        // ignore
+                    }
+                }
+            ?>
 
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-1.5">Recipients</label>
-                    <div id="recipients-chips-edit" class="min-h-[48px] flex flex-wrap gap-2 items-center">
-                        <?php if (empty($editRecipients)): ?>
-                            <span class="text-sm text-slate-500">No recipients selected</span>
-                        <?php else: ?>
-                            <?php foreach ($editRecipients as $r): ?>
-                                <input type="hidden" name="recipients[]" value="<?= (int)$r['recipient_id'] ?>">
-                                <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"><?= htmlspecialchars($r['recipient_name'] ?? ($r['email'] ?? '')) ?></span>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                    <div class="mt-2">
-                        <button type="button" onclick="openRecipientDrawer('recipients')" class="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-slate-700">Edit recipients</button>
-                    </div>
-                </div>
+            <div class="overflow-hidden rounded-xl  bg-white shadow-sm">
+            
 
-                <div class="mb-4">
-                    <label class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-1.5">CC</label>
-                    <div id="cc-chips-edit" class="min-h-[48px] flex flex-wrap gap-2 items-center">
-                        <?php if (empty($editCc)): ?>
-                            <span class="text-sm text-slate-500">No CC selected</span>
-                        <?php else: ?>
-                            <?php foreach ($editCc as $c): ?>
-                                <input type="hidden" name="cc[]" value="<?= (int)$c['recipient_id'] ?>">
-                                <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700"><?= htmlspecialchars($c['recipient_name'] ?? ($c['email'] ?? '')) ?></span>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                    <div class="mt-2">
-                        <button type="button" onclick="openRecipientDrawer('cc')" class="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-slate-700">Edit CC</button>
-                    </div>
-                </div>
-            <div class="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-                <section class="space-y-4">
-                    <?php if ($isDeleted): ?>
-                        <div class="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                            This document has been removed and can no longer be edited.
-                        </div>
-                    <?php else: ?>
-                        <div class="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                            Update the sender copy here. Privileged roles can edit the document regardless of the original author.
-                        </div>
-                    <?php endif; ?>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Tracking ID</label>
-                            <input type="text" value="<?= htmlspecialchars($doc['tracking_id']) ?>" class="w-full h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm font-mono text-slate-700" readonly>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Manage Until</label>
-                            <input type="text" value="<?= htmlspecialchars($manageUntil ?? '—') ?>" class="w-full h-11 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-700" readonly>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Document Title</label>
-                        <input type="text" name="title" value="<?= htmlspecialchars($doc['title']) ?>" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full h-11 rounded-2xl border border-slate-200 px-4 text-sm text-slate-900 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Type</label>
-                            <select name="type" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full h-11 rounded-2xl border border-slate-200 px-4 text-sm bg-white focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
-                                <?php foreach (['Memo', 'Letter', 'Report', 'Circular'] as $type): ?>
-                                    <option value="<?= htmlspecialchars($type) ?>" <?= $doc['type'] === $type ? 'selected' : '' ?>><?= htmlspecialchars($type) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Priority</label>
-                            <select name="priority" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full h-11 rounded-2xl border border-slate-200 px-4 text-sm bg-white focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
-                                <?php foreach (['Low', 'Medium', 'High', 'Urgent'] as $priority): ?>
-                                    <option value="<?= htmlspecialchars($priority) ?>" <?= $doc['priority'] === $priority ? 'selected' : '' ?>><?= htmlspecialchars($priority) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Due Date</label>
-                            <input type="date" name="due_date" value="<?= htmlspecialchars($doc['due_date'] ?? '') ?>" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full h-11 rounded-2xl border border-slate-200 px-4 text-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Sender Email</label>
-                        <input type="email" name="sender_email" value="<?= htmlspecialchars($doc['sender_email']) ?>" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full h-11 rounded-2xl border border-slate-200 px-4 text-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Description</label>
-                        <textarea name="description" rows="5" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50"><?= htmlspecialchars($doc['description'] ?? '') ?></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-1.5">Notes</label>
-                        <textarea name="notes" rows="3" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50"><?= htmlspecialchars($doc['notes'] ?? '') ?></textarea>
-                    </div>
-
-                    <label class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                        <input type="checkbox" name="is_confidential" value="1" <?= !empty($doc['is_confidential']) ? 'checked' : '' ?> <?= !$canEditDocument ? 'disabled' : '' ?> class="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500">
-                        <span class="text-sm font-medium text-slate-700">Confidential</span>
-                    </label>
-                </section>
-
-                <aside class="space-y-4">
-                    <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Change Snapshot</p>
-                        <h4 class="mt-1 text-base font-semibold text-slate-900">Latest edit note</h4>
-                        <p class="mt-3 text-sm leading-6 text-slate-600">
-                            <?= htmlspecialchars($doc['edit_summary'] ?? 'No edits have been recorded yet.') ?>
-                        </p>
-                    </div>
-
-                    <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-blue-600">History</p>
-                        <h4 class="mt-1 text-base font-semibold text-slate-900">Recent Activity</h4>
-                        <div class="mt-4 space-y-3 max-h-[360px] overflow-auto pr-1">
-                            <?php if (!empty($history)): ?>
-                                <?php foreach (array_slice($history, 0, 5) as $entry): ?>
-                                    <?php
-                                        $actor = trim(($entry['firstName'] ?? '') . ' ' . ($entry['lastName'] ?? ''));
-                                        $actor = $actor !== '' ? $actor : ($entry['userName'] ?? 'System');
-                                    ?>
-                                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                                        <p class="text-sm font-semibold text-slate-900"><?= htmlspecialchars($actor) ?></p>
-                                        <p class="mt-1 text-sm leading-6 text-slate-600"><?= htmlspecialchars($entry['logDesc'] ?? '') ?></p>
-                                        <p class="mt-2 text-xs text-slate-500">
-                                            <?= !empty($entry['logDate']) ? date('M d, Y g:i A', strtotime($entry['logDate'])) : '—' ?>
-                                        </p>
+                <div class="px-4 py-3">
+                    <div class="grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
+                        <div class="space-y-3">
+                            <section class="rounded-lg border border-slate-200 p-3">
+                                <div class="flex items-center justify-between gap-3">
+                                    <h4 class="text-sm font-medium text-slate-900">Recipients</h4>
+                                    <span class="text-xs text-slate-500">Optional</span>
+                                </div>
+                                <div class="mt-3 grid gap-3 md:grid-cols-2">
+                                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                        <label class="block text-xs font-medium text-slate-500">Recipients</label>
+                                        <div id="recipients-chips-edit" class="mt-2 flex min-h-[40px] flex-wrap items-center gap-2">
+                                            <?php if (empty($editRecipients)): ?>
+                                                <span class="text-sm text-slate-500">No recipients selected</span>
+                                            <?php else: ?>
+                                                <?php foreach ($editRecipients as $r): ?>
+                                                    <input type="hidden" name="recipients[]" value="<?= (int)$r['recipient_id'] ?>">
+                                                    <span class="inline-flex items-center gap-2 rounded-full bg-white px-2.5 py-1 text-sm text-slate-700"><?= htmlspecialchars($r['recipient_name'] ?? ($r['email'] ?? '')) ?></span>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="mt-2">
+                                            <button type="button" onclick="openRecipientDrawer('recipients')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Edit recipients</button>
+                                        </div>
                                     </div>
-                                <?php endforeach; ?>
+
+                                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                        <label class="block text-xs font-medium text-slate-500">CC</label>
+                                        <div id="cc-chips-edit" class="mt-2 flex min-h-[40px] flex-wrap items-center gap-2">
+                                            <?php if (empty($editCc)): ?>
+                                                <span class="text-sm text-slate-500">No CC selected</span>
+                                            <?php else: ?>
+                                                <?php foreach ($editCc as $c): ?>
+                                                    <input type="hidden" name="cc[]" value="<?= (int)$c['recipient_id'] ?>">
+                                                    <span class="inline-flex items-center gap-2 rounded-full bg-white px-2.5 py-1 text-sm text-slate-700"><?= htmlspecialchars($c['recipient_name'] ?? ($c['email'] ?? '')) ?></span>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="mt-2">
+                                            <button type="button" onclick="openRecipientDrawer('cc')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Edit CC</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <?php if ($isDeleted): ?>
+                                <div class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                                    This document has been removed and can no longer be edited.
+                                </div>
                             <?php else: ?>
-                                <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                                    No change history recorded yet.
+                                <div class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                                    Update the sender copy here. Privileged roles can edit the document regardless of the original author.
                                 </div>
                             <?php endif; ?>
-                        </div>
-                    </div>
-                </aside>
-            </div>
 
-            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <button type="button" onclick="closeEditModal()" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                    Cancel
-                </button>
-                <button type="submit" <?= !$canEditDocument ? 'disabled' : '' ?> class="inline-flex items-center justify-center rounded-2xl bg-amber-600 px-4 py-3 text-sm font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-300">
-                    Save Changes
-                </button>
+                            <section class="rounded-lg border border-slate-200 p-3">
+                                <h4 class="text-sm font-medium text-slate-900">Document details</h4>
+                                <p class="mt-1 text-xs text-slate-500">Core fields and notes</p>
+
+                                <div class="mt-3 grid gap-3 md:grid-cols-2">
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-500">Tracking ID</label>
+                                        <input type="text" value="<?= htmlspecialchars($doc['tracking_id']) ?>" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-mono text-slate-700" readonly>
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-500">Manage Until</label>
+                                        <input type="text" value="<?= htmlspecialchars($manageUntil ?? '—') ?>" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <label class="mb-1 block text-xs font-medium text-slate-500">Document Title</label>
+                                    <input type="text" name="title" value="<?= htmlspecialchars($doc['title']) ?>" <?= !$canEditDocument ? 'disabled' : '' ?> class="h-9 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-900 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
+                                </div>
+
+                                <div class="mt-3 grid gap-3 md:grid-cols-3">
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-500">Type</label>
+                                        <select name="type" <?= !$canEditDocument ? 'disabled' : '' ?> class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
+                                            <?php foreach (['Memo', 'Letter', 'Report', 'Circular'] as $type): ?>
+                                                <option value="<?= htmlspecialchars($type) ?>" <?= $doc['type'] === $type ? 'selected' : '' ?>><?= htmlspecialchars($type) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-500">Priority</label>
+                                        <select name="priority" <?= !$canEditDocument ? 'disabled' : '' ?> class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
+                                            <?php foreach (['Low', 'Medium', 'High', 'Urgent'] as $priority): ?>
+                                                <option value="<?= htmlspecialchars($priority) ?>" <?= $doc['priority'] === $priority ? 'selected' : '' ?>><?= htmlspecialchars($priority) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-500">Due Date</label>
+                                        <input type="date" name="due_date" value="<?= htmlspecialchars($doc['due_date'] ?? '') ?>" <?= !$canEditDocument ? 'disabled' : '' ?> class="h-9 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <label class="mb-1 block text-xs font-medium text-slate-500">Sender Email</label>
+                                    <input type="email" name="sender_email" value="<?= htmlspecialchars($doc['sender_email']) ?>" <?= !$canEditDocument ? 'disabled' : '' ?> class="h-9 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50">
+                                </div>
+
+                                <div class="mt-3">
+                                    <label class="mb-1 block text-xs font-medium text-slate-500">Description</label>
+                                    <textarea name="description" rows="4" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50"><?= htmlspecialchars($doc['description'] ?? '') ?></textarea>
+                                </div>
+
+                                <div class="mt-3">
+                                    <label class="mb-1 block text-xs font-medium text-slate-500">Notes</label>
+                                    <textarea name="notes" rows="3" <?= !$canEditDocument ? 'disabled' : '' ?> class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50"><?= htmlspecialchars($doc['notes'] ?? '') ?></textarea>
+                                </div>
+
+                                <label class="mt-3 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                    <input type="checkbox" name="is_confidential" value="1" <?= !empty($doc['is_confidential']) ? 'checked' : '' ?> <?= !$canEditDocument ? 'disabled' : '' ?> class="mt-0.5 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500">
+                                    <span class="text-sm font-medium text-slate-700">Confidential</span>
+                                </label>
+                            </section>
+                        </div>
+
+                        <aside class="space-y-3">
+                            <div class="rounded-lg border border-slate-200 p-3">
+                                <p class="text-xs font-medium text-slate-500">Change summary</p>
+                                <p class="mt-2 text-sm text-slate-700">
+                                    <?= htmlspecialchars($doc['edit_summary'] ?? 'No edits have been recorded yet.') ?>
+                                </p>
+                            </div>
+
+                            <div class="rounded-lg border border-slate-200 p-3">
+                                <div class="flex items-center justify-between gap-2">
+                                    <h4 class="text-sm font-medium text-slate-900">Recent activity</h4>
+                                    <span class="text-xs text-slate-500">Latest</span>
+                                </div>
+                                <div class="mt-3 space-y-2">
+                                    <?php if (!empty($history)): ?>
+                                        <?php foreach (array_slice($history, 0, 4) as $entry): ?>
+                                            <?php
+                                                $actor = trim(($entry['firstName'] ?? '') . ' ' . ($entry['lastName'] ?? ''));
+                                                $actor = $actor !== '' ? $actor : ($entry['userName'] ?? 'System');
+                                            ?>
+                                            <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                                <p class="text-sm font-medium text-slate-900"><?= htmlspecialchars($actor) ?></p>
+                                                <p class="mt-1 text-sm text-slate-600"><?= htmlspecialchars($entry['logDesc'] ?? '') ?></p>
+                                                <p class="mt-1 text-xs text-slate-500">
+                                                    <?= !empty($entry['logDate']) ? date('M d, Y g:i A', strtotime($entry['logDate'])) : '—' ?>
+                                                </p>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <div class="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                                            No change history recorded yet.
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-200 bg-slate-50/70 px-4 py-3">
+                    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <button type="button" onclick="closeEditModal()" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                            Cancel
+                        </button>
+                        <button type="submit" <?= !$canEditDocument ? 'disabled' : '' ?> class="inline-flex items-center justify-center rounded-lg bg-emerald-700 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
         <?php
@@ -1320,6 +1353,45 @@ public function getDocumentData() {
                 }
 
                 throw new Exception('Unable to update the document.');
+            }
+
+            // Persist recipient/CC edits for drafts or circulated documents
+            try {
+                if (!empty($doc['is_draft']) || strtolower(trim((string)($doc['status'] ?? ''))) === 'draft') {
+                    $this->model->updateDraftRecipients($id, $recipientsRaw !== '' ? $recipientsRaw : null, $ccRaw !== '' ? $ccRaw : null);
+                } else {
+                    $this->model->replaceDocumentCirculations($id, $recipientsRaw !== '' ? $recipientsRaw : null, $ccRaw !== '' ? $ccRaw : null);
+                }
+            } catch (Throwable $e) {
+                error_log('Recipient/CC update failed during edit: ' . $e->getMessage());
+            }
+
+            // Save any newly uploaded attachments as part of this update
+            $movedFiles = [];
+            try {
+                $newAttachments = $this->collectAttachmentUploads();
+                if (!empty($newAttachments)) {
+                    $movedFiles = $this->handleFileUploads($id, $newAttachments);
+                }
+            } catch (Throwable $e) {
+                error_log('Attachment upload failed during update: ' . $e->getMessage());
+                throw new Exception('Unable to process uploaded attachments. Please try again.');
+            }
+
+            // Remove any attachments marked for deletion
+            $removedAttachments = $_POST['removed_attachments'] ?? [];
+            if (is_array($removedAttachments) && !empty($removedAttachments)) {
+                foreach ($removedAttachments as $attachmentId) {
+                    $attachmentId = (int)$attachmentId;
+                    if ($attachmentId <= 0) {
+                        continue;
+                    }
+                    try {
+                        $this->model->deleteAttachmentById($attachmentId);
+                    } catch (Throwable $e) {
+                        error_log('Attachment delete failed: ' . $e->getMessage());
+                    }
+                }
             }
 
             // If admin finalized the draft, convert to circulated document

@@ -67,20 +67,22 @@
     </div>
 </aside>
 
-<div id="editDocumentModal" class="hidden fixed inset-0 z-[60] p-2 md:p-4 lg:p-6">
+<div id="editDocumentModal" class="hidden fixed inset-0 z-[60] p-2 md:p-3 lg:p-4">
+     
     <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm" onclick="closeEditModal()"></div>
-    <div class="relative mx-auto flex h-full w-full max-w-3xl md:max-w-2xl lg:max-w-4xl items-center justify-center">
-        <div class="modal-panel w-full max-h-[96vh] md:max-h-[94vh] overflow-hidden rounded-lg md:rounded-xl border border-white/10 bg-white shadow-[0_30px_120px_rgba(15,23,42,0.35)]">
-            <div class="flex items-start justify-between gap-2 md:gap-4 border-b border-slate-300 bg-white/90 px-3 md:px-4 lg:px-6 py-2 md:py-3 lg:py-4">
+    <div class="relative mx-auto flex h-full w-full max-w-4xl items-center justify-center">
+        <div class="modal-panel w-full max-h-[94vh] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_20px_80px_rgba(15,23,42,0.24)] flex flex-col">
+            <div class="flex items-start justify-between gap-2 border-b border-slate-200 bg-white px-4 py-3 flex-shrink-0">
                 <div class="min-w-0">
-                    <p class="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-600">Edit Document</p>
-                    <h3 class="mt-0.5 md:mt-1 text-base md:text-lg lg:text-2xl font-semibold text-slate-900">Update details</h3>
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-600">Edit Document</p>
+                    <h3 class="mt-0.5 text-base font-semibold text-slate-900">Update details</h3>
                 </div>
-                <button onclick="closeEditModal()" class="inline-flex h-8 md:h-10 w-8 md:w-10 flex-shrink-0 items-center justify-center rounded-full border border-slate-300 text-slate-500 transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close edit modal">
-                    <span class="text-lg md:text-2xl leading-none">×</span>
+                <button onclick="closeEditModal()" class="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700" aria-label="Close edit modal">
+                    <span class="text-lg leading-none">×</span>
                 </button>
             </div>
-            <div id="editModalBody" class="max-h-[calc(96vh-50px)] md:max-h-[calc(94vh-60px)] overflow-auto px-3 md:px-4 lg:px-6 py-2 md:py-3 lg:py-6"></div>
+            <div id="editModalBody" class="flex-1 overflow-auto px-4 py-3"></div>
+            <div id="editModalFooter" class="border-t border-slate-200 bg-slate-50/70 px-4 py-3 flex-shrink-0"></div>
         </div>
     </div>
 </div>

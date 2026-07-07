@@ -11,82 +11,109 @@ $totalRecipients = $totalRecipients ?? 0;
 // $base = rtrim(defined('BASE_URL') ? BASE_URL : '/', '/') . '/';
 
 $isDeleted = !empty($doc['is_deleted']);
-$priorityClass = match ($doc['priority'] ?? 'Medium') {
-    'Urgent' => 'bg-red-50 text-red-700',
-    'High' => 'bg-orange-50 text-orange-700',
-    'Medium' => 'bg-blue-50 text-blue-700',
-    default => 'bg-gray-50 text-gray-700',
+$isClosedDocument = in_array(strtolower(trim((string)($doc['status'] ?? ''))), ['done', 'completed'], true);
+$closedDateDisplay = $isClosedDocument && !empty($doc['closed_at']) ? date('M d, Y', strtotime($doc['closed_at'])) : null;
+$statusDotClass = match (strtolower((string)$status)) {
+    'completed', 'done' => 'bg-emerald-500',
+    'rejected', 'suspended' => 'bg-amber-500',
+    default => 'bg-slate-400',
 };
-$statusClass = match (strtolower((string)$status)) {
-    'completed', 'done' => 'bg-emerald-50 text-emerald-700',
-    'rejected', 'suspended' => 'bg-amber-50 text-amber-700',
-    default => 'bg-slate-100 text-slate-600',
+$priorityDotClass = match (strtolower((string)($doc['priority'] ?? 'medium'))) {
+    'urgent' => 'bg-rose-500',
+    'high' => 'bg-orange-500',
+    'medium' => 'bg-sky-500',
+    'low' => 'bg-slate-400',
+    default => 'bg-slate-400',
 };
 
 ?>
 
 <div class="max-w-6xl mx-auto py-3 md:py-4 lg:py-6 correspondence-ui">
-    <!-- Header card -->
-    <div class="rounded-lg md:rounded-xl border border-slate-200 bg-white p-2 md:p-3 lg:p-4 shadow-sm mb-3 md:mb-4">
-        <div class="flex items-start justify-between gap-2 md:gap-3">
+    <div class="mb-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4 lg:p-5">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-1.5 md:gap-2 flex-wrap">
-                    <div class="font-mono text-[10px] md:text-xs text-blue-700 px-1.5 md:px-2 py-1 rounded bg-blue-50"><?= htmlspecialchars($doc['tracking_id'] ?? '—') ?></div>
-                    <h1 class="text-base md:text-lg lg:text-xl font-semibold text-slate-900 truncate"><?= htmlspecialchars($doc['title'] ?? 'Untitled') ?></h1>
-                </div>
-                <div class="mt-1.5 md:mt-2 flex flex-wrap items-center gap-2 text-xs md:text-sm text-slate-500">
-                    <span class="font-medium"><?= htmlspecialchars($doc['type'] ?? '—') ?></span>
+                <div class="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">
+                    <span><?= htmlspecialchars($doc['type'] ?? 'Document') ?></span>
                     <span class="text-slate-300">•</span>
-                    <span><?= htmlspecialchars($doc['created_by_name'] ?? ($doc['created_by'] ?? 'System')) ?></span>
+                    <span><?= htmlspecialchars($doc['tracking_id'] ?? '—') ?></span>
                 </div>
-            </div>
-            <div class="flex flex-col items-end gap-1.5 md:gap-2">
-                <a type="button" href= 'index.php?controller=correspondence&action=correspondence' class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-medium text-slate-700 hover:bg-slate-50 transition">← Back</a>
-                <div class="flex items-center gap-1 md:gap-2 flex-wrap justify-end">
-                    <span class="inline-flex items-center rounded-full px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-bold uppercase tracking-wider <?= $statusClass ?>"><?= htmlspecialchars($status) ?></span>
-                    <span class="inline-flex items-center rounded-full px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-bold uppercase tracking-wider <?= $priorityClass ?>"><?= htmlspecialchars($doc['priority'] ?? '—') ?></span>
-                    <?php if (!empty($doc['is_confidential'])): ?>
-                        <span class="inline-flex items-center rounded-full px-2 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-bold uppercase tracking-wider bg-red-50 text-red-700">🔒 Confidential</span>
+                <h1 class="mt-2 text-base font-semibold tracking-tight text-slate-900"><?= htmlspecialchars($doc['title'] ?? 'Untitled') ?></h1>
+                <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                    <span><?= htmlspecialchars($doc['created_by_name'] ?? ($doc['created_by'] ?? 'System')) ?></span>
+                    <?php if (!empty($doc['sender_email'])): ?>
+                        <span class="text-slate-300">•</span>
+                        <span><?= htmlspecialchars($doc['sender_email']) ?></span>
                     <?php endif; ?>
                 </div>
-                <div class="text-right text-xs md:text-sm text-slate-500 leading-tight">
-                    <div>Due: <?= $doc['due_date'] ? date('M d, Y', strtotime($doc['due_date'])) : '—' ?></div>
-                    <div class="mt-0.5">Updated: <?= !empty($doc['updated_at']) ? date('M d, Y', strtotime($doc['updated_at'])) : '—' ?></div>
+            </div>
+
+            <div class="flex flex-col items-start gap-2 lg:items-end">
+                <a href="index.php?controller=correspondence&action=correspondence" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">← Back</a>
+                <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                        <span class="h-2 w-2 rounded-full <?= $statusDotClass ?>"></span>
+                        <span><?= htmlspecialchars($status) ?></span>
+                    </span>
+                    <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                        <span class="h-2 w-2 rounded-full <?= $priorityDotClass ?>"></span>
+                        <span><?= htmlspecialchars($doc['priority'] ?? '—') ?></span>
+                    </span>
+                    <?php if (!empty($doc['is_confidential'])): ?>
+                        <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                            <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+                            <span>Confidential</span>
+                        </span>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
 
-        <!-- Quick stats row -->
-        <div class="mt-2 md:mt-3 grid grid-cols-3 gap-1.5 md:gap-2">
-            <div class="rounded-lg border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100/50 px-2 md:px-3 py-1.5 md:py-2">
-                <p class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-blue-600">Recipients</p>
-                <p class="mt-0.5 text-sm md:text-base font-bold text-blue-900"><?= $receivedCount ?>/<?= $totalRecipients ?></p>
-            </div>
-            <div class="rounded-lg border border-slate-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 px-2 md:px-3 py-1.5 md:py-2">
-                <p class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-emerald-600">Status</p>
-                <p class="mt-0.5 text-sm md:text-base font-bold text-emerald-900"><?= $receivedCount ?> of <?= $totalRecipients ?></p>
-            </div>
-            <div class="rounded-lg border border-slate-200 bg-gradient-to-br from-amber-50 to-amber-100/50 px-2 md:px-3 py-1.5 md:py-2">
-                <p class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-amber-600">Attachments</p>
-                <p class="mt-0.5 text-sm md:text-base font-bold text-amber-900"><?= count($attachments ?? []) ?></p>
-            </div>
+        <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 text-sm text-slate-500">
+            <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">Recipients <?= $receivedCount ?>/<?= $totalRecipients ?></span>
+            <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">Attachments <?= count($attachments ?? []) ?></span>
+            <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">Due <?= $doc['due_date'] ? date('M d, Y', strtotime($doc['due_date'])) : '—' ?></span>
+            <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">Updated <?= !empty($doc['updated_at']) ? date('M d, Y', strtotime($doc['updated_at'])) : '—' ?></span>
+            <?php if ($isClosedDocument): ?>
+                <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">Closed <?= !empty($closedDateDisplay) ? htmlspecialchars($closedDateDisplay) : '—' ?></span>
+            <?php endif; ?>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
         <!-- Left: main workspace -->
         <main class="lg:col-span-2 space-y-3 md:space-y-4">
-            <section class="rounded-lg md:rounded-xl border border-slate-200 bg-white p-2 md:p-3 lg:p-4 shadow-sm">
-                <h3 class="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-600">Description</h3>
-                <div class="mt-2 md:mt-3 text-xs md:text-sm text-slate-700 leading-6 line-clamp-4 md:line-clamp-none">
-                    <?= nl2br(htmlspecialchars(strip_tags($document['description'] ?? '--'))) ?>
+            <section class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Description</h3>
+                    <?php
+                        $descriptionText = trim((string)($document['description'] ?? ''));
+                        $descriptionPreview = $descriptionText !== '' ? nl2br(htmlspecialchars(strip_tags($descriptionText))) : 'No description provided.';
+                        $descriptionNeedsToggle = mb_strlen(strip_tags($descriptionText)) > 260;
+                    ?>
+                </div>
+                <div class="mt-2 text-sm leading-7 text-slate-700">
+                    <?php if ($descriptionNeedsToggle): ?>
+                        <div id="description-collapsed" class="space-y-2">
+                            <?= nl2br(htmlspecialchars(mb_substr(strip_tags($descriptionText), 0, 260) . '...')) ?>
+                        </div>
+                        <div id="description-expanded" class="hidden space-y-2">
+                            <?= nl2br(htmlspecialchars(strip_tags($descriptionText))) ?>
+                        </div>
+                        <button type="button" id="description-toggle" class="mt-2 text-sm font-medium text-slate-600 transition hover:text-slate-900">
+                            See more
+                        </button>
+                    <?php else: ?>
+                        <div class="space-y-2">
+                            <?= $descriptionPreview ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </section>
 
     <section class="rounded-lg md:rounded-xl border border-slate-200 bg-white shadow-sm font-sans overflow-hidden">
 
     <!-- Header -->
-    <div class="flex items-center justify-between p-2 md:p-3 lg:p-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+    <div class="flex items-center justify-between p-2 md:p-3 lg:p-4 border-b border-slate-100 bg-white">
         <div>
             <p class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-600">
                 Conversation
@@ -99,7 +126,7 @@ $statusClass = match (strtolower((string)$status)) {
     </div>
 
     <!-- Scroll Area -->
-    <div class="h-[300px] md:h-[380px] lg:h-[420px] overflow-y-auto px-2 md:px-3 lg:px-4 py-2 md:py-3 lg:py-4 space-y-2 md:space-y-3 bg-slate-50/50" id="portal-thread-container">
+    <div class="h-[300px] md:h-[380px] lg:h-[420px] overflow-y-auto px-2 md:px-3 lg:px-4 py-2 md:py-3 lg:py-4 space-y-2 md:space-y-3 bg-slate-100" id="portal-thread-container">
 
         <?php $threadEntries = $threadEntries ?? []; ?>
 
@@ -202,7 +229,7 @@ $statusClass = match (strtolower((string)$status)) {
     <form method="POST"
           action="index.php?controller=correspondence&action=postThreadEntry"
           enctype="multipart/form-data"
-          class="border-t border-slate-100 bg-slate-50/60 p-2 md:p-3 lg:p-4">
+          class="border-t border-slate-100 bg-white p-2 md:p-3 lg:p-4">
 
         <input type="hidden" name="document_id" value="<?= (int)($document['id'] ?? 0) ?>" />
 
@@ -258,6 +285,19 @@ $statusClass = match (strtolower((string)$status)) {
 
     <script>
         (function() {
+            const descriptionToggle = document.getElementById('description-toggle');
+            const descriptionCollapsed = document.getElementById('description-collapsed');
+            const descriptionExpanded = document.getElementById('description-expanded');
+
+            if (descriptionToggle && descriptionCollapsed && descriptionExpanded) {
+                descriptionToggle.addEventListener('click', function() {
+                    const isExpanded = descriptionExpanded.classList.contains('hidden');
+                    descriptionCollapsed.classList.toggle('hidden', isExpanded);
+                    descriptionExpanded.classList.toggle('hidden', !isExpanded);
+                    descriptionToggle.textContent = isExpanded ? 'See less' : 'See more';
+                });
+            }
+
             const threadInput = document.querySelector('input[name="thread_files[]"]');
             const statusEl = document.getElementById('thread-attachment-status');
 
@@ -324,18 +364,51 @@ $statusClass = match (strtolower((string)$status)) {
 </section>
 
         <!-- Change History -->
-        <section class="rounded-lg md:rounded-xl border border-slate-200 bg-white p-2 md:p-3 lg:p-4 shadow-sm">
-            <h3 class="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-600">History</h3>
-            <div class="mt-2 md:mt-3 space-y-1.5 md:space-y-2 text-xs md:text-sm text-slate-700 max-h-[200px] overflow-y-auto">
+        <section class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+            <div class="flex items-center justify-between gap-2">
+                <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">History</h3>
+                <span class="text-xs font-medium text-slate-400"><?= count($history ?? []) ?></span>
+            </div>
+
+            <div class="mt-3 max-h-[280px] space-y-2 overflow-y-auto pr-1">
                 <?php if (!empty($history)): ?>
                     <?php foreach ($history as $h): ?>
-                        <div class="rounded-lg border border-slate-200 bg-slate-50/60 p-1.5 md:p-2">
-                            <div class="text-xs md:text-sm font-medium"><?= htmlspecialchars($h['logDesc'] ?? '') ?></div>
-                            <div class="mt-0.5 text-[10px] md:text-xs text-slate-500"><?= !empty($h['logDate']) ? date('M d, g:i A', strtotime($h['logDate'])) : '—' ?></div>
+                        <?php
+                            $fullDesc = trim((string)($h['logDesc'] ?? ''));
+                            $activityTitle = $fullDesc !== ''
+                                ? (mb_strlen($fullDesc) > 72 ? mb_substr($fullDesc, 0, 69) . '…' : $fullDesc)
+                                : 'Activity recorded';
+                            $actorName = trim((string)($h['userName'] ?? 'System'));
+                            $timestamp = !empty($h['logDate']) ? date('M d, Y · g:i A', strtotime($h['logDate'])) : '—';
+                        ?>
+                        <div class="relative pl-4">
+                            <span class="absolute left-0 top-3 h-2.5 w-2.5 rounded-full bg-slate-300"></span>
+                            <div class="rounded-lg border border-slate-100 bg-white p-2.5 shadow-sm">
+                                <div class="min-w-0">
+                                    <div class="truncate text-sm font-semibold text-slate-800">
+                                        <?= htmlspecialchars($activityTitle) ?>
+                                    </div>
+                                    <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                        <span class="font-medium text-slate-600"><?= htmlspecialchars($actorName ?: 'System') ?></span>
+                                        <span class="text-slate-300">•</span>
+                                        <span><?= htmlspecialchars($timestamp) ?></span>
+                                    </div>
+                                </div>
+
+                                <details class="mt-2 group">
+                                    <summary class="cursor-pointer list-none text-[11px] font-medium text-slate-500 transition hover:text-slate-700">
+                                        <span class="group-open:hidden">View details</span>
+                                        <span class="hidden group-open:inline">Hide details</span>
+                                    </summary>
+                                    <div class="mt-2 rounded-md bg-slate-50 px-2.5 py-2 text-sm leading-6 text-slate-600">
+                                        <?= nl2br(htmlspecialchars($fullDesc !== '' ? $fullDesc : 'No details recorded.')) ?>
+                                    </div>
+                                </details>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="text-xs text-slate-500">No history.</div>
+                    <div class="rounded-lg border border-dashed border-slate-200 bg-slate-50/70 px-3 py-3 text-sm text-slate-500">No history yet.</div>
                 <?php endif; ?>
             </div>
         </section>
@@ -344,138 +417,169 @@ $statusClass = match (strtolower((string)$status)) {
         <!-- Right: sidebar -->
         <aside class="space-y-3 md:space-y-4">
             <!-- Attachments -->
-            <section class="rounded-lg md:rounded-xl border border-slate-200 bg-white p-2 md:p-3 lg:p-4 shadow-sm">
-                <div class="flex items-center justify-between mb-2 md:mb-3">
-                    <h3 class="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-600">Attachments</h3>
-                    <span class="text-xs text-slate-400 font-medium"><?= count($attachments ?? []) ?></span>
+            <section class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Attachments</h3>
+                    <span class="text-xs font-medium text-slate-400"><?= count($attachments ?? []) ?></span>
                 </div>
 
-                <div class="space-y-1.5 md:space-y-2">
+                <div class="mt-3 space-y-1">
                 <?php if (!empty($attachments)): ?>
                     <?php foreach ($attachments as $a): ?>
-                        <a href="index.php?controller=correspondence&action=download&attachment_id=<?= (int)($a['id'] ?? 0) ?>" class="flex items-center justify-between rounded-lg px-2 md:px-3 py-1 md:py-1.5 text-xs bg-slate-50 hover:bg-slate-100 transition border border-slate-100">
-                            <span class="truncate text-slate-700 font-medium"><?= htmlspecialchars($a['file_name'] ?? 'file') ?></span>
-                            <svg class="w-3 md:w-3.5 h-3 md:h-3.5 text-slate-400 shrink-0 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <a href="index.php?controller=correspondence&action=download&attachment_id=<?= (int)($a['id'] ?? 0) ?>" class="flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm text-slate-700 transition hover:bg-slate-50">
+                            <div class="flex min-w-0 items-center gap-2">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7.5V5.25A2.25 2.25 0 0 1 9.25 3h5.5A2.25 2.25 0 0 1 17 5.25v2.25m-10 0h10m-10 0v11.25A2.25 2.25 0 0 0 9.25 21h5.5A2.25 2.25 0 0 0 17 18.75V7.5"></path></svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="truncate font-medium text-slate-700"><?= htmlspecialchars($a['file_name'] ?? 'file') ?></div>
+                                    <?php if (!empty($a['file_size'])): ?>
+                                        <div class="mt-0.5 text-xs text-slate-400"><?= number_format((int)$a['file_size'] / 1024, 1) ?> KB</div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <span class="shrink-0 text-xs font-medium text-slate-500">Download</span>
                         </a>
+                        <div class="h-px bg-slate-100 last:hidden"></div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="text-xs text-slate-500 py-2">No attachments.</div>
+                    <div class="rounded-lg border border-dashed border-slate-200 bg-slate-50/70 px-3 py-3 text-sm text-slate-500">No attachments.</div>
                 <?php endif; ?>
                 </div>
             </section>
 
             <!-- Recipients -->
-            <section class="rounded-lg md:rounded-xl border border-slate-200 bg-white p-2 md:p-3 lg:p-4 shadow-sm">
+            <section class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Recipients</h3>
+                    <span class="text-xs font-medium text-slate-400"><?= (int)count($recipientsTo ?? []) + (int)count($recipientsCc ?? []) ?></span>
+                </div>
 
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-600">Recipients</p>
+                <div class="mt-3 space-y-3">
+                    <?php
+                        $renderRecipientRow = function($recipient, $toneClass, $statusDotClass) {
+                            $name = htmlspecialchars($recipient['name'] ?? '—');
+                            $office = htmlspecialchars($recipient['office'] ?? '');
+                            $initials = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name), 0, 2));
+                            $statusValue = strtolower(trim($recipient['status'] ?? ''));
+                            $isReceived = $statusValue === 'received';
+                            $displayStatus = $isReceived ? 'Received' : 'Pending';
+                            $dotClass = $isReceived ? 'bg-emerald-500' : 'bg-amber-500';
+                            echo '<div class="flex items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-slate-50">';
+                            echo '<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600">' . ($initials ?: '•') . '</div>';
+                            echo '<div class="min-w-0 flex-1">';
+                            echo '<div class="truncate text-sm font-medium text-slate-900">' . $name . '</div>';
+                            echo '<div class="truncate text-xs text-slate-500">' . ($office !== '' ? $office : 'No organization') . '</div>';
+                            echo '</div>';
+                            echo '<span class="inline-flex items-center gap-1.5 shrink-0 text-xs font-medium text-slate-500">';
+                            echo '<span class="h-2 w-2 rounded-full ' . $dotClass . '"></span>';
+                            echo '<span>' . htmlspecialchars($displayStatus) . '</span>';
+                            echo '</span>';
+                            echo '</div>';
+                        };
+                    ?>
 
-                <div class="mt-2 md:mt-3 space-y-3 md:space-y-4">
-
-                    <!-- TO SECTION -->
                     <div>
-                        <div class="flex items-center justify-between mb-1.5 md:mb-2">
-                            <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-emerald-600">TO</span>
-                            <span class="text-[10px] md:text-xs text-slate-400 font-medium"><?= count($recipientsTo ?? []) ?></span>
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600">To</span>
+                            <span class="text-xs font-medium text-slate-400"><?= count($recipientsTo ?? []) ?></span>
                         </div>
-
                         <div class="space-y-1">
                             <?php if (!empty($recipientsTo)): ?>
                                 <?php foreach ($recipientsTo as $r): ?>
-                                    <?php
-                                        $statusValue = strtolower(trim($r['status'] ?? ''));
-                                        $isReceived = $statusValue === 'received';
-                                        $displayStatus = $isReceived ? 'Received' : 'Pending';
-                                        $badgeClass = $isReceived
-                                            ? 'bg-emerald-50 text-emerald-700'
-                                            : 'bg-amber-50 text-amber-700';
-                                    ?>
-                                    <div class="flex items-center justify-between gap-2 rounded-lg bg-slate-50/50 border border-slate-100 px-2 md:px-3 py-1.5 md:py-2">
-                                        <div class="min-w-0">
-                                            <div class="truncate text-xs md:text-sm font-medium text-slate-900"><?= htmlspecialchars($r['name'] ?? '—') ?></div>
-                                            <div class="truncate text-[10px] md:text-xs text-slate-500"><?= htmlspecialchars($r['office'] ?? '') ?></div>
-                                        </div>
-                                        <span class="shrink-0 text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-full <?= $badgeClass ?>"><?= htmlspecialchars($displayStatus) ?></span>
-                                    </div>
+                                    <?php $renderRecipientRow($r, 'emerald', 'bg-emerald-500'); ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <p class="text-xs text-slate-500">No recipients.</p>
+                                <p class="px-2 py-2 text-sm text-slate-500">No recipients.</p>
                             <?php endif; ?>
                         </div>
                     </div>
 
-                    <!-- CC SECTION -->
                     <div>
-                        <div class="flex items-center justify-between mb-1.5 md:mb-2">
-                            <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-blue-600">CC</span>
-                            <span class="text-[10px] md:text-xs text-slate-400 font-medium"><?= count($recipientsCc ?? []) ?></span>
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-600">Cc</span>
+                            <span class="text-xs font-medium text-slate-400"><?= count($recipientsCc ?? []) ?></span>
                         </div>
-
                         <div class="space-y-1">
                             <?php if (!empty($recipientsCc)): ?>
                                 <?php foreach ($recipientsCc as $r): ?>
-                                    <?php
-                                        $statusValue = strtolower(trim($r['status'] ?? ''));
-                                        $isReceived = $statusValue === 'received';
-                                        $displayStatus = $isReceived ? 'Received' : 'Pending';
-                                        $badgeClass = $isReceived
-                                            ? 'bg-emerald-50 text-emerald-700'
-                                            : 'bg-amber-50 text-amber-700';
-                                    ?>
-                                    <div class="flex items-center justify-between gap-2 rounded-lg bg-slate-50/50 border border-slate-100 px-2 md:px-3 py-1.5 md:py-2">
-                                        <div class="min-w-0">
-                                            <div class="truncate text-xs md:text-sm font-medium text-slate-900"><?= htmlspecialchars($r['name'] ?? '—') ?></div>
-                                            <div class="truncate text-[10px] md:text-xs text-slate-500"><?= htmlspecialchars($r['office'] ?? '') ?></div>
-                                        </div>
-                                        <span class="shrink-0 text-[9px] md:text-[10px] font-bold px-1.5 md:px-2 py-0.5 rounded-full <?= $badgeClass ?>"><?= htmlspecialchars($displayStatus) ?></span>
-                                    </div>
+                                    <?php $renderRecipientRow($r, 'sky', 'bg-sky-500'); ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <p class="text-xs text-slate-500">No CC recipients.</p>
+                                <p class="px-2 py-2 text-sm text-slate-500">No CC recipients.</p>
                             <?php endif; ?>
                         </div>
                     </div>
-
                 </div>
             </section>
 
             <!-- Metadata -->
-            <section class="rounded-lg md:rounded-xl border border-slate-200 bg-white p-2 md:p-3 lg:p-4 shadow-sm">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-600">Metadata</p>
-                <div class="mt-2 md:mt-3 space-y-1.5 md:space-y-2 text-xs md:text-sm text-slate-700">
-                    <div class="flex items-start justify-between gap-2">
-                        <span class="text-slate-500 font-medium">Sender:</span>
-                        <span class="text-right text-slate-900"><?= htmlspecialchars($doc['sender_email'] ?? '—') ?></span>
+            <section class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Metadata</h3>
+                    <span class="text-xs font-medium text-slate-400">Properties</span>
+                </div>
+
+                <div class="mt-3 space-y-3">
+                    <div>
+                        <div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Overview</div>
+                        <div class="space-y-1">
+                            <div class="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2 rounded-md px-2 py-1.5">
+                                <span class="text-xs font-medium text-slate-500">Sender</span>
+                                <span class="text-sm font-medium text-slate-700"><?= htmlspecialchars($doc['sender_email'] ?? '—') ?></span>
+                            </div>
+                            <div class="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2 rounded-md px-2 py-1.5">
+                                <span class="text-xs font-medium text-slate-500">Priority</span>
+                                <span class="text-sm font-medium text-slate-700"><?= htmlspecialchars($doc['priority'] ?? '—') ?></span>
+                            </div>
+                            <div class="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2 rounded-md px-2 py-1.5">
+                                <span class="text-xs font-medium text-slate-500">Due Date</span>
+                                <span class="text-sm font-medium text-slate-700"><?= $doc['due_date'] ? date('M d, Y', strtotime($doc['due_date'])) : '—' ?></span>
+                            </div>
+                            <div class="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2 rounded-md px-2 py-1.5">
+                                <span class="text-xs font-medium text-slate-500">Confidentiality</span>
+                                <span class="text-sm font-medium text-slate-700"><?= !empty($doc['is_confidential']) ? 'Yes' : 'No' ?></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-start justify-between gap-2">
-                        <span class="text-slate-500 font-medium">Priority:</span>
-                        <span class="text-right text-slate-900"><?= htmlspecialchars($doc['priority'] ?? '—') ?></span>
-                    </div>
-                    <div class="flex items-start justify-between gap-2">
-                        <span class="text-slate-500 font-medium">Due:</span>
-                        <span class="text-right text-slate-900 font-mono text-xs"><?= $doc['due_date'] ? date('M d', strtotime($doc['due_date'])) : '—' ?></span>
-                    </div>
-                    <div class="flex items-start justify-between gap-2">
-                        <span class="text-slate-500 font-medium">Confidential:</span>
-                        <span class="text-right text-slate-900"><?= !empty($doc['is_confidential']) ? 'Yes' : 'No' ?></span>
-                    </div>
+
+                    <?php if ($isClosedDocument): ?>
+                        <div class="border-t border-slate-100 pt-2.5">
+                            <div class="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Closure</div>
+                            <div class="space-y-1">
+                                <div class="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2 rounded-md px-2 py-1.5">
+                                    <span class="text-xs font-medium text-slate-500">Closed At</span>
+                                    <span class="text-sm font-medium text-slate-700"><?= !empty($closedDateDisplay) ? htmlspecialchars($closedDateDisplay) : '—' ?></span>
+                                </div>
+                                <div class="grid grid-cols-[88px_minmax(0,1fr)] items-center gap-2 rounded-md px-2 py-1.5">
+                                    <span class="text-xs font-medium text-slate-500">Closed By</span>
+                                    <span class="text-sm font-medium text-slate-700"><?= htmlspecialchars($doc['closed_by'] ?? '—') ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </section>
 
         <?php if ((int)($_SESSION['user_level'] ?? 3) <= 1): ?>
         <!-- Admin Controls -->
-        <section class="rounded-lg md:rounded-xl border border-slate-200 bg-slate-50 p-2 md:p-3 lg:p-4 shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-wider text-slate-600">Admin Controls</p>
-            <p class="mt-2 md:mt-3 text-xs md:text-sm text-slate-700 leading-5">
-                Close sets status to <strong>Done</strong>; Open sets to <strong>Suspended</strong>.
-            </p>
-            <form method="POST" action="index.php?controller=correspondence&action=toggleOpenClose" class="mt-2 md:mt-3 flex items-center gap-1.5 md:gap-2">
+        <section class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm md:p-4">
+            <div class="flex items-center justify-between gap-2">
+                <h3 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Admin</h3>
+                <span class="text-xs font-medium text-slate-400"><?= $isClosedDocument ? 'Closed' : 'Open' ?></span>
+            </div>
+
+            <form method="POST" action="index.php?controller=correspondence&action=toggleOpenClose" class="mt-3">
                 <input type="hidden" name="document_id" value="<?= (int)($doc['id'] ?? 0) ?>">
-                <button type="submit" name="toggle_action" value="close" class="flex-1 rounded-lg border border-emerald-300 bg-emerald-100 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-bold text-emerald-700 hover:bg-emerald-200 transition">
-                    Close
-                </button>
-                <button type="submit" name="toggle_action" value="open" class="flex-1 rounded-lg border border-rose-300 bg-rose-100 px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-bold text-rose-700 hover:bg-rose-200 transition">
-                    Open
-                </button>
+                <?php if ($isClosedDocument): ?>
+                    <button type="submit" name="toggle_action" value="open" class="w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-400">
+                        Reopen document
+                    </button>
+                <?php else: ?>
+                    <button type="submit" name="toggle_action" value="close" class="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        Close document
+                    </button>
+                <?php endif; ?>
             </form>
         </section>
         <?php endif; ?>

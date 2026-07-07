@@ -1,6 +1,7 @@
 <?php
     $currentUserLevel = (int)($_SESSION['user_level'] ?? 3);
     $selectableUsers = $users ?? [];
+    $drafterName = trim(($_SESSION['firstName'] ?? '') . ' ' . ($_SESSION['lastName'] ?? '')) ?: 'You';
     usort($selectableUsers, function ($left, $right) {
         $leftDepartment = strtolower(trim($left['department'] ?? ''));
         $rightDepartment = strtolower(trim($right['department'] ?? ''));
@@ -11,31 +12,35 @@
 ?>
 <?php require __DIR__ . '/_shared.php'; ?>
 
-<div class="mb-4 md:mb-6 overflow-hidden rounded-lg md:rounded-xl border border-slate-200 bg-white shadow-sm md:shadow-md">
-    <div class="border-b border-slate-200 bg-gradient-to-r from-white via-slate-50 to-white px-3 md:px-4 py-3 md:py-4">
-        <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-            <div class="min-w-0">
-                <p class="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">Digital Correspondence</p>
-                <h2 class="mt-1 text-lg md:text-xl font-semibold tracking-tight text-slate-900">New Circulation</h2>
-                <p class="mt-1 md:mt-2 max-w-2xl text-xs md:text-sm leading-5 md:leading-6 text-slate-500">
-                    Capture document details, assign recipients and CC with minimal friction.
-                </p>
-            </div>
-            <div class="flex flex-wrap gap-1 md:gap-2 mt-2 lg:mt-0">
-                <div class="inline-flex items-center gap-1.5 md:gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-slate-600 shadow-sm">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                    <span>Role-enabled</span>
+<div class="max-w-[1240px] mx-auto px-3 py-6">
+    <section class="mb-5 rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="px-4 py-3 sm:px-5 sm:py-4">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div class="min-w-0">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Correspondence</p>
+                    <div class="mt-1 flex flex-wrap items-center gap-3">
+                        <h1 class="text-base font-semibold tracking-tight text-slate-900">New Circulation</h1>
+                        <p class="text-xs text-slate-500">Create a new draft or circulation with fast recipient and attachment setup.</p>
+                    </div>
+                    <p class="mt-2 text-xs text-slate-500">Drafter: <span class="font-semibold text-slate-900"><?= htmlspecialchars($drafterName) ?></span></p>
                 </div>
-                <div class="inline-flex items-center gap-1.5 md:gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-slate-600 shadow-sm">
-                    <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-                    <span>Live filters</span>
+                <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1">
+                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        Ready to send
+                    </span>
+                    <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1">
+                        <span class="h-2 w-2 rounded-full bg-sky-500"></span>
+                        Draft-friendly
+                    </span>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <?php // include the original circulation form markup from index.php by copying the block there. To avoid duplication, keep form JS in index.php but include shared modals here. ?>
-    <?php include __DIR__ . '/index_form_block.php'; ?>
+    <section class="">
+        <?php include __DIR__ . '/index_form_block.php'; ?>
+    </section>
 </div>
 
 <script>
