@@ -1,0 +1,19 @@
+{
+    "name": "ysh/dpintranet",
+    "description": "Enterprise Document Management System",
+    "authors": [
+        {
+            "name": "YSHCNY",
+            "email": "ycanoy12@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "require": {
+        "phpmailer/phpmailer": "^7.1",
+        "vlucas/phpdotenv": "^5.6"
+    }
+}

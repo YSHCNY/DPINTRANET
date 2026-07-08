@@ -121,6 +121,10 @@
           </button>
         </form>
 
+        <div class="mt-4 text-sm text-slate-500">
+          <a href="index.php?controller=Auth&action=forgotPassword" class="font-medium text-slate-600 transition hover:text-slate-900">Forgot password?</a>
+        </div>
+
         <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
           <a href="index.php?controller=StandardPortal&action=login"
             class="flex items-center justify-between gap-3 text-sm font-medium text-slate-700 transition hover:text-slate-900">

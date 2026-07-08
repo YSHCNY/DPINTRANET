@@ -45,6 +45,54 @@ class UserModel {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function findPortalUserByIdentifier(string $identifier): ?array {
+        $identifier = trim($identifier);
+        if ($identifier === '') {
+            return null;
+        }
+
+        $sql = "SELECT * FROM {$this->table}
+                WHERE (username = :identifier OR email = :identifier)
+                  AND is_portal_user = 1
+                  AND status = 'active'
+                LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute(['identifier' => $identifier]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            return $user;
+        }
+
+        if ($this->columnExists('employee_id')) {
+            $stmt = $this->conn->prepare("SELECT * FROM {$this->table} WHERE employee_id = :identifier AND is_portal_user = 1 AND status = 'active' LIMIT 1");
+            $stmt->execute(['identifier' => $identifier]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($user) {
+                return $user;
+            }
+        }
+
+        if ($this->columnExists('employeeId')) {
+            $stmt = $this->conn->prepare("SELECT * FROM {$this->table} WHERE employeeId = :identifier AND is_portal_user = 1 AND status = 'active' LIMIT 1");
+            $stmt->execute(['identifier' => $identifier]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($user) {
+                return $user;
+            }
+        }
+
+        return null;
+    }
+
+    public function updatePortalPassword(int $id, string $password): bool {
+        $stmt = $this->conn->prepare("UPDATE {$this->table} SET password = :password, updated_at = NOW() WHERE id = :id");
+        return $stmt->execute([
+            ':password' => password_hash($password, PASSWORD_DEFAULT),
+            ':id' => $id,
+        ]);
+    }
+
     public function getAllStandardUsers() {
         $sql = "SELECT * FROM {$this->table} ORDER BY created_at DESC, id DESC";
         $stmt = $this->conn->prepare($sql);
@@ -180,5 +228,11 @@ class UserModel {
     public function deleteStandardUser($id) {
         $stmt = $this->conn->prepare("DELETE FROM {$this->table} WHERE id = ?");
         return $stmt->execute([$id]);
+    }
+
+    private function columnExists(string $column): bool {
+        $stmt = $this->conn->prepare("SHOW COLUMNS FROM {$this->table} LIKE ?");
+        $stmt->execute([$column]);
+        return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

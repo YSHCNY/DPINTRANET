@@ -8,6 +8,33 @@ class User extends Model {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function findByIdentifier($identifier) {
+        $identifier = trim((string) $identifier);
+        if ($identifier === '') {
+            return null;
+        }
+
+        $stmt = $this->db->prepare("SELECT * FROM UserTbl WHERE username = :identifier OR email = :identifier LIMIT 1");
+        $stmt->execute(['identifier' => $identifier]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($user) {
+            return $user;
+        }
+
+        foreach (['employee_id', 'employeeId'] as $column) {
+            if ($this->columnExists($column)) {
+                $stmt = $this->db->prepare("SELECT * FROM UserTbl WHERE {$column} = :identifier LIMIT 1");
+                $stmt->execute(['identifier' => $identifier]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($user) {
+                    return $user;
+                }
+            }
+        }
+
+        return null;
+    }
+
     public function usernameExists($username, $excludeId = null) {
         $sql = "SELECT id FROM UserTbl WHERE username = ?";
         $params = [$username];
@@ -103,9 +130,23 @@ class User extends Model {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function updatePassword($id, $password) {
+        $stmt = $this->db->prepare("UPDATE UserTbl SET password = :password WHERE id = :id");
+        return $stmt->execute([
+            ':password' => password_hash($password, PASSWORD_DEFAULT),
+            ':id' => $id,
+        ]);
+    }
+
     public function delete($id) {
         $stmt = $this->db->prepare("DELETE FROM UserTbl WHERE id = ?");
         return $stmt->execute([$id]);
+    }
+
+    private function columnExists($column) {
+        $stmt = $this->db->prepare("SHOW COLUMNS FROM UserTbl LIKE :column");
+        $stmt->execute([':column' => $column]);
+        return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function hasSuperAdmin() {

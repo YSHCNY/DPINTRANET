@@ -14,10 +14,10 @@ class StaffDirectoryController extends Controller {
         $this->requireLogin();
 
         $staffEntries = $this->directoryModel->getAllStaff();
-        $departments = array_values(array_filter(array_unique(array_map(function ($item) {
-            return trim($item['department'] ?? '');
+        $firms = array_values(array_filter(array_unique(array_map(function ($item) {
+            return trim($item['firm'] ?? '');
         }, $staffEntries))));
-        sort($departments, SORT_NATURAL | SORT_FLAG_CASE);
+        sort($firms, SORT_NATURAL | SORT_FLAG_CASE);
 
         $positions = array_values(array_filter(array_unique(array_map(function ($item) {
             return trim($item['position'] ?? '');
@@ -29,13 +29,13 @@ class StaffDirectoryController extends Controller {
             'activeStaff' => count(array_filter($staffEntries, function ($item) {
                 return ($item['status'] ?? '') === 'active';
             })),
-            'departmentCount' => count($departments),
+            'firmCount' => count($firms),
             'recentDeployment' => $this->getLatestDeploymentDate($staffEntries),
         ];
 
         $content = $this->renderView('staff_directory/index', [
             'staffEntries' => $staffEntries,
-            'departments' => $departments,
+            'firms' => $firms,
             'positions' => $positions,
             'metrics' => $metrics,
         ]);
@@ -58,6 +58,7 @@ class StaffDirectoryController extends Controller {
         $lastName = trim($_POST['lastName'] ?? '');
         $position = trim($_POST['position'] ?? '');
         $department = trim($_POST['department'] ?? '');
+        $firm = trim($_POST['firm'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $contactNumber = trim($_POST['contact_number'] ?? '');
         $deploymentDate = trim($_POST['deployment_date'] ?? '');
@@ -96,6 +97,7 @@ class StaffDirectoryController extends Controller {
             'lastName' => $lastName,
             'position' => $position,
             'department' => $department !== '' ? $department : null,
+            'firm' => $firm !== '' ? $firm : null,
             'email' => $email,
             'contact_number' => $contactNumber !== '' ? $contactNumber : null,
             'deployment_date' => $deploymentDate !== '' ? $deploymentDate : null,
@@ -145,6 +147,7 @@ class StaffDirectoryController extends Controller {
         $lastName = trim($_POST['lastName'] ?? '');
         $position = trim($_POST['position'] ?? '');
         $department = trim($_POST['department'] ?? '');
+        $firm = trim($_POST['firm'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $contactNumber = trim($_POST['contact_number'] ?? '');
         $deploymentDate = trim($_POST['deployment_date'] ?? '');
@@ -192,6 +195,7 @@ class StaffDirectoryController extends Controller {
             'lastName' => $lastName,
             'position' => $position,
             'department' => $department !== '' ? $department : null,
+            'firm' => $firm !== '' ? $firm : null,
             'email' => $email,
             'contact_number' => $contactNumber !== '' ? $contactNumber : null,
             'deployment_date' => $deploymentDate !== '' ? $deploymentDate : null,
@@ -308,7 +312,7 @@ class StaffDirectoryController extends Controller {
         }
 
         $headers = $this->normalizeHeaders(array_shift($rows));
-        $requiredHeaders = ['staff id', 'firstname', 'lastname', 'position', 'email'];
+        $requiredHeaders = ['firstname'];
         foreach ($requiredHeaders as $requiredHeader) {
             if (!array_key_exists($requiredHeader, $headers)) {
                 $importErrors[] = [
@@ -333,6 +337,7 @@ class StaffDirectoryController extends Controller {
         $rowNumber = 1;
         $validRows = 0;
         $dataRows = [];
+        $invalidRowNames = [];
 
         foreach ($rows as $row) {
             $rowNumber++;
@@ -341,72 +346,82 @@ class StaffDirectoryController extends Controller {
                 continue;
             }
 
-            $staffId = $this->getRowValue($row, $headers, 'staff id');
-            $firstName = $this->getRowValue($row, $headers, 'firstname');
-            $lastName = $this->getRowValue($row, $headers, 'lastname');
+            $staffId = $this->getRowValue($row, $headers, 'staff id', 'staffid');
+            $firstName = $this->getRowValue($row, $headers, 'first name', 'firstname');
+            $lastName = $this->getRowValue($row, $headers, 'last name', 'lastname');
             $position = $this->getRowValue($row, $headers, 'position');
-            $department = $this->getRowValue($row, $headers, 'department');
+            $department = $this->getRowValue($row, $headers, 'team/discipline', 'teamdiscipline', 'department');
+            $firm = $this->getRowValue($row, $headers, 'firm');
             $email = $this->getRowValue($row, $headers, 'email');
-            $contactNumber = $this->getRowValue($row, $headers, 'contact number');
-            $deploymentDate = $this->getRowValue($row, $headers, 'deployment date');
+            $contactNumber = $this->getRowValue($row, $headers, 'contact number', 'contactnumber');
+            $deploymentDate = $this->getRowValue($row, $headers, 'deployment date', 'deploymentdate');
 
-            if ($staffId === '') {
-                $importErrors[] = ['row' => $rowNumber, 'field' => 'Staff ID', 'message' => 'Staff ID is required.'];
+            $rowName = $staffId !== '' ? $staffId : trim(($firstName . ' ' . $lastName));
+            if ($rowName === '') {
+                $rowName = 'Row ' . $rowNumber;
             }
+
+            $rowErrors = [];
             if ($firstName === '') {
-                $importErrors[] = ['row' => $rowNumber, 'field' => 'First name', 'message' => 'First name is required.'];
+                $rowErrors[] = ['row' => $rowNumber, 'field' => 'First name', 'message' => 'First name is required.', 'name' => $rowName];
             }
-            if ($lastName === '') {
-                $importErrors[] = ['row' => $rowNumber, 'field' => 'Last name', 'message' => 'Last name is required.'];
-            }
-            if ($position === '') {
-                $importErrors[] = ['row' => $rowNumber, 'field' => 'Position', 'message' => 'Position is required.'];
-            }
-            if ($email === '') {
-                $importErrors[] = ['row' => $rowNumber, 'field' => 'Email', 'message' => 'Email is required.'];
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $importErrors[] = ['row' => $rowNumber, 'field' => 'Email', 'message' => 'Email address is not valid.'];
+            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $rowErrors[] = ['row' => $rowNumber, 'field' => 'Email', 'message' => 'Email address is not valid.', 'name' => $rowName];
             }
 
             if ($deploymentDate !== '' && strtotime($deploymentDate) === false) {
-                $importErrors[] = ['row' => $rowNumber, 'field' => 'Deployment Date', 'message' => 'Deployment date must be a valid date, like YYYY-MM-DD.'];
+                $rowErrors[] = ['row' => $rowNumber, 'field' => 'Deployment Date', 'message' => 'Deployment date must be a valid date, like YYYY-MM-DD.', 'name' => $rowName];
             }
 
             $lowerStaffId = strtolower($staffId);
             if ($staffId !== '') {
                 if (in_array($lowerStaffId, $existingStaffIds, true)) {
-                    $importErrors[] = ['row' => $rowNumber, 'field' => 'Staff ID', 'message' => 'Staff ID already exists in the directory.'];
+                    $rowErrors[] = ['row' => $rowNumber, 'field' => 'Staff ID', 'message' => 'Staff ID already exists in the directory.', 'name' => $rowName];
                 }
                 if (in_array($lowerStaffId, $seenStaffIds, true)) {
-                    $importErrors[] = ['row' => $rowNumber, 'field' => 'Staff ID', 'message' => 'Duplicate Staff ID found in the file.'];
+                    $rowErrors[] = ['row' => $rowNumber, 'field' => 'Staff ID', 'message' => 'Duplicate Staff ID found in the file.', 'name' => $rowName];
                 }
             }
 
-            if (count(array_filter($importErrors, fn($error) => $error['row'] === $rowNumber)) === 0) {
-                $validRows++;
-                $dataRows[] = [
-                    'staff_id' => $staffId,
-                    'firstName' => $firstName,
-                    'lastName' => $lastName,
-                    'position' => $position,
-                    'department' => $department !== '' ? $department : null,
-                    'email' => $email,
-                    'contact_number' => $contactNumber !== '' ? $contactNumber : null,
-                    'deployment_date' => $deploymentDate !== '' ? $deploymentDate : null,
-                    'image' => null,
-                    'status' => 'active',
-                ];
-                $seenStaffIds[] = $lowerStaffId;
+            if ($staffId === '') {
+                $staffId = sprintf('imported-%d-%s', $rowNumber, substr(bin2hex(random_bytes(4)), 0, 8));
             }
+
+            if (count($rowErrors) > 0) {
+                foreach ($rowErrors as $error) {
+                    $importErrors[] = $error;
+                }
+                if (!in_array($rowName, $invalidRowNames, true)) {
+                    $invalidRowNames[] = $rowName;
+                }
+                continue;
+            }
+
+            $validRows++;
+            $dataRows[] = [
+                'staff_id' => $staffId,
+                'firstName' => $firstName,
+                'lastName' => $lastName,
+                'position' => $position,
+                'department' => $department !== '' ? $department : '',
+                'firm' => $firm !== '' ? $firm : '',
+                'email' => $email,
+                'contact_number' => $contactNumber !== '' ? $contactNumber : '',
+                'deployment_date' => $deploymentDate !== '' ? $deploymentDate : null,
+                'image' => null,
+                'status' => 'active',
+            ];
+            $seenStaffIds[] = $lowerStaffId;
         }
 
         $importResults = [
             'rows' => count($rows),
             'validRows' => $validRows,
             'errors' => count($importErrors),
+            'invalidRowNames' => $invalidRowNames,
         ];
 
-        if ($bulkAction === 'import' && empty($importErrors)) {
+        if ($bulkAction === 'import' && count($dataRows) > 0) {
             $created = 0;
             foreach ($dataRows as $dataRow) {
                 try {
@@ -414,10 +429,17 @@ class StaffDirectoryController extends Controller {
                         $created++;
                     }
                 } catch (Exception $e) {
-                    $importErrors[] = ['row' => '-', 'field' => 'Database', 'message' => 'Unable to save one or more rows.'];
-                    break;
+                    $importErrors[] = [
+                        'row' => '-',
+                        'field' => 'Database',
+                        'message' => 'Unable to save one or more rows.',
+                        'name' => $dataRow['staff_id'] ?: trim($dataRow['firstName'] . ' ' . $dataRow['lastName']),
+                    ];
                 }
             }
+
+            $importResults['created'] = $created;
+            $importResults['failedRows'] = $invalidRowNames;
 
             if (empty($importErrors) && $created > 0) {
                 $_SESSION['message'] = sprintf('Imported %d staff profiles successfully.', $created);
@@ -490,7 +512,19 @@ class StaffDirectoryController extends Controller {
 
         foreach ($dom->getElementsByTagName('row') as $row) {
             $rowValues = [];
+            $lastIndex = -1;
             foreach ($row->getElementsByTagName('c') as $cell) {
+                $cellRef = $cell->getAttribute('r');
+                $cellIndex = $this->columnIndexFromCellReference($cellRef);
+                if ($cellIndex === null) {
+                    continue;
+                }
+
+                while ($lastIndex + 1 < $cellIndex) {
+                    $rowValues[] = '';
+                    $lastIndex++;
+                }
+
                 $cellType = $cell->getAttribute('t');
                 $valueNode = $cell->getElementsByTagName('v')->item(0);
                 $value = $valueNode ? $valueNode->nodeValue : '';
@@ -499,7 +533,8 @@ class StaffDirectoryController extends Controller {
                     $value = $sharedStrings[(int)$value];
                 }
 
-                $rowValues[] = $value;
+                $rowValues[$cellIndex] = $value;
+                $lastIndex = $cellIndex;
             }
             $rows[] = $rowValues;
         }
@@ -507,21 +542,62 @@ class StaffDirectoryController extends Controller {
         return $rows;
     }
 
+    private function columnIndexFromCellReference(string $cellRef): ?int {
+        if ($cellRef === '') {
+            return null;
+        }
+
+        $columnPart = preg_replace('/[^A-Z]/', '', strtoupper($cellRef));
+        if ($columnPart === '') {
+            return null;
+        }
+
+        $index = 0;
+        $letters = str_split($columnPart);
+        foreach ($letters as $letter) {
+            $index = $index * 26 + (ord($letter) - ord('A') + 1);
+        }
+
+        return $index - 1;
+    }
+
     private function normalizeHeaders(array $headerRow): array {
         $headers = [];
         foreach ($headerRow as $index => $header) {
             $headerKey = trim((string)$header);
+            if ($headerKey === '') {
+                continue;
+            }
+
+            $normalizedKey = $this->normalizeHeaderName($headerKey);
+            if ($normalizedKey !== '') {
+                $headers[$normalizedKey] = $index;
+            }
+
             $headers[strtolower($headerKey)] = $index;
+            $headers[strtolower(str_replace([' ', '/'], '', $headerKey))] = $index;
         }
         return $headers;
     }
 
-    private function getRowValue(array $row, array $headers, string $headerName): string {
-        $index = $headers[$headerName] ?? null;
-        if ($index === null) {
-            return '';
+    private function getRowValue(array $row, array $headers, string ...$headerNames): string {
+        foreach ($headerNames as $headerName) {
+            $index = $headers[$headerName] ?? null;
+            if ($index === null) {
+                $normalizedHeader = $this->normalizeHeaderName($headerName);
+                $index = $headers[$normalizedHeader] ?? null;
+            }
+
+            if ($index !== null) {
+                return trim((string)($row[$index] ?? ''));
+            }
         }
-        return trim($row[$index] ?? '');
+
+        return '';
+    }
+
+    private function normalizeHeaderName(string $headerName): string {
+        return preg_replace('/[^a-z0-9]+/', '', strtolower(trim($headerName))) ?? '';
     }
 
     private function getLatestDeploymentDate(array $staffEntries): string

@@ -5,6 +5,12 @@
 **/Database.php
 app/core/Database.php
 
+# ENVIRONMENT
+.env
+
+# COMPOSER
+/vendor/
+
 #UPLOADS
 app/uploads/standard_users/*
 app/uploads/correspondence/*
@@ -16,3 +22,4 @@ uploads/vehicle/*
 !uploads/correspondence/.gitkeep
 !uploads/thread/.gitkeep
 !uploads/vehicle/.gitkeep
+

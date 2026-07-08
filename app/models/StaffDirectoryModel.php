@@ -30,18 +30,38 @@ class StaffDirectoryModel {
         return $result === false ? null : $result;
     }
 
-    public function updateStaff(array $data): bool {
-        $sql = "UPDATE staff_directory SET firstName = :firstName, lastName = :lastName, position = :position, department = :department, email = :email, contact_number = :contact_number, deployment_date = :deployment_date, image = :image, status = :status WHERE staff_id = :staff_id";
+    public function createStaff(array $data): bool {
+        $sql = "INSERT INTO staff_directory (staff_id, firstName, lastName, position, department, firm, email, contact_number, deployment_date, image, status)
+                VALUES (:staff_id, :firstName, :lastName, :position, :department, :firm, :email, :contact_number, :deployment_date, :image, :status)";
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute([
             ':staff_id' => $data['staff_id'],
             ':firstName' => $data['firstName'],
             ':lastName' => $data['lastName'],
-            ':position' => $data['position'],
-            ':department' => $data['department'],
-            ':email' => $data['email'],
-            ':contact_number' => $data['contact_number'],
-            ':deployment_date' => $data['deployment_date'],
+            ':position' => trim((string)($data['position'] ?? '')),
+            ':department' => trim((string)($data['department'] ?? '')),
+            ':firm' => trim((string)($data['firm'] ?? '')),
+            ':email' => trim((string)($data['email'] ?? '')),
+            ':contact_number' => trim((string)($data['contact_number'] ?? '')),
+            ':deployment_date' => !empty($data['deployment_date']) ? $data['deployment_date'] : null,
+            ':image' => $data['image'],
+            ':status' => $data['status'],
+        ]);
+    }
+
+    public function updateStaff(array $data): bool {
+        $sql = "UPDATE staff_directory SET firstName = :firstName, lastName = :lastName, position = :position, department = :department, firm = :firm, email = :email, contact_number = :contact_number, deployment_date = :deployment_date, image = :image, status = :status WHERE staff_id = :staff_id";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            ':staff_id' => $data['staff_id'],
+            ':firstName' => $data['firstName'],
+            ':lastName' => $data['lastName'],
+            ':position' => trim((string)($data['position'] ?? '')),
+            ':department' => trim((string)($data['department'] ?? '')),
+            ':firm' => trim((string)($data['firm'] ?? '')),
+            ':email' => trim((string)($data['email'] ?? '')),
+            ':contact_number' => trim((string)($data['contact_number'] ?? '')),
+            ':deployment_date' => !empty($data['deployment_date']) ? $data['deployment_date'] : null,
             ':image' => $data['image'],
             ':status' => $data['status'],
         ]);

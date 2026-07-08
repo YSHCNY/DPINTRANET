@@ -39,6 +39,10 @@ $staff = $staff ?? null;
                     <input id="department" name="department" type="text" value="<?= escape($staff['department']) ?>" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100">
                 </div>
                 <div class="space-y-3">
+                    <label class="block text-xs font-semibold text-slate-700" for="firm">Firm / Organization</label>
+                    <input id="firm" name="firm" type="text" value="<?= escape($staff['firm'] ?? '') ?>" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100">
+                </div>
+                <div class="space-y-3">
                     <label class="block text-xs font-semibold text-slate-700" for="email">Email</label>
                     <input id="email" name="email" type="email" value="<?= escape($staff['email']) ?>" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100">
                 </div>

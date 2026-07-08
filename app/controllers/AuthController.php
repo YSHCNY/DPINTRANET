@@ -2,12 +2,15 @@
 session_start();
 require_once '../app/core/Controller.php';
 require_once '../app/models/User.php';
+require_once '../app/Services/PasswordResetService.php';
 
 class AuthController extends Controller {
     private $userModel;
+    private $passwordResetService;
 
     public function __construct() {
         $this->userModel = new User();
+        $this->passwordResetService = new PasswordResetService($this->userModel);
     }
 
     public function login() {
@@ -34,6 +37,121 @@ class AuthController extends Controller {
         }
 
         $this->view('auth/login');
+    }
+
+    public function forgotPassword() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $identifier = trim($_POST['identifier'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+
+            $result = $this->passwordResetService->startReset($identifier, $email);
+
+            $_SESSION['password_reset_identifier'] = $identifier;
+            $_SESSION['password_reset_email'] = $email;
+            $_SESSION['password_reset_user_id'] = null;
+
+            $user = $this->userModel->findByIdentifier($identifier);
+            if ($user && strtolower((string)($user['email'] ?? '')) === strtolower($email)) {
+                $_SESSION['password_reset_user_id'] = (int) $user['id'];
+            }
+
+            $_SESSION['portal_message'] = $result['message'];
+            $_SESSION['portal_msg_type'] = 'info';
+            $this->redirect('index.php?controller=Auth&action=verifyOtp');
+        }
+
+        $this->view('auth/forgot_password');
+    }
+
+    public function verifyOtp() {
+        $userId = (int)($_SESSION['password_reset_user_id'] ?? 0);
+        if ($userId <= 0) {
+            $_SESSION['portal_message'] = 'Please start the password reset process again.';
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->redirect('index.php?controller=Auth&action=forgotPassword');
+        }
+
+        $message = $_SESSION['portal_message'] ?? null;
+        $type = $_SESSION['portal_msg_type'] ?? 'info';
+        unset($_SESSION['portal_message'], $_SESSION['portal_msg_type']);
+        $remainingAttempts = (int)($_SESSION['password_reset_remaining_attempts'] ?? 5);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $otp = trim($_POST['otp'] ?? '');
+            $result = $this->passwordResetService->verifyOtp($userId, $otp);
+            $remainingAttempts = (int)($result['remainingAttempts'] ?? $remainingAttempts);
+            $_SESSION['password_reset_remaining_attempts'] = $remainingAttempts;
+            $_SESSION['portal_message'] = $result['message'];
+            $_SESSION['portal_msg_type'] = $result['success'] ? 'success' : 'error';
+
+            if ($result['success']) {
+                $_SESSION['password_reset_verified'] = true;
+                $this->redirect('index.php?controller=Auth&action=resetPassword');
+            }
+
+            $this->view('auth/verify_otp', ['message' => $result['message'], 'msgType' => $result['success'] ? 'success' : 'error', 'remainingAttempts' => $remainingAttempts]);
+            return;
+        }
+
+        $this->view('auth/verify_otp', ['message' => $message, 'msgType' => $type, 'remainingAttempts' => $remainingAttempts]);
+    }
+
+    public function resendOtp() {
+        $identifier = $_SESSION['password_reset_identifier'] ?? '';
+        $email = $_SESSION['password_reset_email'] ?? '';
+        $result = $this->passwordResetService->startReset($identifier, $email);
+
+        $_SESSION['portal_message'] = $result['message'];
+        $_SESSION['portal_msg_type'] = 'info';
+        $this->redirect('index.php?controller=Auth&action=verifyOtp');
+    }
+
+    public function resetPassword() {
+        if (empty($_SESSION['password_reset_verified']) || empty($_SESSION['password_reset_user_id'])) {
+            $_SESSION['portal_message'] = 'Please verify your code before resetting your password.';
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->redirect('index.php?controller=Auth&action=forgotPassword');
+        }
+
+        $message = $_SESSION['portal_message'] ?? null;
+        $type = $_SESSION['portal_msg_type'] ?? 'info';
+        unset($_SESSION['portal_message'], $_SESSION['portal_msg_type']);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+
+            if ($newPassword === '' || $confirmPassword === '') {
+                $this->view('auth/reset_password', ['message' => 'Please complete both password fields.', 'msgType' => 'error']);
+                return;
+            }
+
+            if ($newPassword !== $confirmPassword) {
+                $this->view('auth/reset_password', ['message' => 'Passwords do not match.', 'msgType' => 'error']);
+                return;
+            }
+
+            $userId = (int)$_SESSION['password_reset_user_id'];
+            $result = $this->passwordResetService->resetPassword($userId, $newPassword);
+            if ($result['success']) {
+                session_regenerate_id(true);
+                unset(
+                    $_SESSION['password_reset_user_id'],
+                    $_SESSION['password_reset_identifier'],
+                    $_SESSION['password_reset_email'],
+                    $_SESSION['password_reset_verified'],
+                    $_SESSION['password_reset_remaining_attempts']
+                );
+                $_SESSION['portal_message'] = $result['message'];
+                $_SESSION['portal_msg_type'] = 'success';
+                $this->redirect('index.php?controller=Auth&action=login');
+            }
+
+            $this->view('auth/reset_password', ['message' => $result['message'], 'msgType' => 'error']);
+            return;
+        }
+
+        $this->view('auth/reset_password', ['message' => $message, 'msgType' => $type]);
     }
 
     public function dashboard() {

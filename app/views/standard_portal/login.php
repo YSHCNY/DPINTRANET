@@ -25,6 +25,12 @@
             </div>
 
             <form method="POST" action="index.php?controller=StandardPortal&action=login" class="space-y-4 p-6 sm:px-8 sm:py-7">
+                <?php if (!empty($flashMessage)): ?>
+                    <div class="rounded-lg border <?= ($flashType ?? 'info') === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : (($flashType ?? 'info') === 'error' ? 'border-rose-200 bg-rose-50 text-rose-600' : 'border-slate-200 bg-slate-50 text-slate-600') ?> px-4 py-3 text-sm font-medium">
+                        <?= htmlspecialchars($flashMessage) ?>
+                    </div>
+                <?php endif; ?>
+
                 <?php if (!empty($error)): ?>
                     <div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-600">
                         <?= htmlspecialchars($error) ?>
@@ -41,9 +47,7 @@
                     <label class="block text-sm font-medium text-slate-700">Password</label>
                     <input type="password" name="password" required
                            class="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm text-slate-800 transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
-                    <?php if (false): ?>
-                        <a href="#" class="mt-2 inline-flex text-sm text-slate-500 transition hover:text-slate-700">Forgot password?</a>
-                    <?php endif; ?>
+                    <a href="index.php?controller=StandardPortal&action=forgotPassword" class="mt-2 inline-flex text-sm text-slate-500 transition hover:text-slate-700">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="h-11 w-full rounded-xl bg-slate-900 text-sm font-medium text-white transition hover:bg-slate-800">

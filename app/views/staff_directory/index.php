@@ -8,7 +8,7 @@ function staffImageUrl($image) {
         return BASE_URL . 'uploads/staff_directory/' . rawurlencode($image);
     }
 
-    return BASE_URL . 'app/assets/profiles/default.png';
+    return BASE_URL . 'uploads/staff_directory/default.png';
 }
 
 function staffStatusBadge($status) {
@@ -67,11 +67,11 @@ function staffStatusBadge($status) {
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
                     <div class="flex flex-1 flex-col gap-3 md:flex-row md:items-end">
                         <div class="w-full md:w-40">
-                            <label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Department</label>
-                            <select id="departmentFilter" class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
-                                <option value="">All departments</option>
-                                <?php foreach ($departments as $department): ?>
-                                    <option value="<?= escape($department) ?>"><?= escape($department) ?></option>
+                            <label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Firm</label>
+                            <select id="firmFilter" class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+                                <option value="">All firms</option>
+                                <?php foreach ($firms as $firm): ?>
+                                    <option value="<?= escape($firm) ?>"><?= escape($firm) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -113,8 +113,8 @@ function staffStatusBadge($status) {
             </div>
         </div>
 
-    <div class="grid gap-4 xl:grid-cols-[1.85fr_0.95fr]">
-        <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="grid gap-4 xl:grid-cols-[2.2fr_0.8fr]">
+        <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-w-0">
 
           <div class="flex flex-col mb-4">
     <p class="text-base font-semibold text-slate-900">Team roster</p>
@@ -128,8 +128,8 @@ function staffStatusBadge($status) {
                 <div class="flex items-center gap-2 text-xs text-slate-500">
                     <label for="pageLengthSelect" class="font-medium text-slate-600">Show</label>
                     <select id="pageLengthSelect" class="h-8 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-sm text-slate-900 outline-none focus:border-slate-400">
-                        <option value="10">10</option>
-                        <option value="20" selected>20</option>
+                        <option value="10" selected>10</option>
+                        <option value="20" >20</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
@@ -140,10 +140,11 @@ function staffStatusBadge($status) {
                 <table id="staffDirectoryTable" class="w-full text-sm text-slate-900">
             
 
-                    <thead class="bg-white text-left text-xs uppercase tracking-[0.24em] text-slate-500">
+                    <thead class="bg-white text-left text-[0.75rem] uppercase tracking-[0.2em] text-slate-500">
                         <tr>
                             <th class="px-3 py-3">Staff</th>
                             <th class="px-3 py-3">Position</th>
+                            <th class="px-3 py-3">Firm</th>
                             <th class="px-3 py-3">Deployment</th>
                             <th class="px-3 py-3">Status</th>
                         </tr>
@@ -156,6 +157,7 @@ function staffStatusBadge($status) {
                                 'name' => $fullName,
                                 'department' => $staff['department'],
                                 'position' => $staff['position'],
+                                'firm' => $staff['firm'] ?? '',
                                 'email' => $staff['email'],
                                 'contact' => $staff['contact_number'],
                                 'deployment' => !empty($staff['deployment_date']) ? date('M j, Y', strtotime($staff['deployment_date'])) : '—',
@@ -171,7 +173,8 @@ function staffStatusBadge($status) {
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-3 py-3 align-top text-sm text-slate-700"><?= escape($staff['position']) ?></td>
+                                <td class="px-3 py-3 align-top text-xs text-slate-700"><?= escape($staff['position']) ?></td>
+                                <td class="px-3 py-3 align-top text-sm text-slate-700"><?= escape($staff['firm'] ?? '—') ?></td>
                                 <td class="px-3 py-3 align-top text-sm text-slate-700"><?= !empty($staff['deployment_date']) ? date('M j, Y', strtotime($staff['deployment_date'])) : '—' ?></td>
                                 <td class="px-3 py-3 align-top text-sm text-slate-700">
                                     <?php $statusBadge = staffStatusBadge($staff['status'] ?? 'active'); ?>
@@ -203,8 +206,8 @@ function staffStatusBadge($status) {
                             <p class="text-base font-semibold text-slate-900"><?= escape($metrics['activeStaff']) ?></p>
                         </div>
                         <div class="space-y-1">
-                            <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Departments</p>
-                            <p class="text-base font-semibold text-slate-900"><?= escape($metrics['departmentCount']) ?></p>
+                            <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Firms</p>
+                            <p class="text-base font-semibold text-slate-900"><?= escape($metrics['firmCount']) ?></p>
                         </div>
                         <div class="space-y-1">
                             <p class="text-xs uppercase tracking-[0.24em] text-slate-500">Latest deployment</p>
@@ -336,8 +339,8 @@ function staffStatusBadge($status) {
 <script>
     $(document).ready(function() {
         const table = $('#staffDirectoryTable').DataTable({
-            pageLength: 20,
-            order: [[2, 'desc']],
+            pageLength: 10,
+            order: [[2, 'asc']],
             dom: 'rt<"mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"ip>',
             language: {
                 emptyTable: 'No staff found.'
@@ -482,7 +485,7 @@ function staffStatusBadge($status) {
         });
 
         $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            const department = $('#departmentFilter').val();
+            const firm = $('#firmFilter').val();
             const position = $('#positionFilter').val();
             const status = $('#statusFilter').val();
             const row = table.row(dataIndex).node();
@@ -492,13 +495,13 @@ function staffStatusBadge($status) {
                 return true;
             }
 
-            const departmentMatches = department === '' || staffData.department === department;
+            const firmMatches = firm === '' || staffData.firm === firm;
             const positionMatches = position === '' || staffData.position === position;
             const statusMatches = status === '' || (staffData.status || 'active').toString().toLowerCase() === status;
-            return departmentMatches && positionMatches && statusMatches;
+            return firmMatches && positionMatches && statusMatches;
         });
 
-        $('#departmentFilter, #positionFilter, #statusFilter').on('change', function() {
+        $('#firmFilter, #positionFilter, #statusFilter').on('change', function() {
             $('#staffDirectoryTable tbody tr').removeClass('selected-row');
             togglePreview(null);
             table.draw();
