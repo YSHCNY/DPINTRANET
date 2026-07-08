@@ -20,6 +20,10 @@
             $documentTitle = 'Correspondence Management';
         } elseif ($currentController === 'StandardUsers' && $currentAction === 'index') {
             $documentTitle = 'Standard Users';
+        } elseif ($currentController === 'StaffDirectory' && $currentAction === 'index') {
+            $documentTitle = 'Staff Directory';
+        } elseif ($currentController === 'StaffDirectory' && $currentAction === 'create') {
+            $documentTitle = 'Add new staff';
         } elseif ($currentController === 'CarBookings' && $currentAction === 'calendar') {
             $documentTitle = 'Car Bookings';
         } elseif ($currentController === 'RoomBookings' && $currentAction === 'calendar') {

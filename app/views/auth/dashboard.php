@@ -109,7 +109,10 @@
   $roomStatus = ((int)($roomMetrics['scheduledBookings'] ?? 0) > 0) ? 'Bookings active' : 'Quiet day';
   $filesStatus = $recentFilesCount > 0 ? 'Recently updated' : 'No recent activity';
 ?>
-<div class="mx-auto flex max-w-7xl flex-col gap-4">
+<div class="min-h-screen theme-palette">
+  
+
+<div class="max-w-[1400px] mx-auto px-3 py-6 text-xs  sm:text-xs md:text-sm flex-col gap-4">
   <section class="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.22)] sm:p-5">
     <div class="grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
       <div class="space-y-3">
@@ -962,3 +965,5 @@
     </section>
   </div>
 </div>
+</div>
+

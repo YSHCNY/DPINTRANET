@@ -151,6 +151,17 @@ function sidebarActiveClass(bool $active): string
             </span>
           </a>
         </li>
+        <li>
+          <a href="index.php?controller=StaffDirectory&action=index"
+             class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'StaffDirectory' && $currentAction == 'index') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StaffDirectory' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+              <?= $usersIcon ?>
+            </span>
+            <span class="min-w-0 sidebar-expanded leading-tight">
+              <span class="text-sm font-medium">Staff Directory</span>
+            </span>
+          </a>
+        </li>
       </ul>
     </div>
 
@@ -197,6 +208,17 @@ function sidebarActiveClass(bool $active): string
               </span>
             </a>
           </li>
+          <!-- <li>
+            <a href="index.php?controller=StaffDirectory&action=index"
+               class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'StaffDirectory' && $currentAction == 'index') ?>">
+              <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StaffDirectory' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+                <?= $usersIcon ?>
+              </span>
+              <span class="min-w-0 sidebar-expanded leading-tight">
+                <span class="text-sm font-medium">Staff Directory</span>
+              </span>
+            </a>
+          </li> -->
         </ul>
       </div>
     <?php endif; ?>

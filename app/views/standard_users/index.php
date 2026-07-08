@@ -12,8 +12,8 @@ function fieldValue($editingUser, $key, $default = '') {
 
 function avatarUrl($avatar) {
     return !empty($avatar)
-        ? '../app/uploads/standard_users/' . htmlspecialchars($avatar)
-        : '../app/assets/profiles/default.png';
+        ? BASE_URL . 'uploads/standard_users/' . htmlspecialchars($avatar)
+        : BASE_URL . 'uploads/standard_users/default.png';
 }
 ?>
 

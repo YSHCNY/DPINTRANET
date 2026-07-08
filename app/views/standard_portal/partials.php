@@ -2,8 +2,8 @@
 function portalAvatar() {
     $avatar = $_SESSION['standard_user_avatar'] ?? null;
     return !empty($avatar)
-        ? BASE_URL . '/uploads/standard_users/' . rawurlencode($avatar)
-        : BASE_URL . '/uploads/profile/default.png';
+        ? BASE_URL . 'uploads/standard_users/' . rawurlencode($avatar)
+        : BASE_URL . 'uploads/standard_users/default.png';
 }
 
 function portalFlash() {

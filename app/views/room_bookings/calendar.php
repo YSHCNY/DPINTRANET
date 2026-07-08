@@ -15,88 +15,202 @@ if (!empty($rooms) && is_array($rooms)) {
 }
 ?>
 <!-- HEADER -->
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-  <div class="max-w-[1500px] mx-auto px-4 py-6">
-    <div class="mb-6 overflow-hidden rounded-[22px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/40 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)]">
-      <div class="border-b border-slate-200/60 bg-gradient-to-r from-slate-50/80 to-slate-50/60 px-6 py-5">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="max-w-2xl space-y-1">
-            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-700">Room scheduling</p>
-            <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Meeting rooms calendar</h1>
-            <p class="mt-1 text-sm text-slate-600">Schedule room resources with real-time availability, capacity checks, and conflict prevention.</p>
+<div class="min-h-screen theme-palette">
+    <div class="max-w-[1400px] mx-auto px-3 py-6 text-xs  sm:text-xs md:text-sm ">
+    <div class="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+      <div class="grid grid-cols-8 gap-4 items-start">
+        <div class="col-span-8 md:col-span-5">
+          <p class="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-700">ROOM SCHEDULING</p>
+          <h1 class="mt-1 text-base font-semibold text-slate-900">Meeting rooms calendar</h1>
+          <p class="mt-1 text-sm text-slate-600">Reserve rooms, check capacity, and prevent booking conflicts with real-time availability and capacity checks.</p>
+        </div>
+        <div class="col-span-8 md:col-span-3 flex items-center justify-end gap-3">
+          <div class="inline-flex items-center gap-3">
+            <div class="flex items-center gap-2 text-xs text-slate-700">
+              <span class="inline-block h-2 w-2 rounded-full bg-slate-400"></span>
+              <span class="font-semibold">Total Rooms</span>
+              <span id="roomSummaryTotal" class="ml-2 text-sm font-semibold text-slate-900"><?= $roomCount ?></span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-700">
+              <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+              <span class="font-semibold">Available</span>
+              <span id="roomSummaryAvailable" class="ml-2 text-sm font-semibold text-emerald-700">0</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-700">
+              <span class="inline-block h-2 w-2 rounded-full bg-sky-500"></span>
+              <span class="font-semibold">Active Bookings</span>
+              <span id="roomSummaryOccupied" class="ml-2 text-sm font-semibold text-violet-700">0</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-700">
+              <span class="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
+              <span class="font-semibold">Upcoming</span>
+              <span id="roomSummaryBookings" class="ml-2 text-sm font-semibold text-slate-900">0</span>
+            </div>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" id="openRoomBookingModalBtn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-200 mt-4 pt-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
+              <label class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mr-2">View:</label>
+              <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                <option value="dayGridMonth">Month</option>
+                <option value="timeGridWeek">Week</option>
+                <option value="timeGridDay">Day</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+              <label class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mr-2">Room:</label>
+              <select id="roomFilter" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                <option value="">All</option>
+                <?php foreach (($rooms ?? []) as $room): ?>
+                  <option value="<?= (int)$room['id'] ?>"><?= htmlspecialchars($room['room_name'] . ' (' . $room['room_code'] . ')') ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button" id="openRoomBookingModalBtn" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               <span>New booking</span>
             </button>
-            <button type="button" id="openRoomCreateModalBtn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>Manage rooms</span>
+            <button type="button" id="openRoomCreateModalBtn" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+              <span>New room</span>
             </button>
           </div>
         </div>
       </div>
-      <div class="p-6 lg:p-6">
+
+      <div class="mt-6">
         <div class="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
-          <div class="rounded-[16px] border border-slate-200/60 bg-white shadow-sm overflow-hidden">
-            <div class="border-b border-slate-200/60 bg-gradient-to-r from-slate-50/40 to-slate-50/20 px-5 py-4">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
-                  <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">View:</label>
-                  <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
-                    <option value="dayGridMonth">Month</option>
-                    <option value="timeGridWeek">Week</option>
-                    <option value="timeGridDay">Day</option>
-                  </select>
-                </div>
-                <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 shadow-sm">
-                  <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Room:</label>
-                  <select id="roomFilter" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
-                    <option value="">All</option>
-                    <?php foreach (($rooms ?? []) as $room): ?>
-                      <option value="<?= (int)$room['id'] ?>"><?= htmlspecialchars($room['room_name'] . ' (' . $room['room_code'] . ')') ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </div>
-              </div>
-            </div>
+          <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
             <div id="roomBookingCalendar" class="min-h-[520px] p-4 sm:p-5"></div>
           </div>
 
-          <aside class="rounded-[16px] border border-slate-200/60 bg-slate-50/80 p-5 shadow-sm">
-            <div class="space-y-4">
+          <aside class="rounded-xl border border-slate-200 bg-slate-50/80 p-5 shadow-sm">
+            <div id="roomResourceSummary" class="space-y-4 h-full flex flex-col">
               <div>
-                <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Room resources</p>
-                <h2 class="mt-1 text-[15px] font-medium text-slate-900">Summary</h2>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Workspace</p>
+                <div class="flex items-center justify-between gap-3 mt-1">
+                  <h2 class="text-sm font-semibold text-slate-900">Rooms snapshot</h2>
+                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    Live availability
+                  </span>
+                </div>
               </div>
+
               <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Total Rooms</p>
-                  <p id="roomSummaryTotal" class="mt-2.5 text-2xl font-semibold text-slate-900"><?= $roomCount ?></p>
+                <div class="rounded-lg border border-slate-200 bg-white p-3">
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Total Rooms</p>
+                  <p id="snapshotTotalRooms" class="mt-2 text-2xl font-semibold text-slate-900">0</p>
                 </div>
-                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Available</p>
-                  <p id="roomSummaryAvailable" class="mt-2.5 text-2xl font-semibold text-emerald-700">0</p>
+                <div class="rounded-lg border border-slate-200 bg-white p-3">
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Available</p>
+                  <p id="snapshotAvailableRooms" class="mt-2 text-2xl font-semibold text-emerald-600">0</p>
                 </div>
-                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">In use</p>
-                  <p id="roomSummaryOccupied" class="mt-2.5 text-2xl font-semibold text-violet-700">0</p>
+                <div class="rounded-lg border border-slate-200 bg-white p-3">
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">In Use</p>
+                  <p id="snapshotInUseRooms" class="mt-2 text-2xl font-semibold text-rose-600">0</p>
                 </div>
-                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Upcoming</p>
-                  <p id="roomSummaryBookings" class="mt-2.5 text-2xl font-semibold text-slate-900">0</p>
+                <div class="rounded-lg border border-slate-200 bg-white p-3">
+                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Upcoming</p>
+                  <p id="snapshotUpcomingRooms" class="mt-2 text-2xl font-semibold text-blue-600">0</p>
                 </div>
               </div>
-              <div class="pt-2 border-t border-slate-200/60">
-                <p id="roomInventoryStatusBadge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
-                  <span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                  Open for booking
-                </p>
+
+              <div class="pt-4 border-t border-slate-200 mt-auto">
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Selected booking</p>
+                <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+                  <p class="text-sm font-semibold text-slate-900">Workspace preview</p>
+                  <p class="mt-2 text-sm text-slate-500">No selection</p>
+                  <p class="mt-2 text-xs text-slate-500">Select a booked slot on the calendar to inspect, edit, cancel, or remove it.</p>
+                </div>
+              </div>
+            </div>
+
+            <div id="roomResourceDetailPanel" class="hidden flex flex-col h-full">
+              <div class="space-y-4 flex-1 overflow-y-auto">
+                <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Booking editor</p>
+                    <h2 id="roomResourceDetailTitle" class="mt-1 text-base font-semibold text-slate-900">Booking</h2>
+                    <p id="roomResourceDetailSubtitle" class="mt-1 text-sm text-slate-500">Room booking</p>
+                  </div>
+                  <div id="roomResourceDetailStatusWrap"></div>
+                </div>
+
+                <form id="roomEditorForm" class="space-y-4">
+                  <input type="hidden" name="id" id="roomEditorId" value="">
+
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">Booking Details</p>
+                    <div class="space-y-3">
+                      <div>
+                        <label class="text-sm font-semibold text-slate-700 block mb-2">Room <span class="text-red-500">*</span></label>
+                        <select name="room_id" id="roomEditorRoomId" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required>
+                          <option value="">-- Select a room --</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="text-sm font-semibold text-slate-700 block mb-2">Booking Date <span class="text-red-500">*</span></label>
+                        <input type="date" name="date_trip" id="roomEditorDateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                      </div>
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="text-sm font-semibold text-slate-700 block mb-2">Start Time <span class="text-red-500">*</span></label>
+                          <input type="datetime-local" name="departure_expected" id="roomEditorDepartureExpected" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                        </div>
+                        <div>
+                          <label class="text-sm font-semibold text-slate-700 block mb-2">End Time <span class="text-red-500">*</span></label>
+                          <input type="datetime-local" name="return_expected" id="roomEditorReturnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">Reservation Information</p>
+                    <div class="space-y-3">
+                      <div>
+                        <label class="text-sm font-semibold text-slate-700 block mb-2">Purpose <span class="text-red-500">*</span></label>
+                        <input type="text" name="purpose" id="roomEditorPurpose" placeholder="Meeting, workshop, training" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                      </div>
+                      <div>
+                        <label class="text-sm font-semibold text-slate-700 block mb-2">Attendees <span class="text-red-500">*</span></label>
+                        <input type="number" name="attendees" id="roomEditorAttendees" min="1" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                      </div>
+                      <div>
+                        <label class="text-sm font-semibold text-slate-700 block mb-2">Requested Date <span class="text-red-500">*</span></label>
+                        <input type="date" name="date_requested" id="roomEditorDateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">Additional Information</p>
+                    <div class="space-y-3">
+                      <div>
+                        <label class="text-sm font-semibold text-slate-700 block mb-2">Special Instructions</label>
+                        <textarea name="special_instructions" id="roomEditorSpecialInstructions" rows="2" placeholder="Any equipment, AV needs, or setup requests" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition resize-none"></textarea>
+                      </div>
+                      <div>
+                        <label class="text-sm font-semibold text-slate-700 block mb-2">Remarks</label>
+                        <textarea name="remarks" id="roomEditorRemarks" rows="2" placeholder="Additional notes" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition resize-none"></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              <div class="flex flex-col gap-2 pt-4 border-t border-slate-200 mt-auto">
+                <button type="button" id="roomEditorSaveBtn" class="inline-flex h-9 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 w-full">Save Changes</button>
+                <button type="button" id="roomEditorDeleteBtn" class="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 w-full">Cancel Booking</button>
+                <button type="button" id="roomEditorCloseBtn" class="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 w-full">Close Preview</button>
               </div>
             </div>
           </aside>
@@ -227,26 +341,28 @@ if (!empty($rooms) && is_array($rooms)) {
 
 <div id="roomHistoryModal" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true" aria-labelledby="roomHistoryModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="roomHistoryModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-3xl max-h-[85vh] overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-2xl">
+  <div class="relative mx-auto my-6 w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
     <div class="border-b border-slate-200 px-5 py-4">
       <div class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500" id="roomHistoryModalSubtitle">Room schedule</p>
-          <h2 id="roomHistoryModalTitle" class="mt-1 text-lg font-semibold text-slate-900">Room history</h2>
+        <div class="min-w-0 flex-1">
+          <h2 id="roomHistoryModalTitle" class="text-base font-semibold text-slate-900">Room schedule</h2>
+          <div class="mt-2 flex items-center gap-3">
+            <span id="roomHistoryModalSubtitle" class="text-sm text-slate-500">—</span>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              Active
+            </span>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button type="button" id="editRoomDetailsBtn" class="btn-ghost">Edit room</button>
-          <button type="button" id="deleteRoomDetailsBtn" class="btn-danger">Delete room</button>
-          <button type="button" id="closeRoomHistoryModalBtn" class="modal-close" aria-label="Close"><span class="text-lg">✕</span></button>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button type="button" id="editRoomDetailsBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Edit</button>
+      
+          <button type="button" id="deleteRoomDetailsBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">Delete</button>
+          <button type="button" id="closeRoomHistoryModalBtn" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50">✕</button>
         </div>
-      </div>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <span class="inline-flex items-center gap-2 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700"><span class="h-2 w-2 rounded-full bg-amber-500"></span>Upcoming</span>
-        <span class="inline-flex items-center gap-2 rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700"><span class="h-2 w-2 rounded-full bg-sky-500"></span>Ongoing</span>
-        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Finished meeting</span>
       </div>
     </div>
-    <div class="max-h-[70vh] overflow-y-auto px-5 py-4">
+    <div class="max-h-[calc(85vh-80px)] overflow-y-auto px-5 py-4">
       <div id="roomHistoryModalContent" class="space-y-4"></div>
     </div>
   </div>
@@ -480,6 +596,29 @@ if (!empty($rooms) && is_array($rooms)) {
   const roomSummaryOccupied = document.getElementById('roomSummaryOccupied');
   const roomSummaryBookings = document.getElementById('roomSummaryBookings');
   const roomInventoryStatusBadge = document.getElementById('roomInventoryStatusBadge');
+  const roomResourceSummary = document.getElementById('roomResourceSummary');
+  const snapshotTotalRooms = document.getElementById('snapshotTotalRooms');
+  const snapshotAvailableRooms = document.getElementById('snapshotAvailableRooms');
+  const snapshotInUseRooms = document.getElementById('snapshotInUseRooms');
+  const snapshotUpcomingRooms = document.getElementById('snapshotUpcomingRooms');
+  const roomResourceDetailPanel = document.getElementById('roomResourceDetailPanel');
+  const roomResourceDetailTitle = document.getElementById('roomResourceDetailTitle');
+  const roomResourceDetailSubtitle = document.getElementById('roomResourceDetailSubtitle');
+  const roomResourceDetailStatusWrap = document.getElementById('roomResourceDetailStatusWrap');
+  const roomEditorForm = document.getElementById('roomEditorForm');
+  const roomEditorId = document.getElementById('roomEditorId');
+  const roomEditorRoomId = document.getElementById('roomEditorRoomId');
+  const roomEditorDateTrip = document.getElementById('roomEditorDateTrip');
+  const roomEditorDepartureExpected = document.getElementById('roomEditorDepartureExpected');
+  const roomEditorReturnExpected = document.getElementById('roomEditorReturnExpected');
+  const roomEditorPurpose = document.getElementById('roomEditorPurpose');
+  const roomEditorAttendees = document.getElementById('roomEditorAttendees');
+  const roomEditorDateRequested = document.getElementById('roomEditorDateRequested');
+  const roomEditorSpecialInstructions = document.getElementById('roomEditorSpecialInstructions');
+  const roomEditorRemarks = document.getElementById('roomEditorRemarks');
+  const roomEditorSaveBtn = document.getElementById('roomEditorSaveBtn');
+  const roomEditorDeleteBtn = document.getElementById('roomEditorDeleteBtn');
+  const roomEditorCloseBtn = document.getElementById('roomEditorCloseBtn');
   const roomHistoryModal = document.getElementById('roomHistoryModal');
   const roomHistoryModalBackdrop = document.getElementById('roomHistoryModalBackdrop');
   const closeRoomHistoryModalBtn = document.getElementById('closeRoomHistoryModalBtn');
@@ -546,6 +685,7 @@ if (!empty($rooms) && is_array($rooms)) {
   const notifications = [];
   const roomHistoryCache = new Map();
   let activeBookingDetail = null;
+  let editorFormDirty = false;
 
   function openModal(modalEl) {
     if (!modalEl) return;
@@ -657,6 +797,11 @@ if (!empty($rooms) && is_array($rooms)) {
     if (roomSummaryOccupied) roomSummaryOccupied.textContent = occupiedNow;
     if (roomSummaryBookings) roomSummaryBookings.textContent = upcomingBookings;
 
+    if (snapshotTotalRooms) snapshotTotalRooms.textContent = rooms.length;
+    if (snapshotAvailableRooms) snapshotAvailableRooms.textContent = availableNow;
+    if (snapshotInUseRooms) snapshotInUseRooms.textContent = occupiedNow;
+    if (snapshotUpcomingRooms) snapshotUpcomingRooms.textContent = upcomingBookings;
+
     if (roomInventoryStatusBadge) {
       const badgeClasses = availableNow === 0 && activeRooms > 0
         ? 'inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700'
@@ -696,6 +841,11 @@ if (!empty($rooms) && is_array($rooms)) {
     formFields.roomId.innerHTML = '<option value="">-- Select a room --</option>' + dynamicRoomData.map(room => {
       return `<option value="${room.id}">${escapeHtml(room.room_name)} (${escapeHtml(room.room_code)}) / ${room.capacity} pax</option>`;
     }).join('');
+    if (roomEditorRoomId) {
+      roomEditorRoomId.innerHTML = '<option value="">-- Select a room --</option>' + dynamicRoomData.map(room => {
+        return `<option value="${room.id}">${escapeHtml(room.room_name)} (${escapeHtml(room.room_code)}) / ${room.capacity} pax</option>`;
+      }).join('');
+    }
   }
 
   function resetRoomCreateForm() {
@@ -823,65 +973,43 @@ function formatBookingDateTime(value) {
   function openBookingDetailModal(booking) {
     if (!booking || !booking.id) return;
     activeBookingDetail = booking;
+    editorFormDirty = false;
     const status = getRoomBookingStatus(booking.departure_expected, booking.return_expected);
     const roomMeta = getRoomMeta(booking.room_id);
-    if (roomBookingDetailModalTitle) {
-      roomBookingDetailModalTitle.textContent = booking.purpose || 'Room booking';
+    
+    if (roomResourceDetailTitle) {
+      roomResourceDetailTitle.textContent = booking.purpose || 'Room booking';
     }
-    if (roomBookingDetailModalSubtitle) {
-      roomBookingDetailModalSubtitle.textContent = roomMeta ? `${roomMeta.room_name} · ${roomMeta.room_code}` : 'Room booking';
+    if (roomResourceDetailSubtitle) {
+      roomResourceDetailSubtitle.textContent = roomMeta ? `${roomMeta.room_name} · ${roomMeta.room_code}` : 'Room booking';
     }
-    if (roomBookingDetailStatusWrap) {
-      roomBookingDetailStatusWrap.innerHTML = `
+    if (roomResourceDetailStatusWrap) {
+      roomResourceDetailStatusWrap.innerHTML = `
         <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.badgeClass}">
           <span class="h-2 w-2 rounded-full ${status.dotClass}"></span>
           ${escapeHtml(status.label)}
         </span>
       `;
     }
-    if (roomBookingDetailContent) {
-      roomBookingDetailContent.innerHTML = `
-        <div class="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Room</p>
-              <p class="mt-2 text-sm font-semibold text-slate-900">${escapeHtml(roomMeta ? `${roomMeta.room_name} (${roomMeta.room_code})` : '—')}</p>
-            </div>
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Capacity</p>
-              <p class="mt-2 text-sm font-semibold text-slate-900">${escapeHtml(roomMeta && roomMeta.capacity ? `${roomMeta.capacity} pax` : '—')}</p>
-            </div>
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Start</p>
-              <p class="mt-2 text-sm font-semibold text-slate-900">${escapeHtml(formatBookingDateTime(booking.departure_expected))}</p>
-            </div>
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">End</p>
-              <p class="mt-2 text-sm font-semibold text-slate-900">${escapeHtml(formatBookingDateTime(booking.return_expected))}</p>
-            </div>
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Attendees</p>
-              <p class="mt-2 text-sm font-semibold text-slate-900">${escapeHtml(booking.attendees || 0)} pax</p>
-            </div>
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Requested</p>
-              <p class="mt-2 text-sm font-semibold text-slate-900">${escapeHtml(booking.date_requested || booking.date_trip || '—')}</p>
-            </div>
-          </div>
-          <div class="mt-4 space-y-3">
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Special instructions</p>
-              <p class="mt-2 text-sm text-slate-600">${escapeHtml(booking.special_instructions || 'No special instructions.')}</p>
-            </div>
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Remarks</p>
-              <p class="mt-2 text-sm text-slate-600">${escapeHtml(booking.remarks || 'No remarks.')}</p>
-            </div>
-          </div>
-        </div>
-      `;
+
+    roomEditorId.value = booking.id || '';
+    roomEditorRoomId.value = booking.room_id || '';
+    roomEditorDateTrip.value = booking.date_trip || '';
+    roomEditorDateRequested.value = booking.date_requested || '';
+    roomEditorPurpose.value = booking.purpose || '';
+    roomEditorAttendees.value = booking.attendees || '';
+    roomEditorDepartureExpected.value = booking.departure_expected ? booking.departure_expected.replace(' ', 'T') : '';
+    roomEditorReturnExpected.value = booking.return_expected ? booking.return_expected.replace(' ', 'T') : '';
+    roomEditorSpecialInstructions.value = booking.special_instructions || '';
+    roomEditorRemarks.value = booking.remarks || '';
+
+    if (roomResourceSummary) {
+      roomResourceSummary.classList.add('hidden');
     }
-    openModal(roomBookingDetailModal);
+    if (roomResourceDetailPanel) {
+      roomResourceDetailPanel.classList.remove('hidden');
+    }
+    editorFormDirty = false;
   }
 
   function openBookingEditModal(booking) {
@@ -1072,22 +1200,29 @@ function formatBookingDateTime(value) {
 
   function renderRoomPreview(roomId, bookings) {
     const previewEl = document.getElementById(`room-card-preview-${roomId}`);
-    const moreEl = document.getElementById(`room-card-more-${roomId}`);
-    if (!previewEl || !moreEl) return;
+    if (!previewEl) return;
 
     const upcoming = bookings.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'upcoming');
     previewEl.innerHTML = '';
     if (upcoming.length === 0) {
-      previewEl.innerHTML = '<div class="text-sm text-slate-500">No upcoming reservations</div>';
-      moreEl.textContent = '';
+      previewEl.innerHTML = '<div class="text-sm text-slate-500">No upcoming bookings</div>';
       return;
     }
 
-    const limit = 2;
-    const shown = upcoming.slice(0, limit);
-    shown.forEach(b => previewEl.appendChild(createBookingSummaryItem(b, true)));
-    const extra = upcoming.length - shown.length;
-    moreEl.textContent = extra > 0 ? `+${extra} more upcoming` : 'Click to view full history';
+    const nextBooking = upcoming[0];
+    if (!nextBooking) return;
+
+    const start = new Date(String(nextBooking.departure_expected).replace(' ', 'T'));
+    const end = new Date(String(nextBooking.return_expected).replace(' ', 'T'));
+    const timeRange = `${start.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})} – ${end.toLocaleString([], {hour:'2-digit', minute:'2-digit'})}`;
+    
+    previewEl.innerHTML = `
+      <div>
+        <p class="text-sm font-semibold text-slate-900 truncate">${escapeHtml(nextBooking.purpose || 'Meeting')}</p>
+        <p class="mt-1 text-xs text-slate-500">${escapeHtml(timeRange)}</p>
+        <p class="mt-1 text-xs text-slate-500">${escapeHtml(nextBooking.attendees || 0)} attendee${nextBooking.attendees === 1 ? '' : 's'}</p>
+      </div>
+    `;
   }
 
   function renderRoomHistoryModal(room, bookings) {
@@ -1098,60 +1233,119 @@ function formatBookingDateTime(value) {
     const ongoing = list.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'ongoing').sort(sortByStart);
     const upcoming = list.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'upcoming').sort(sortByStart);
     const finished = list.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'finished').sort(sortByEnd);
-    const history = finished.slice().sort(sortByEnd);
 
     if (roomHistoryModalTitle) {
-      roomHistoryModalTitle.textContent = `${room.room_name} · ${room.room_code}`;
+      roomHistoryModalTitle.textContent = `${room.room_name}`;
     }
     if (roomHistoryModalSubtitle) {
-      roomHistoryModalSubtitle.textContent = `${room.capacity} pax • ${String(room.status || 'active').toLowerCase() === 'active' ? 'Active room' : 'Inactive room'}`;
+      roomHistoryModalSubtitle.textContent = `${room.room_code} • ${room.capacity} pax`;
     }
+    
     if (roomHistoryModalContent) {
       roomHistoryModalContent.innerHTML = '';
 
-      const summary = document.createElement('div');
-      summary.className = 'mb-4 flex flex-wrap gap-2';
-      summary.innerHTML = `
-        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">${list.length} total bookings</span>
-        <span class="rounded-full bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700">${ongoing.length} ongoing</span>
-        <span class="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">${upcoming.length} upcoming</span>
-        <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">${finished.length} finished</span>
-      `;
-      roomHistoryModalContent.appendChild(summary);
+      const currentBooking = ongoing[0] || null;
+      const nextBooking = upcoming[0] || null;
 
-      const renderSection = (title, items, badgeClass, emptyText) => {
+      if (currentBooking) {
         const section = document.createElement('div');
-        section.className = 'rounded-[20px] border border-slate-200 bg-slate-50 p-4';
-        const header = document.createElement('div');
-        header.className = 'mb-3 flex items-center justify-between gap-2';
+        section.className = 'rounded-lg border-l-4 border-l-sky-500 border border-slate-200 bg-white p-4';
+        const start = new Date(String(currentBooking.departure_expected).replace(' ', 'T'));
+        const end = new Date(String(currentBooking.return_expected).replace(' ', 'T'));
+        const now = new Date();
+        const remaining = Math.max(0, Math.floor((end - now) / 60000));
+        const hours = Math.floor(remaining / 60);
+        const minutes = remaining % 60;
+        const remainingText = hours > 0 ? `${hours}h ${minutes}m left` : `${minutes}m left`;
+        const timeRange = `${start.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})} – ${end.toLocaleString([], {hour:'2-digit', minute:'2-digit'})}`;
+        
+        section.innerHTML = `
+          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-2">Current booking</p>
+          <h3 class="text-base font-semibold text-slate-900">${escapeHtml(currentBooking.purpose || 'Meeting')}</h3>
+          <p class="mt-2 text-sm text-slate-600">${escapeHtml(timeRange)}</p>
+          <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
+            <span>${escapeHtml(currentBooking.attendees || 0)} attendee${currentBooking.attendees === 1 ? '' : 's'}</span>
+            <span class="font-semibold text-sky-700">${escapeHtml(remainingText)}</span>
+          </div>
+        `;
+        roomHistoryModalContent.appendChild(section);
+      }
+
+      if (nextBooking) {
+        const section = document.createElement('div');
+        section.className = 'rounded-lg border border-slate-200 bg-white p-4';
+        const start = new Date(String(nextBooking.departure_expected).replace(' ', 'T'));
+        const end = new Date(String(nextBooking.return_expected).replace(' ', 'T'));
+        const timeRange = `${start.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})} – ${end.toLocaleString([], {hour:'2-digit', minute:'2-digit'})}`;
+        
+        section.innerHTML = `
+          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-2">Next booking</p>
+          <h3 class="text-base font-semibold text-slate-900">${escapeHtml(nextBooking.purpose || 'Meeting')}</h3>
+          <p class="mt-2 text-sm text-slate-600">${escapeHtml(timeRange)}</p>
+          <p class="mt-2 text-xs text-slate-500">${escapeHtml(nextBooking.attendees || 0)} attendee${nextBooking.attendees === 1 ? '' : 's'}</p>
+        `;
+        roomHistoryModalContent.appendChild(section);
+      }
+
+      if (finished.length > 0) {
+        const historyId = `room-history-${room.id}`;
+        const historyWrap = document.createElement('div');
+        historyWrap.className = 'rounded-lg border border-slate-200 bg-white p-4';
+        
+        const header = document.createElement('button');
+        header.type = 'button';
+        header.className = 'w-full flex items-center justify-between gap-2 cursor-pointer pb-3 border-b border-slate-200 mb-3 text-left hover:text-slate-900 transition';
+        header.setAttribute('aria-expanded', 'false');
+        header.setAttribute('aria-controls', historyId);
         header.innerHTML = `
           <div>
-            <h3 class="text-sm font-semibold text-slate-900">${escapeHtml(title)}</h3>
-            <p class="text-xs text-slate-500">${items.length} item${items.length === 1 ? '' : 's'}</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Booking history</p>
+            <p class="text-sm font-semibold text-slate-900 mt-1">${finished.length} completed booking${finished.length === 1 ? '' : 's'}</p>
           </div>
-          <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClass}">${escapeHtml(title)}</span>
+          <span class="text-slate-400 transition" style="transform: rotate(0deg);">▼</span>
         `;
-        section.appendChild(header);
+        
+        const content = document.createElement('div');
+        content.id = historyId;
+        content.className = 'space-y-2';
+        content.style.display = 'none';
+        
+        finished.forEach(b => {
+          const item = document.createElement('div');
+          item.className = 'rounded-lg border border-slate-200 bg-slate-50 p-3';
+          const start = new Date(String(b.departure_expected).replace(' ', 'T'));
+          const end = new Date(String(b.return_expected).replace(' ', 'T'));
+          const timeRange = `${start.toLocaleString([], {month:'short', day:'numeric'})} ${start.toLocaleString([], {hour:'2-digit', minute:'2-digit'})}–${end.toLocaleString([], {hour:'2-digit', minute:'2-digit'})}`;
+          item.innerHTML = `
+            <p class="text-sm font-semibold text-slate-900">${escapeHtml(b.purpose || 'Meeting')}</p>
+            <p class="mt-1 text-xs text-slate-500">${escapeHtml(timeRange)}</p>
+            <p class="mt-1 text-xs text-slate-500">${escapeHtml(b.attendees || 0)} attendee${b.attendees === 1 ? '' : 's'}</p>
+          `;
+          content.appendChild(item);
+        });
+        
+        header.addEventListener('click', () => {
+          const isExpanded = header.getAttribute('aria-expanded') === 'true';
+          header.setAttribute('aria-expanded', !isExpanded);
+          content.style.display = isExpanded ? 'none' : '';
+          const arrow = header.querySelector('span');
+          arrow.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+        });
+        
+        historyWrap.appendChild(header);
+        historyWrap.appendChild(content);
+        roomHistoryModalContent.appendChild(historyWrap);
+      }
 
-        if (items.length === 0) {
-          const empty = document.createElement('div');
-          empty.className = 'rounded-2xl border border-dashed border-slate-200 bg-white px-3 py-4 text-sm text-slate-500';
-          empty.textContent = emptyText;
-          section.appendChild(empty);
-        } else {
-          const listWrap = document.createElement('div');
-          listWrap.className = 'space-y-2';
-          items.forEach(item => listWrap.appendChild(createBookingSummaryItem(item, false)));
-          section.appendChild(listWrap);
-        }
-
-        roomHistoryModalContent.appendChild(section);
-      };
-
-      renderSection('Ongoing', ongoing, 'bg-sky-50 text-sky-700', 'No ongoing meetings.');
-      renderSection('Upcoming', upcoming, 'bg-amber-50 text-amber-700', 'No upcoming meetings.');
-      renderSection('Finished meetings', finished, 'bg-emerald-50 text-emerald-700', 'No finished meetings.');
-      renderSection('History', history, 'bg-slate-100 text-slate-700', 'No booking history.');
+      if (ongoing.length === 0 && upcoming.length === 0 && finished.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center';
+        empty.innerHTML = `
+          <p class="text-sm font-semibold text-slate-900">No bookings</p>
+          <p class="mt-1 text-xs text-slate-500">This room has no scheduled meetings</p>
+        `;
+        roomHistoryModalContent.appendChild(empty);
+      }
     }
   }
 
@@ -1225,63 +1419,68 @@ function formatBookingDateTime(value) {
     if (!statusBadgeEl || !availabilityDetailEl) return;
 
     const isActive = String(room.status || '').toLowerCase() === 'active';
+    if (!isActive) {
+      statusBadgeEl.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span><span class="text-slate-600">Unavailable</span>';
+      availabilityDetailEl.textContent = 'Inactive room';
+      return;
+    }
+
     const state = getRoomAvailabilityState(bookings);
     const isOccupied = state.isOccupied;
-    const isUnavailable = !isActive || isOccupied;
-    const badgeClass = isUnavailable
-      ? 'inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700'
-      : 'inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700';
-    const badgeLabel = !isActive ? 'Unavailable' : (isOccupied ? 'Occupied' : 'Available');
-    const detailsHtml = !isActive
-      ? '<div class="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">Inactive room · unavailable</div>'
-      : (isOccupied && state.nextAvailability
-        ? `<div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600"><span class="font-semibold text-slate-700">Next availability:</span> ${escapeHtml(formatBookingDateTime(state.nextAvailability))}</div>`
-        : '<div class="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">Available now</div>');
-
-    statusBadgeEl.className = badgeClass;
-    statusBadgeEl.textContent = badgeLabel;
-    availabilityDetailEl.innerHTML = detailsHtml;
+    
+    if (isOccupied) {
+      statusBadgeEl.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span><span class="text-slate-900">Occupied</span>';
+      const nextAvail = state.nextAvailability ? `Available ${escapeHtml(formatBookingDateTime(state.nextAvailability))}` : 'Next availability TBD';
+      availabilityDetailEl.textContent = nextAvail;
+    } else {
+      statusBadgeEl.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span><span class="text-slate-900">Available</span>';
+      availabilityDetailEl.textContent = 'Available today';
+    }
   }
 
   function buildRoomCard(room, bookings = []) {
     const card = document.createElement('div');
     const isActive = String(room.status || '').toLowerCase() === 'active';
-    const status = isActive ? 'Active' : 'Inactive';
-    const cardClasses = isActive
-      ? 'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm cursor-pointer hover:shadow-lg transition'
-      : 'rounded-2xl border border-slate-300 bg-slate-100 p-4 shadow-sm cursor-pointer opacity-80 hover:shadow-lg transition';
+    const cardClasses = 'min-h-[280px] rounded-xl border border-slate-200 bg-white p-4 shadow-sm cursor-pointer hover:shadow-lg transition flex flex-col gap-3 ' + (isActive ? '' : 'opacity-60');
     card.className = cardClasses;
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.dataset.roomId = String(room.id);
-    const badge = isActive
-      ? `<span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">${status}</span>`
-      : `<span class="inline-flex rounded-full bg-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700">${status}</span>`;
-    const mutedText = isActive ? 'text-slate-900' : 'text-slate-500';
-    const mutedMeta = isActive ? 'text-slate-500' : 'text-slate-400';
+
     card.innerHTML = `
-      <div class="flex items-center justify-between gap-3">
+      <div class="flex flex-col gap-3 flex-1">
         <div>
-          <h3 class="text-base font-semibold ${mutedText}">${escapeHtml(room.room_name)}</h3>
-          <p class="text-sm ${mutedMeta}">${escapeHtml(room.room_code)} · ${escapeHtml(room.capacity)} pax</p>
+          <h3 class="text-base font-semibold text-slate-900">${escapeHtml(room.room_name)}</h3>
+          <p class="mt-1 text-sm text-slate-500">${escapeHtml(room.room_code)} • ${escapeHtml(room.capacity)} pax</p>
         </div>
-        <div>${badge}</div>
+
+        <div class="flex items-center gap-2 text-sm">
+          <span id="room-card-status-${room.id}" class="inline-flex items-center gap-1.5 text-slate-900">
+            <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+            <span>Checking...</span>
+          </span>
+        </div>
+        <p id="room-card-availability-${room.id}" class="text-xs text-slate-500">Loading availability…</p>
+
+        <div class="border-t border-slate-200 pt-3 mt-auto">
+          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-2">Next booking</p>
+          <div id="room-card-preview-${room.id}" class="text-sm text-slate-500">Loading...</div>
+        </div>
       </div>
-      <div class="mt-4 space-y-3">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-xs uppercase tracking-[0.24em] ${mutedMeta}">Current status</span>
-          <span id="room-card-status-${room.id}" class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">Available</span>
-        </div>
-        <div id="room-card-availability-${room.id}" class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs font-medium text-emerald-700">Checking availability…</div>
-        <div class="text-xs uppercase tracking-[0.24em] ${mutedMeta}">Upcoming reservations</div>
-        <div class="space-y-3" id="room-card-preview-${room.id}"><div class="text-sm ${mutedMeta}">Loading...</div></div>
-        <div class="text-xs ${mutedMeta}" id="room-card-more-${room.id}"></div>
-        <div class="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 text-sm ${mutedMeta}">
-          <span>Open room schedule</span>
-          <span class="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700">View</span>
-        </div>
-      </div>`;
+
+      <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-800 w-full">
+        View Schedule
+        <span>→</span>
+      </button>
+    `;
     renderRoomCardAvailability(room, bookings);
+    const button = card.querySelector('button');
+    if (button) {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openRoomHistoryModal(room);
+      });
+    }
     card.addEventListener('click', () => openRoomHistoryModal(room));
     card.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -1451,6 +1650,71 @@ function formatBookingDateTime(value) {
 
   if (deleteRoomBookingDetailBtn) {
     deleteRoomBookingDetailBtn.addEventListener('click', () => deleteBookingById(activeBookingDetail && activeBookingDetail.id));
+  }
+
+  if (roomEditorCloseBtn) {
+    roomEditorCloseBtn.addEventListener('click', () => {
+      if (editorFormDirty) {
+        if (!window.confirm('You have unsaved changes. Discard them?')) {
+          return;
+        }
+      }
+      editorFormDirty = false;
+      if (roomResourceDetailPanel) roomResourceDetailPanel.classList.add('hidden');
+      if (roomResourceSummary) roomResourceSummary.classList.remove('hidden');
+    });
+  }
+
+  if (roomEditorDeleteBtn) {
+    roomEditorDeleteBtn.addEventListener('click', () => {
+      if (!activeBookingDetail || !activeBookingDetail.id) return;
+      if (!window.confirm(`Delete this booking for ${activeBookingDetail.purpose || 'this event'}?`)) return;
+      deleteBookingById(activeBookingDetail.id);
+      editorFormDirty = false;
+      if (roomResourceDetailPanel) roomResourceDetailPanel.classList.add('hidden');
+      if (roomResourceSummary) roomResourceSummary.classList.remove('hidden');
+    });
+  }
+
+  if (roomEditorSaveBtn) {
+    roomEditorSaveBtn.addEventListener('click', () => {
+      if (!roomEditorForm) return;
+      const formData = new FormData(roomEditorForm);
+      const isUpdate = Boolean(roomEditorId.value);
+      const url = isUpdate ? updateBookingUrl : createBookingUrl;
+
+      fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(parseJsonResponse)
+      .then(data => {
+        if (!data.success) {
+          showNotification(data.message || 'Unable to save booking', 'error');
+          return;
+        }
+        editorFormDirty = false;
+        if (roomResourceDetailPanel) roomResourceDetailPanel.classList.add('hidden');
+        if (roomResourceSummary) roomResourceSummary.classList.remove('hidden');
+        calendar.refetchEvents();
+        refreshRoomList();
+        loadRoomCards();
+        refreshRoomHistoryForActiveSelection();
+        showNotification('Booking saved successfully', 'success');
+      })
+      .catch(err => {
+        showNotification(err.message || 'Network error saving booking', 'error');
+      });
+    });
+  }
+
+  if (roomEditorForm) {
+    const trackFormChanges = () => {
+      editorFormDirty = true;
+    };
+    roomEditorForm.addEventListener('change', trackFormChanges);
+    roomEditorForm.addEventListener('input', trackFormChanges);
   }
 
   if (refreshRoomsBtn) {

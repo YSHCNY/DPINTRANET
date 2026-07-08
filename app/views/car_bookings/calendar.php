@@ -15,115 +15,282 @@ if (!empty($vehicles) && is_array($vehicles)) {
 $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 ?>
 
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-  <div class="max-w-[1500px] mx-auto px-4 py-6">
-    <div class="mb-6 overflow-hidden rounded-[22px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/40 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)]">
-      <div class="border-b border-slate-200/60 bg-gradient-to-r from-slate-50/80 to-slate-50/60 px-6 py-5">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="max-w-2xl space-y-1">
-            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-700">Fleet management</p>
-            <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Vehicle bookings calendar</h1>
-            <p class="mt-1 text-sm text-slate-600">Schedule vehicles, manage drivers, and review booking history across your fleet.</p>
+<div class="min-h-screen theme-palette">
+    <div class="max-w-[1400px] mx-auto px-3 py-6 text-xs  sm:text-xs md:text-sm ">
+    <div class="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="flex flex-col gap-4 p-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-700">Fleet management</p>
+            <h1 class="mt-1 text-base font-semibold tracking-tight text-slate-900">Vehicle bookings calendar</h1>
+            <p class="mt-1 max-w-2xl text-sm text-slate-500">Schedule vehicles, manage drivers, and review booking history across your fleet.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button type="button" id="openVehicleModalBtn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
+            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
+              <span class="h-2 w-2 rounded-full bg-slate-900"></span>
+              Total fleet <?= count($vehicles ?? []) ?>
+            </span>
+            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
+              <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+              Available <?= max(0, $vehicleActiveCount) ?>
+            </span>
+            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
+              <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+              Active <?= $driverCount ?>
+            </span>
+            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
+              <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+              Upcoming 0
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 border-t border-slate-200 pt-4 lg:flex-row lg:items-end lg:justify-between">
+          <div class="flex flex-1 flex-col gap-3 xl:flex-row xl:items-end">
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- <div id="external-events" class="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-600 sm:inline-flex">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span>Drag to create booking</span>
+              </div> -->
+              <!-- <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
+                <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="calendarViewSelect">View</label>
+                <select id="calendarViewSelect" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
+                  <option value="dayGridMonth">Month</option>
+                  <option value="timeGridWeek">Week</option>
+                  <option value="timeGridDay">Day</option>
+                </select>
+              </div> -->
+              <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
+                <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="vehicleFilter">Vehicle</label>
+                <select id="vehicleFilter" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
+                  <option value="">All</option>
+                  <?php foreach (($vehicles ?? []) as $v): ?>
+                    <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
+                <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="driverFilter">Driver</label>
+                <select id="driverFilter" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
+                  <option value="">All</option>
+                  <?php foreach (($drivers ?? []) as $d): ?>
+                    <option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['driver_name']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+            <button type="button" id="refreshBtn" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M5 14a7 7 0 0011.9 2.1L20 20m0-8a7 7 0 00-11.9-2.1L4 4" />
               </svg>
-              <span>Vehicles</span>
+              <span>Refresh</span>
             </button>
-            <button type="button" id="openDriversModalBtn" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:shadow-md">
+            <button type="button" id="newBookingBtn" class="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 19H9a6 6 0 016-6v0a6 6 0 016 6v0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span>Drivers</span>
+              <span>New Booking</span>
             </button>
+            
           </div>
         </div>
       </div>
-      <div class="p-6 lg:p-6">
-        <div class="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
-          <div class="rounded-[16px] border border-slate-200/60 bg-white shadow-sm overflow-hidden">
-            <div class="border-b border-slate-200/60 bg-gradient-to-r from-slate-50/40 to-slate-50/20 px-5 py-4">
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div id="external-events" class="hidden sm:inline-flex items-center gap-2 rounded-full border border-emerald-200/60 bg-emerald-50/40 px-3 py-2 text-sm font-medium text-emerald-700 shadow-sm">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <span>Drag to create booking</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
-                    <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">View:</label>
-                    <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
-                      <option value="dayGridMonth">Month</option>
-                      <option value="timeGridWeek">Week</option>
-                      <option value="timeGridDay">Day</option>
-                    </select>
-                  </div>
-                  <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 shadow-sm">
-                    <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Vehicle:</label>
-                    <select id="vehicleFilter" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
-                      <option value="">All</option>
-                      <?php foreach (($vehicles ?? []) as $v): ?>
-                        <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
-                  <div class="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-white px-3 py-2 shadow-sm">
-                    <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Driver:</label>
-                    <select id="driverFilter" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
-                      <option value="">All</option>
-                      <?php foreach (($drivers ?? []) as $d): ?>
-                        <option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['driver_name']) ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div id="carBookingCalendar" class="min-h-[520px] p-4 sm:p-5"></div>
+      <div class="border-t border-slate-200 p-4 lg:p-6">
+        <div class="grid gap-4 xl:grid-cols-[1.75fr_0.75fr]">
+          <div class="overflow-hidden rounded-[16px] border border-slate-200/60 bg-white shadow-sm">
+            <div id="carBookingCalendar" class="min-h-[520px] p-3 sm:p-4"></div>
           </div>
 
-          <aside class="rounded-[16px] border border-slate-200/60 bg-slate-50/80 p-5 shadow-sm">
-            <div class="space-y-4">
-              <div>
-                <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Fleet overview</p>
-                <h2 class="mt-1 text-[15px] font-medium text-slate-900">Summary</h2>
+          <aside class="rounded-[16px] border border-slate-200/60 bg-white p-4 shadow-sm">
+            <div class="space-y-3">
+    
+              <div id="fleetSnapshotSection" class="space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Workspace</p>
+                    <h2 class="mt-0.5 text-[15px] font-medium text-slate-900">Fleet snapshot</h2>
+                  </div>
+                  <p id="fleetStatusBadge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    Live
+                  </p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Fleet</p>
+                    <p id="totalFleetCount" class="mt-1 text-lg font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
+                  </div>
+                  <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">On trip</p>
+                    <p id="onTripCount" class="mt-1 text-lg font-semibold text-emerald-700">0</p>
+                  </div>
+                  <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Ready</p>
+                    <p id="readyBookingCount" class="mt-1 text-lg font-semibold text-emerald-700">0</p>
+                  </div>
+                  <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Drivers</p>
+                    <p id="driverAvailableCount" class="mt-1 text-lg font-semibold text-slate-900">0</p>
+                  </div>
+                </div>
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Total Fleet</p>
-                  <p id="totalFleetCount" class="mt-2.5 text-2xl font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
+
+              <div class="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Selected booking</p>
+                    <h3 class="mt-0.5 text-sm font-medium text-slate-900">Workspace preview</h3>
+                  </div>
+                  <div id="bookingPreviewStatus" class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-medium text-slate-600">No selection</div>
                 </div>
-                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">On Trip</p>
-                  <p id="onTripCount" class="mt-2.5 text-2xl font-semibold text-emerald-700">0</p>
+                <div id="bookingPreviewEmpty" class="mt-3 rounded-lg border border-dashed border-slate-200 bg-white/80 p-3 text-sm text-slate-500">
+                  Select a booked slot on the calendar to inspect, edit, cancel, or remove it.
                 </div>
-                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Ready</p>
-                  <p id="readyBookingCount" class="mt-2.5 text-2xl font-semibold text-emerald-700">0</p>
+                <form id="bookingPreviewForm" class="mt-3 hidden space-y-3">
+                  <input type="hidden" name="id" id="previewBookingId" value="">
+                  <div class="grid gap-3 md:grid-cols-2">
+                    <div class="md:col-span-2">
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewPurpose">Purpose</label>
+                      <input type="text" id="previewPurpose" name="purpose" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewDestinations">Destinations</label>
+                      <input type="text" id="previewDestinations" name="destinations" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewDateTrip">Trip date</label>
+                      <input type="date" id="previewDateTrip" name="date_trip" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewDateRequested">Requested</label>
+                      <input type="date" id="previewDateRequested" name="date_requested" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewDepartureExpected">Departure</label>
+                      <input type="datetime-local" id="previewDepartureExpected" name="departure_expected" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewReturnExpected">Return</label>
+                      <input type="datetime-local" id="previewReturnExpected" name="return_expected" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewPassengers">Passengers</label>
+                      <input type="number" id="previewPassengers" name="passengers" min="1" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewVehicleId">Vehicle</label>
+                      <select id="previewVehicleId" name="vehicle_id" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                        <option value="">Select a vehicle</option>
+                        <?php foreach (($vehicles ?? []) as $v): ?>
+                          <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewDriverId">Driver</label>
+                      <select id="previewDriverId" name="driver_id" class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-slate-400" required>
+                        <option value="">Select a driver</option>
+                        <?php foreach (($drivers ?? []) as $d): ?>
+                          <option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['driver_name']) ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewSpecialInstructions">Special instructions</label>
+                      <textarea id="previewSpecialInstructions" name="special_instructions" rows="2" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-slate-400"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="previewRemarks">Remarks</label>
+                      <textarea id="previewRemarks" name="remarks" rows="2" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-slate-400"></textarea>
+                    </div>
+                  </div>
+                 <div class="flex flex-col gap-2 border-t border-slate-200 pt-3">
+                    <button
+                        type="submit"
+                        class="inline-flex h-9 w-full items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+                        Save changes
+                    </button>
+
+                    <button
+                        type="button"
+                        id="previewCancelViewBtn"
+                        class="inline-flex h-9 w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Cancel view
+                    </button>
+
+                    <button
+                        type="button"
+                        id="previewCancelBtn"
+                        class="inline-flex h-9 w-full items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">
+                        Cancel booking
+                    </button>
                 </div>
-                <div class="rounded-[12px] border border-slate-200/60 bg-white/80 p-3 shadow-sm">
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Drivers</p>
-                  <p id="driverAvailableCount" class="mt-2.5 text-2xl font-semibold text-slate-900">0</p>
-                </div>
-              </div>
-              <div class="pt-2 border-t border-slate-200/60">
-                <p id="fleetStatusBadge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
-                  <span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                  Live availability
-                </p>
+                </form>
               </div>
             </div>
           </aside>
         </div>
-        <div class="mt-6 space-y-4">
-          <div class="space-y-1">
-            <h2 class="text-base font-semibold text-slate-900">Fleet vehicles</h2>
-            <p class="text-sm text-slate-600">Real-time vehicle status and recent bookings</p>
+        <div class="mt-8 rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div class="flex flex-col gap-4 p-4 sm:p-5">
+            <div class="flex flex-col gap-2">
+              <h2 class="text-base font-semibold text-slate-900">Fleet gallery</h2>
+              <p class="text-sm text-slate-500">Scan active assets and drivers, then open details only when you need them.</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="inline-flex h-9 overflow-hidden rounded-full border border-slate-200 bg-white">
+                <button id="fleetTabVehiclesBtn" type="button" class="px-4 text-sm font-semibold text-slate-900 bg-slate-100">Vehicles (0)</button>
+                <button id="fleetTabDriversBtn" type="button" class="border-l border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:text-slate-900">Drivers (0)</button>
+              </div>
+
+              <div class="relative w-full max-w-[32rem]">
+                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+                  </svg>
+                </span>
+                <input id="fleetSearchInput" type="search" placeholder="Search vehicles" class="h-9 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-400" />
+              </div>
+
+              <div class="ml-auto relative">
+                <button id="fleetAddNewBtn" type="button" aria-expanded="false" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
+                  Add New
+                  <span class="text-xs">▾</span>
+                </button>
+                <div id="fleetAddNewMenu" class="absolute right-0 z-10 mt-2 hidden w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <button id="openVehicleModalBtn" type="button" class="w-full rounded-none border-b border-slate-200 px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Vehicle</button>
+                  <button id="openDriversModalBtn" type="button" class="w-full rounded-none px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Driver</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3 text-xs text-slate-500">
+              <span id="fleetGalleryMeta">0 Vehicles • Page 1 of 1</span>
+            </div>
+
+            <div id="vehicleCardsContainer" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"></div>
+
+            <div id="fleetPaginationControls" class="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div id="fleetPaginationInfo" class="text-sm text-slate-600">Showing 0–0 of 0 results</div>
+              <div class="flex flex-wrap items-center gap-2">
+                <div id="fleetPageNumbers" class="hidden flex flex-wrap items-center gap-1"></div>
+                <button id="fleetPrevPageBtn" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  Previous
+                </button>
+                <button id="fleetNextPageBtn" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
+                  Next
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
-          <div id="vehicleCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"></div>
         </div>
       </div>
     </div>
@@ -1001,8 +1168,9 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
       <div class="modal-header card-header">
         <div>
-          <h2 id="vehicleDetailsModalTitle" class="text-lg font-semibold text-slate-900">Vehicle Details</h2>
-          <p class="text-sm text-slate-500 mt-1">Recent bookings — click an item to view full booking details</p>
+          <h2 id="vehicleDetailsModalTitle" class="text-base font-semibold text-slate-900">Vehicle Booking Timeline</h2>
+          <p class="mt-1 text-sm text-slate-500">Recent booking activity and upcoming commitments for this vehicle.</p>
+          <div id="vehicleDetailsMeta" class="mt-3 flex flex-wrap gap-2"></div>
         </div>
         <button type="button" id="closeVehicleDetailsModalBtn" class="modal-close" aria-label="Close">
           <span class="text-lg">✕</span>
@@ -1010,10 +1178,33 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       </div>
 
       <div class="modal-body" id="vehicleDetailsContent">
-        <div class="text-sm text-slate-500">Loading...</div>
+        <div class="text-sm text-slate-500">Loading booking timeline...</div>
       </div>
     </div>
   </div>
+
+    <!-- Fleet card action confirmation modal -->
+    <div id="fleetCardActionModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="fleetCardActionModalTitle">
+      <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="fleetCardActionBackdrop"></div>
+      <div class="relative mx-auto my-6 w-[95vw] max-w-md modal-panel">
+        <div class="modal-header card-header">
+          <div>
+            <h2 id="fleetCardActionModalTitle" class="text-lg font-semibold text-slate-900">Confirm action</h2>
+            <p id="fleetCardActionModalSubtitle" class="text-sm text-slate-500 mt-1">Confirm the action before it is applied.</p>
+          </div>
+          <button type="button" id="fleetCardActionCloseBtn" class="modal-close" aria-label="Close">
+            <span class="text-lg">✕</span>
+          </button>
+        </div>
+        <div class="modal-body p-5">
+          <p id="fleetCardActionMessage" class="text-sm text-slate-600"></p>
+          <div class="mt-6 flex items-center justify-end gap-3">
+            <button type="button" id="fleetCardActionCancelBtn" class="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
+            <button type="button" id="fleetCardActionConfirmBtn" class="inline-flex h-9 items-center justify-center rounded-lg bg-rose-600 px-4 text-sm font-semibold text-white transition hover:bg-rose-500">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
 <script>
 (function () {
@@ -1073,10 +1264,46 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
   const externalEventsEl = document.getElementById('external-events');
   const vehicleCardsContainer = document.getElementById('vehicleCardsContainer');
+  const fleetTabVehiclesBtn = document.getElementById('fleetTabVehiclesBtn');
+  const fleetTabDriversBtn = document.getElementById('fleetTabDriversBtn');
+  const fleetSearchInput = document.getElementById('fleetSearchInput');
+  const fleetAddNewBtn = document.getElementById('fleetAddNewBtn');
+  const fleetAddNewMenu = document.getElementById('fleetAddNewMenu');
+  const fleetGalleryMetaEl = document.getElementById('fleetGalleryMeta');
+  const fleetPaginationControlsEl = document.getElementById('fleetPaginationControls');
+  const fleetPaginationInfoEl = document.getElementById('fleetPaginationInfo');
+  const fleetPageNumbersEl = document.getElementById('fleetPageNumbers');
+  const fleetPrevPageBtn = document.getElementById('fleetPrevPageBtn');
+  const fleetNextPageBtn = document.getElementById('fleetNextPageBtn');
+  const bookingPreviewForm = document.getElementById('bookingPreviewForm');
+  const bookingPreviewEmptyEl = document.getElementById('bookingPreviewEmpty');
+  const bookingPreviewStatusEl = document.getElementById('bookingPreviewStatus');
+  const fleetSnapshotSectionEl = document.getElementById('fleetSnapshotSection');
+  const previewBookingIdEl = document.getElementById('previewBookingId');
+  const previewPurposeEl = document.getElementById('previewPurpose');
+  const previewDestinationsEl = document.getElementById('previewDestinations');
+  const previewDateTripEl = document.getElementById('previewDateTrip');
+  const previewDateRequestedEl = document.getElementById('previewDateRequested');
+  const previewDepartureExpectedEl = document.getElementById('previewDepartureExpected');
+  const previewReturnExpectedEl = document.getElementById('previewReturnExpected');
+  const previewPassengersEl = document.getElementById('previewPassengers');
+  const previewVehicleIdEl = document.getElementById('previewVehicleId');
+  const previewDriverIdEl = document.getElementById('previewDriverId');
+  const previewSpecialInstructionsEl = document.getElementById('previewSpecialInstructions');
+  const previewRemarksEl = document.getElementById('previewRemarks');
+  const previewCancelViewBtn = document.getElementById('previewCancelViewBtn');
+  const previewCancelBtn = document.getElementById('previewCancelBtn');
   const vehicleDetailsModalEl = document.getElementById('vehicleDetailsModal');
   const vehicleDetailsContentEl = document.getElementById('vehicleDetailsContent');
+  const vehicleDetailsMetaEl = document.getElementById('vehicleDetailsMeta');
   const closeVehicleDetailsModalBtn = document.getElementById('closeVehicleDetailsModalBtn');
   const vehicleDetailsModalBackdrop = document.getElementById('vehicleDetailsModalBackdrop');
+  const fleetCardActionModalEl = document.getElementById('fleetCardActionModal');
+  const fleetCardActionBackdrop = document.getElementById('fleetCardActionBackdrop');
+  const fleetCardActionCloseBtn = document.getElementById('fleetCardActionCloseBtn');
+  const fleetCardActionMessageEl = document.getElementById('fleetCardActionMessage');
+  const fleetCardActionConfirmBtn = document.getElementById('fleetCardActionConfirmBtn');
+  const fleetCardActionCancelBtn = document.getElementById('fleetCardActionCancelBtn');
 
   // ==================== UTILITY FUNCTIONS ====================
   function escapeHtml(str) {
@@ -1086,6 +1313,84 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+  const fleetCardActionState = {
+    itemType: null,
+    itemId: null,
+    itemName: '',
+    action: null,
+    itemData: null
+  };
+
+  function showFleetCardActionModal({ itemType, itemId, itemName, action, itemData }) {
+    fleetCardActionState.itemType = itemType;
+    fleetCardActionState.itemId = itemId;
+    fleetCardActionState.itemName = itemName;
+    fleetCardActionState.action = action;
+    fleetCardActionState.itemData = itemData;
+    const label = action === 'disable' ? 'Disable' : 'Enable';
+    const subject = itemType === 'drivers' || itemType === 'driver' ? 'driver' : 'vehicle';
+    fleetCardActionMessageEl.textContent = `${label} ${subject} '${itemName}'? This action will update its availability for new bookings.`;
+    openModal(fleetCardActionModalEl);
+  }
+
+  function hideFleetCardActionModal() {
+    if (!fleetCardActionModalEl) return;
+    closeModal(fleetCardActionModalEl);
+    fleetCardActionState.itemType = null;
+    fleetCardActionState.itemId = null;
+    fleetCardActionState.itemName = '';
+    fleetCardActionState.action = null;
+    fleetCardActionState.itemData = null;
+  }
+
+  function performFleetCardAction() {
+    const { itemType, itemId, itemName, action, itemData } = fleetCardActionState;
+    if (!itemType || !itemId || !action || !itemData) return;
+    const isVehicle = itemType === 'vehicles' || itemType === 'vehicle';
+    const deleteUrl = isVehicle ? deleteVehicleUrl : deleteDriverUrl;
+    const updateUrl = isVehicle ? updateVehicleUrl : updateDriverUrl;
+    const isDisable = action === 'disable';
+    const fd = new FormData();
+    fd.append('id', itemId);
+
+    const successLabel = isDisable ? 'disabled' : 'enabled';
+    const errorLabel = isDisable ? 'disable' : 'enable';
+    const refreshList = isVehicle ? loadVehiclesTable : loadDriversTable;
+    const refreshSelect = isVehicle ? refreshBookingVehicleSelect : refreshBookingDriverSelect;
+    const notifications = {
+      vehicle: { disabled: 'Vehicle disabled', enabled: 'Vehicle enabled' },
+      driver: { disabled: 'Driver disabled', enabled: 'Driver enabled' }
+    };
+
+    if (!isDisable) {
+      if (isVehicle) {
+        fd.append('plate_number', itemData.plate_number || '');
+        fd.append('vehicle_name', itemData.vehicle_name || '');
+        fd.append('capacity', itemData.capacity || 1);
+        fd.append('status', 'active');
+      } else {
+        fd.append('driver_name', itemData.driver_name || '');
+        fd.append('status', 'active');
+      }
+    }
+
+    const endpoint = isDisable ? deleteUrl : updateUrl;
+    fetch(endpoint, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(resp => {
+        if (!resp || !resp.success) {
+          alert(resp && resp.message ? resp.message : `Failed to ${errorLabel} ${isVehicle ? 'vehicle' : 'driver'}`);
+          return;
+        }
+        hideFleetCardActionModal();
+        refreshList();
+        refreshSelect();
+        loadVehicleCards();
+        showNotification(isDisable ? notifications[isVehicle ? 'vehicle' : 'driver'].disabled : notifications[isVehicle ? 'vehicle' : 'driver'].enabled, isDisable ? 'info' : 'success');
+      })
+      .catch(() => alert(`Network error while trying to ${errorLabel} ${isVehicle ? 'vehicle' : 'driver'}`));
   }
 
   function openModal(modalEl) {
@@ -1278,6 +1583,15 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     if (delBtn) delBtn.classList.add('hidden');
   }
 
+  const newBookingBtn = document.getElementById('newBookingBtn');
+  if (newBookingBtn) {
+    newBookingBtn.addEventListener('click', () => {
+      resetBookingModalForm();
+      setBookingDefaults('');
+      openModal(bookingModalEl);
+    });
+  }
+
   document.getElementById('closeBookingModalBtn').addEventListener('click', () => {
     resetBookingModalForm();
     closeModal(bookingModalEl);
@@ -1294,7 +1608,10 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
   function resetVehicleDetailsModal() {
     if (vehicleDetailsContentEl) {
-      vehicleDetailsContentEl.innerHTML = '<div class="text-sm text-slate-500">Loading...</div>';
+      vehicleDetailsContentEl.innerHTML = '<div class="text-sm text-slate-500">Loading booking timeline...</div>';
+    }
+    if (vehicleDetailsMetaEl) {
+      vehicleDetailsMetaEl.innerHTML = '';
     }
   }
 
@@ -1931,45 +2248,30 @@ driverForm.addEventListener('submit', function (e) {
   function loadVehicleCards() {
     if (!vehicleCardsContainer) return;
 
-    vehicleCardsContainer.innerHTML = '';
+    vehicleCardsContainer.innerHTML = '<div class="col-span-full rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500">Loading fleet...</div>';
 
-    // request all vehicles (we'll show inactive ones as greyed/flagged)
-    fetch(vehicleListAllUrl + '&t=' + Date.now(), {
+    const vehiclesRequest = fetch(vehicleListAllUrl + '&t=' + Date.now(), {
       method: 'GET',
       headers: {'X-Requested-With': 'XMLHttpRequest'}
-    })
-    .then(r => {
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const ct = r.headers.get('content-type') || '';
-      if (!ct.toLowerCase().includes('application/json')) {
-        return r.text().then(txt => {
-          console.error('Non-JSON response for vehicleListAllUrl:', txt);
-          throw new Error('Server returned non-JSON response');
-        });
-      }
-      return r.json();
-    })
-    .then(data => {
-      const vehicles = (data && Array.isArray(data.vehicles) ? data.vehicles : []);
+    }).then(parseJsonResponse).then(data => Array.isArray(data.vehicles) ? data.vehicles : []);
 
-      if (vehicles.length === 0) {
-        vehicleCardsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-slate-500">No vehicles available</div>';
+    const driversRequest = fetch(driversListUrl + '&t=' + Date.now(), {
+      method: 'GET',
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    }).then(parseJsonResponse).then(data => Array.isArray(data.drivers) ? data.drivers : []);
+
+    Promise.all([vehiclesRequest, driversRequest])
+      .then(([vehicles, drivers]) => {
+        fleetGalleryState.vehicles = vehicles;
+        fleetGalleryState.drivers = drivers;
+        renderFleetGalleryCards();
         refreshFleetSnapshot(vehicles);
-        return;
-      }
-
-      // display all vehicles; inactive vehicles will be shown but visually de-emphasized
-      vehicles.forEach(vehicle => {
-        const card = createVehicleCard(vehicle);
-        vehicleCardsContainer.appendChild(card);
+      })
+      .catch(err => {
+        console.error('Error loading fleet gallery:', err);
+        vehicleCardsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-rose-500">Failed to load fleet gallery</div>';
+        updateFleetSnapshot([], [], []);
       });
-      refreshFleetSnapshot(vehicles);
-    })
-    .catch(err => {
-      console.error('Error loading vehicle cards:', err);
-      vehicleCardsContainer.innerHTML = '<div class="col-span-full text-center py-8 text-rose-500">Failed to load vehicles</div>';
-      updateFleetSnapshot([], [], []);
-    });
   }
 
   function getTodayRange() {
@@ -2047,90 +2349,343 @@ driverForm.addEventListener('submit', function (e) {
 
   function createVehicleCard(vehicle) {
     const card = document.createElement('div');
-    card.className = 'rounded-lg border border-slate-200 bg-white shadow-sm hover:shadow-md transition overflow-hidden hover:border-slate-300';
-    // Map status to color/shape following human-intuitive mapping
-    const rawStatus = (vehicle.status || 'info').toString().toLowerCase();
-    let badgeClasses = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold';
-    let badgeLabel = rawStatus.toUpperCase();
-    if (rawStatus === 'active' || rawStatus === 'finished') {
-      badgeClasses += ' text-emerald-700 bg-emerald-50 border border-emerald-100';
-    } else if (rawStatus === 'cancelled' || rawStatus === 'canceled' || rawStatus === 'disabled') {
-      badgeClasses += ' text-rose-700 bg-rose-50 border border-rose-100';
-    } else if (rawStatus === 'warning' || rawStatus === 'pending') {
-      badgeClasses += ' text-amber-800 bg-amber-100 border border-amber-200';
-    } else if (rawStatus === 'info' || rawStatus === 'overall' || rawStatus === 'available') {
-      badgeClasses += ' text-sky-700 bg-sky-50 border border-sky-100';
-      badgeLabel = 'INFO';
-    } else {
-      // default to info/blue
-      badgeClasses += ' text-sky-700 bg-sky-50 border border-sky-100';
+    const rawStatus = (vehicle.status || 'active').toString().toLowerCase();
+    const statusLabel = rawStatus === 'active' ? 'Active' : rawStatus === 'inactive' ? 'Inactive' : rawStatus.toUpperCase();
+    const statusDot = rawStatus === 'active' ? 'bg-emerald-600' : 'bg-slate-400';
+    const vehicleName = vehicle.vehicle_name || 'Vehicle';
+    const plate = vehicle.plate_number || 'No plate';
+    const category = vehicle.category || vehicle.vehicle_type || vehicle.type || 'Vehicle';
+    const seats = vehicle.capacity ? `${vehicle.capacity} Seats` : null;
+    const fuel = vehicle.fuel_type || vehicle.fuel || null;
+    const metaParts = [category, seats, fuel].filter(Boolean).join(' • ');
+
+    card.className = 'flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md';
+    if (rawStatus !== 'active') {
+      card.className += ' opacity-80 filter grayscale';
     }
 
-    const badgeHtml = `<span class="${badgeClasses}">${escapeHtml(badgeLabel)}</span>`;
-
-    // Prefer full URL returned by server (image_url). Fall back to building URL from baseUrl.
     const filename = vehicle.image_filename || vehicle.image || null;
     const imgSrc = vehicle.image_url ? vehicle.image_url : (filename ? (baseUrl + 'uploads/vehicle/' + filename) : (baseUrl + 'app/assets/img/vehicle-placeholder.jpg'));
 
-    const isDisabled = rawStatus !== 'active';
-    if (isDisabled) {
-      card.className += ' opacity-60 filter grayscale';
-    }
-
     card.innerHTML = `
-      <div class="relative h-36 bg-slate-100">
-        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(vehicle.vehicle_name)}" class="w-full h-full object-cover">
-        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-        <div class="absolute left-4 bottom-3 text-white">
-          <h3 class="text-sm font-semibold">${escapeHtml(vehicle.vehicle_name)}</h3>
-          <p class="text-xs opacity-80">${escapeHtml(vehicle.plate_number)}</p>
-        </div>
-        <div class="absolute right-3 top-3">
-          ${badgeHtml}
+      <div class="relative overflow-hidden rounded-t-xl aspect-video bg-slate-100">
+        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(vehicleName)}" class="h-full w-full object-cover" />
+        <div class="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-slate-900 backdrop-blur">
+          <span class="inline-flex h-1.5 w-1.5 rounded-full ${statusDot}"></span>
+          ${escapeHtml(statusLabel)}
         </div>
       </div>
-
-      <div class="px-4 py-4">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <span class="text-xs font-medium text-slate-600">Capacity</span>
-            <div class="text-sm font-semibold text-slate-800">${vehicle.capacity || '—'} seats</div>
-          </div>
-          <div class="text-right">
-            <span class="text-xs text-slate-500">Plate</span>
-            <div class="text-sm font-medium text-slate-900">${escapeHtml(vehicle.plate_number || '—')}</div>
+      <div class="flex flex-1 flex-col gap-3 p-4">
+        <div>
+          <h3 class="truncate text-base font-semibold text-slate-900">${escapeHtml(vehicleName)}</h3>
+          <p class="mt-1 truncate text-sm text-slate-500">${escapeHtml(plate)}</p>
+        </div>
+        <div class="text-xs text-slate-500">${escapeHtml(metaParts || '—')}</div>
+        <div class="mt-auto text-right">
+          <div class="grid gap-2">
+            <button type="button" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 view-vehicle-btn" data-vehicle-id="${vehicle.id}">View Details</button>
+            <button type="button" class="h-9 w-full rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}">${rawStatus === 'active' ? 'Disable' : 'Enable'}</button>
           </div>
         </div>
-
-        <div class="mb-4" id="loading-${vehicle.id}">
-          <p class="text-xs text-slate-500 text-center py-2">Loading bookings...</p>
-        </div>
-        <div id="bookings-${vehicle.id}" class="space-y-2 hidden"></div>
-
-        <button type="button" class="w-full mt-4 rounded-2xl border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-white px-3 py-2 text-sm font-semibold text-slate-700 hover:from-slate-50 hover:to-white transition view-vehicle-btn" data-vehicle-id="${vehicle.id}">
-          View Details
-        </button>
       </div>
     `;
 
-    if (isDisabled) {
-      const flag = document.createElement('div');
-      flag.className = 'absolute right-3 top-3';
-      flag.innerHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-100">Disabled</span>';
-      card.appendChild(flag);
-    }
-
-    // initially load upcoming bookings only
     loadVehicleUpcoming(vehicle.id, card);
-
     card.querySelector('.view-vehicle-btn').addEventListener('click', () => {
       showVehicleDetails(vehicle.id, card);
     });
+    const vehicleActionBtn = card.querySelector('.fleet-card-action-btn');
+    if (vehicleActionBtn) {
+      vehicleActionBtn.addEventListener('click', () => {
+        showFleetCardActionModal({
+          itemType: 'vehicles',
+          itemId: vehicle.id,
+          itemName: vehicleName,
+          action: vehicleActionBtn.getAttribute('data-action'),
+          itemData: vehicle
+        });
+      });
+    }
 
     return card;
   }
 
-  // Show only upcoming bookings (pending or ongoing) — used for cards
+  function createDriverCard(driver) {
+    const card = document.createElement('div');
+    const rawStatus = (driver.status || 'active').toString().toLowerCase();
+    const statusLabel = rawStatus === 'active' ? 'Active' : rawStatus === 'inactive' ? 'Inactive' : rawStatus.toUpperCase();
+    const statusDot = rawStatus === 'active' ? 'bg-emerald-600' : 'bg-slate-400';
+    const driverName = driver.driver_name || 'Driver';
+    const employee = driver.license_number || driver.employee_id || 'No ID';
+    const role = driver.role || driver.department || 'Driver';
+    const assignment = driver.vehicle_name || driver.plate_number
+      ? `${driver.vehicle_name || ''}${driver.vehicle_name && driver.plate_number ? ' • ' : ''}${driver.plate_number || ''}`.trim()
+      : 'No vehicle assigned';
+    const profileImage = driver.image_url || driver.image_filename ?
+      (driver.image_url ? driver.image_url : baseUrl + 'uploads/driver/' + driver.image_filename)
+      : null;
+
+    card.className = 'flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md';
+
+    card.innerHTML = `
+      <div class="relative flex items-center justify-center rounded-t-xl bg-slate-100 p-4">
+        ${profileImage ? `
+          <img src="${escapeHtml(profileImage)}" alt="${escapeHtml(driverName)}" class="h-14 w-14 rounded-full object-cover" />
+        ` : `
+          <div class="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-base font-semibold text-slate-700">${escapeHtml(driverName.charAt(0).toUpperCase())}</div>
+        `}
+        <div class="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-slate-900 backdrop-blur">
+          <span class="inline-flex h-1.5 w-1.5 rounded-full ${statusDot}"></span>
+          ${escapeHtml(statusLabel)}
+        </div>
+      </div>
+      <div class="flex flex-1 flex-col gap-3 p-4">
+        <div>
+          <h3 class="truncate text-base font-semibold text-slate-900">${escapeHtml(driverName)}</h3>
+          <p class="mt-1 truncate text-sm text-slate-500">${escapeHtml(employee)}</p>
+        </div>
+        <div class="text-xs text-slate-500">${escapeHtml(`${role}`)}</div>
+        <div class="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">${escapeHtml(assignment)}</div>
+        <div class="mt-auto text-right">
+          <div class="grid gap-2">
+            <button type="button" class="h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 view-vehicle-btn" data-vehicle-id="${driver.id}">View Details</button>
+            <button type="button" class="h-9 rounded-lg border ${rawStatus === 'active' ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' : 'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100'} px-3 text-sm font-semibold transition fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}">${rawStatus === 'active' ? 'Disable' : 'Enable'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const driverActionBtn = card.querySelector('.fleet-card-action-btn');
+    if (driverActionBtn) {
+      driverActionBtn.addEventListener('click', () => {
+        showFleetCardActionModal({
+          itemType: 'drivers',
+          itemId: driver.id,
+          itemName: driverName,
+          action: driverActionBtn.getAttribute('data-action'),
+          itemData: driver
+        });
+      });
+    }
+
+    return card;
+  }
+
+  if (fleetCardActionCloseBtn) {
+    fleetCardActionCloseBtn.addEventListener('click', hideFleetCardActionModal);
+  }
+  if (fleetCardActionCancelBtn) {
+    fleetCardActionCancelBtn.addEventListener('click', hideFleetCardActionModal);
+  }
+  if (fleetCardActionBackdrop) {
+    fleetCardActionBackdrop.addEventListener('click', hideFleetCardActionModal);
+  }
+  if (fleetCardActionConfirmBtn) {
+    fleetCardActionConfirmBtn.addEventListener('click', performFleetCardAction);
+  }
+
+  function normalizeFleetSearchTerm(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function renderFleetGalleryCards() {
+    if (!vehicleCardsContainer) return;
+    const term = normalizeFleetSearchTerm(fleetGalleryState.searchTerm);
+    const activeTab = fleetGalleryState.activeTab;
+    const pageSize = fleetGalleryState.pageSize || 8;
+
+    if (fleetSearchInput) {
+      fleetSearchInput.placeholder = activeTab === 'drivers' ? 'Search drivers' : 'Search vehicles';
+    }
+
+    let items = activeTab === 'drivers'
+      ? fleetGalleryState.drivers
+      : fleetGalleryState.vehicles;
+
+    const filtered = items.filter(item => {
+      if (activeTab === 'drivers') {
+        return [item.driver_name, item.status, item.license_number, item.contact]
+          .filter(Boolean)
+          .some(value => normalizeFleetSearchTerm(value).includes(term));
+      }
+      return [item.vehicle_name, item.plate_number, item.status, item.make, item.model]
+        .filter(Boolean)
+        .some(value => normalizeFleetSearchTerm(value).includes(term));
+    });
+
+    const totalItems = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    fleetGalleryState.currentPage = Math.min(Math.max(1, fleetGalleryState.currentPage), totalPages);
+
+    const startIndex = (fleetGalleryState.currentPage - 1) * pageSize;
+    const pageItems = filtered.slice(startIndex, startIndex + pageSize);
+
+    vehicleCardsContainer.innerHTML = '';
+    if (pageItems.length === 0) {
+      vehicleCardsContainer.innerHTML = `<div class="col-span-full rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500">No ${activeTab} found</div>`;
+    } else {
+      pageItems.forEach(item => {
+        const card = activeTab === 'drivers' ? createDriverCard(item) : createVehicleCard(item);
+        vehicleCardsContainer.appendChild(card);
+      });
+    }
+
+      const startResult = totalItems === 0 ? 0 : startIndex + 1;
+    const endResult = totalItems === 0 ? 0 : startIndex + pageItems.length;
+    if (fleetPaginationControlsEl) {
+      fleetPaginationInfoEl.textContent = totalItems === 0
+        ? `No ${activeTab} found`
+        : `Showing ${startResult}–${endResult} of ${totalItems} results`;
+      fleetPaginationControlsEl.classList.toggle('hidden', totalPages <= 1);
+    }
+
+    if (fleetGalleryMetaEl) {
+      fleetGalleryMetaEl.textContent = `${totalItems} ${activeTab === 'drivers' ? 'Drivers' : 'Vehicles'} • Page ${fleetGalleryState.currentPage} of ${totalPages}`;
+    }
+
+    if (fleetTabVehiclesBtn) {
+      fleetTabVehiclesBtn.textContent = `Vehicles (${fleetGalleryState.vehicles.length})`;
+    }
+    if (fleetTabDriversBtn) {
+      fleetTabDriversBtn.textContent = `Drivers (${fleetGalleryState.drivers.length})`;
+    }
+
+    updateFleetPageNumbers(totalPages);
+
+    if (fleetPrevPageBtn) {
+      fleetPrevPageBtn.disabled = fleetGalleryState.currentPage <= 1;
+    }
+    if (fleetNextPageBtn) {
+      fleetNextPageBtn.disabled = fleetGalleryState.currentPage >= totalPages;
+    }
+
+    updateFleetGalleryTabStyles();
+  }
+
+  function updateFleetPageNumbers(totalPages) {
+    if (!fleetPageNumbersEl) return;
+    fleetPageNumbersEl.innerHTML = '';
+    if (totalPages <= 1) {
+      fleetPageNumbersEl.classList.add('hidden');
+      return;
+    }
+    fleetPageNumbersEl.classList.remove('hidden');
+    const buttons = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i += 1) buttons.push(i);
+    } else {
+      const left = Math.max(1, fleetGalleryState.currentPage - 2);
+      const right = Math.min(totalPages, fleetGalleryState.currentPage + 2);
+      if (left > 1) buttons.push(1);
+      if (left > 2) buttons.push('...');
+      for (let i = left; i <= right; i += 1) buttons.push(i);
+      if (right < totalPages - 1) buttons.push('...');
+      if (right < totalPages) buttons.push(totalPages);
+    }
+
+    buttons.forEach(value => {
+      if (value === '...') {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'px-2 text-xs text-slate-400';
+        ellipsis.textContent = '…';
+        fleetPageNumbersEl.appendChild(ellipsis);
+        return;
+      }
+      const pageButton = document.createElement('button');
+      pageButton.type = 'button';
+      pageButton.textContent = String(value);
+      pageButton.className = value === fleetGalleryState.currentPage
+        ? 'inline-flex h-9 items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white'
+        : 'inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50';
+      if (value === fleetGalleryState.currentPage) {
+        pageButton.disabled = true;
+      }
+      pageButton.addEventListener('click', () => {
+        fleetGalleryState.currentPage = value;
+        renderFleetGalleryCards();
+      });
+      fleetPageNumbersEl.appendChild(pageButton);
+    });
+  }
+
+  function updateFleetGalleryTabStyles() {
+    if (!fleetTabVehiclesBtn || !fleetTabDriversBtn) return;
+    const active = fleetGalleryState.activeTab;
+    fleetTabVehiclesBtn.classList.toggle('bg-slate-100', active === 'vehicles');
+    fleetTabVehiclesBtn.classList.toggle('text-slate-900', active === 'vehicles');
+    fleetTabVehiclesBtn.classList.toggle('text-slate-600', active !== 'vehicles');
+    fleetTabDriversBtn.classList.toggle('bg-slate-100', active === 'drivers');
+    fleetTabDriversBtn.classList.toggle('text-slate-900', active === 'drivers');
+    fleetTabDriversBtn.classList.toggle('text-slate-600', active !== 'drivers');
+  }
+
+  let fleetGalleryState = {
+    vehicles: [],
+    drivers: [],
+    activeTab: 'vehicles',
+    searchTerm: '',
+    currentPage: 1,
+    pageSize: 8
+  };
+
+  if (fleetTabVehiclesBtn) {
+    fleetTabVehiclesBtn.addEventListener('click', () => {
+      fleetGalleryState.activeTab = 'vehicles';
+      fleetGalleryState.currentPage = 1;
+      renderFleetGalleryCards();
+    });
+  }
+
+  if (fleetTabDriversBtn) {
+    fleetTabDriversBtn.addEventListener('click', () => {
+      fleetGalleryState.activeTab = 'drivers';
+      fleetGalleryState.currentPage = 1;
+      renderFleetGalleryCards();
+    });
+  }
+
+  if (fleetSearchInput) {
+    fleetSearchInput.addEventListener('input', event => {
+      fleetGalleryState.searchTerm = event.target.value || '';
+      fleetGalleryState.currentPage = 1;
+      renderFleetGalleryCards();
+    });
+  }
+
+  if (fleetAddNewBtn && fleetAddNewMenu) {
+    fleetAddNewBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      const expanded = fleetAddNewBtn.getAttribute('aria-expanded') === 'true';
+      fleetAddNewBtn.setAttribute('aria-expanded', String(!expanded));
+      fleetAddNewMenu.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', event => {
+      if (!fleetAddNewMenu.contains(event.target) && !fleetAddNewBtn.contains(event.target)) {
+        fleetAddNewMenu.classList.add('hidden');
+        fleetAddNewBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  if (fleetPrevPageBtn) {
+    fleetPrevPageBtn.addEventListener('click', () => {
+      if (fleetGalleryState.currentPage > 1) {
+        fleetGalleryState.currentPage -= 1;
+        renderFleetGalleryCards();
+      }
+    });
+  }
+
+  if (fleetNextPageBtn) {
+    fleetNextPageBtn.addEventListener('click', () => {
+      fleetGalleryState.currentPage += 1;
+      renderFleetGalleryCards();
+    });
+  }
+
+  // Initialize initial gallery state
+  renderFleetGalleryCards();
   function loadVehicleUpcoming(vehicleId, card) {
     const loadingEl = card.querySelector(`#loading-${vehicleId}`);
     const bookingsEl = card.querySelector(`#bookings-${vehicleId}`);
@@ -2190,10 +2745,173 @@ driverForm.addEventListener('submit', function (e) {
   }
 
   // Show full vehicle details and history inside the card (toggle)
+  function getTimelineBookingStatus(booking) {
+    const serverStatus = String(booking.status || booking.booking_status || '').toLowerCase();
+    if (serverStatus === 'cancelled' || serverStatus === 'canceled') {
+      return 'cancelled';
+    }
+    return getBookingStatus(booking.departure_expected || booking.start_at || '', booking.return_expected || booking.end_at || '');
+  }
+
+  function getTimelineBookingTitle(booking) {
+    return booking.purpose || booking.title || booking.trip_name || 'Booking';
+  }
+
+  function getTimelineScheduleText(booking) {
+    const start = formatLocalDisplay(booking.departure_expected || booking.start_at || '');
+    const end = formatLocalDisplay(booking.return_expected || booking.end_at || '');
+    if (start && end) {
+      return `${start} → ${end}`;
+    }
+    return start || end || 'Schedule to be confirmed';
+  }
+
+  function getTimelineDriverText(booking) {
+    return booking.driver_name || booking.driver || booking.assigned_driver || 'Driver pending';
+  }
+
+  function getTimelineDestinationText(booking) {
+    return booking.destinations || booking.destination || booking.trip_destination || '';
+  }
+
+  function sortTimelineBookings(a, b) {
+    const aTime = new Date(a.departure_expected || a.start_at || a.return_expected || a.end_at || '').getTime();
+    const bTime = new Date(b.departure_expected || b.start_at || b.return_expected || b.end_at || '').getTime();
+    const aValue = Number.isFinite(aTime) ? aTime : 0;
+    const bValue = Number.isFinite(bTime) ? bTime : 0;
+    if (aValue === bValue) {
+      return Number(b.id || 0) - Number(a.id || 0);
+    }
+    return bValue - aValue;
+  }
+
+  function buildTimelineCard(booking, onSelect) {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'w-full rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50';
+
+    const status = getTimelineBookingStatus(booking);
+    const statusLabel = status === 'pending' ? 'Upcoming' : status === 'ongoing' ? 'Ongoing' : status === 'finished' ? 'Completed' : status === 'cancelled' ? 'Cancelled' : 'Scheduled';
+    const badgeClass = getStatusBadgeClass(status);
+    const driverText = getTimelineDriverText(booking);
+    const destinationText = getTimelineDestinationText(booking);
+
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2">
+            <p class="truncate text-sm font-semibold text-slate-900">${escapeHtml(getTimelineBookingTitle(booking))}</p>
+            <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${badgeClass}">${escapeHtml(statusLabel)}</span>
+          </div>
+          <p class="mt-1 text-xs text-slate-500">${escapeHtml(getTimelineScheduleText(booking))}</p>
+          <div class="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500">
+            <span class="inline-flex items-center gap-1"><span class="font-medium text-slate-600">Driver</span>${escapeHtml(driverText)}</span>
+            ${destinationText ? `<span class="inline-flex items-center gap-1"><span class="font-medium text-slate-600">To</span>${escapeHtml(destinationText)}</span>` : ''}
+          </div>
+        </div>
+        <div class="flex flex-shrink-0 flex-col items-end gap-2 text-xs font-medium text-slate-600">
+          <span class="text-[11px] text-slate-400">View</span>
+        <span class="text-[11px] font-semibold text-slate-700">  //// </span>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', (event) => {
+      event.preventDefault();
+      onSelect(booking);
+    });
+
+    return card;
+  }
+
+  function renderTimelineSections(rows, options = {}) {
+    const { showAll = false, maxVisible = 4 } = options;
+    const container = vehicleDetailsContentEl;
+    if (!container) return;
+
+    const sortedRows = [...rows].sort(sortTimelineBookings);
+    const upcomingRows = sortedRows.filter((booking) => getTimelineBookingStatus(booking) === 'pending');
+    const ongoingRows = sortedRows.filter((booking) => getTimelineBookingStatus(booking) === 'ongoing');
+    const pastRows = sortedRows.filter((booking) => {
+      const status = getTimelineBookingStatus(booking);
+      return status === 'finished' || status === 'cancelled';
+    });
+
+    const allSections = [
+      { key: 'upcoming', title: 'Upcoming', items: upcomingRows, emptyMessage: 'No upcoming bookings are scheduled for this vehicle at the moment.' },
+      ...(ongoingRows.length > 0 ? [{ key: 'ongoing', title: 'Ongoing', items: ongoingRows, emptyMessage: '' }] : []),
+      { key: 'past', title: 'Past Bookings', items: pastRows, emptyMessage: 'No completed booking history is available yet.' }
+    ];
+
+    const totalItems = sortedRows.length;
+    const shouldShowToggle = totalItems > maxVisible;
+
+    const renderSection = (section) => {
+      const sectionEl = document.createElement('section');
+      sectionEl.className = 'space-y-3';
+
+      const header = document.createElement('div');
+      header.className = 'flex items-center justify-between gap-2';
+      const titleEl = document.createElement('h3');
+      titleEl.className = 'text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500';
+      titleEl.textContent = section.title;
+      const countEl = document.createElement('span');
+      countEl.className = 'rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600';
+      countEl.textContent = String(section.items.length);
+      header.appendChild(titleEl);
+      header.appendChild(countEl);
+      sectionEl.appendChild(header);
+
+      if (!section.items.length) {
+        const emptyEl = document.createElement('div');
+        emptyEl.className = 'rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500';
+        emptyEl.textContent = section.emptyMessage;
+        sectionEl.appendChild(emptyEl);
+        return sectionEl;
+      }
+
+      const listEl = document.createElement('div');
+      listEl.className = 'space-y-2';
+      const visibleItems = showAll ? section.items : section.items.slice(0, maxVisible);
+      visibleItems.forEach((booking) => {
+        listEl.appendChild(buildTimelineCard(booking, (selectedBooking) => {
+          loadBookingReadOnly(selectedBooking.id);
+          closeModal(vehicleDetailsModalEl);
+        }));
+      });
+      sectionEl.appendChild(listEl);
+      return sectionEl;
+    };
+
+    container.innerHTML = '';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'space-y-5';
+
+    allSections.forEach((section) => {
+      wrapper.appendChild(renderSection(section));
+    });
+
+    if (shouldShowToggle) {
+      const toggleEl = document.createElement('button');
+      toggleEl.type = 'button';
+      toggleEl.className = 'text-sm font-semibold text-slate-600 transition hover:text-slate-900';
+      toggleEl.textContent = showAll ? 'Show fewer entries ←' : 'View Full Booking History →';
+      toggleEl.addEventListener('click', () => {
+        renderTimelineSections(rows, { showAll: !showAll, maxVisible });
+      });
+      wrapper.appendChild(toggleEl);
+    }
+
+    container.appendChild(wrapper);
+  }
+
   function showVehicleDetails(vehicleId, card) {
     // open vehicle details modal and populate with clickable bookings
     if (!vehicleDetailsContentEl || !vehicleDetailsModalEl) return;
-    vehicleDetailsContentEl.innerHTML = '<div class="text-sm text-slate-500">Loading history...</div>';
+    vehicleDetailsContentEl.innerHTML = '<div class="text-sm text-slate-500">Loading booking timeline...</div>';
+    if (vehicleDetailsMetaEl) {
+      vehicleDetailsMetaEl.innerHTML = '';
+    }
     openModal(vehicleDetailsModalEl);
 
     fetch(vehicleHistoryUrl + '&vehicle_id=' + vehicleId + '&t=' + Date.now(), {
@@ -2203,103 +2921,190 @@ driverForm.addEventListener('submit', function (e) {
     .then(parseJsonResponse)
     .then(data => {
       const rows = (data && Array.isArray(data.bookings)) ? data.bookings : [];
-      const upcomingRows = rows.filter(b => {
-        const st = getBookingStatus(b.departure_expected, b.return_expected);
-        return st === 'pending' || st === 'ongoing';
-      });
-      const pastRows = rows.filter(b => {
-        const st = getBookingStatus(b.departure_expected, b.return_expected);
-        return st === 'finished';
-      });
-
-      const buildList = (title, items) => {
-        const sec = document.createElement('div');
-        sec.className = 'mb-4';
-        const hdr = document.createElement('div'); hdr.className = 'text-xs font-semibold text-slate-700 mb-2'; hdr.textContent = title;
-        sec.appendChild(hdr);
-        if (!items || items.length === 0) {
-          const p = document.createElement('div'); p.className = 'text-xs text-slate-500'; p.textContent = 'None'; sec.appendChild(p); return sec;
-        }
-        items.forEach(it => {
-          const item = document.createElement('div');
-          item.className = 'p-2 rounded border mb-2 bg-white hover:bg-slate-50 cursor-pointer';
-
-          const computedStatus = getBookingStatus(it.departure_expected || it.start_at, it.return_expected || it.end_at);
-          const serverStatus = (it.status || it.booking_status || '').toLowerCase();
-          let badgeHtml = '';
-          if (serverStatus === 'cancelled' || serverStatus === 'canceled') {
-            badgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold text-rose-700 bg-rose-50">CANCELLED</span>';
-          } else if (computedStatus === 'finished') {
-            badgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold text-emerald-700 bg-emerald-50">FINISHED</span>';
-          }
-
-          item.innerHTML = `<div class="flex items-center justify-between"><div class="flex-1"><div class="font-medium">${escapeHtml(it.purpose || 'Trip')}</div><div class="text-xs text-slate-500">${escapeHtml(formatLocalDisplay(it.departure_expected || it.start_at || ''))} → ${escapeHtml(formatLocalDisplay(it.return_expected || it.end_at || ''))}</div></div><div class="flex flex-col items-end gap-1"><div class="text-xs text-slate-400">View</div>${badgeHtml}</div></div>`;
-          item.addEventListener('click', () => {
-            // open booking in read-only mode
-            loadBookingReadOnly(it.id);
-            closeModal(vehicleDetailsModalEl);
-          });
-          sec.appendChild(item);
-        });
-        return sec;
+      const counts = {
+        total: rows.length,
+        upcoming: rows.filter((booking) => getTimelineBookingStatus(booking) === 'pending').length,
+        ongoing: rows.filter((booking) => getTimelineBookingStatus(booking) === 'ongoing').length,
+        completed: rows.filter((booking) => getTimelineBookingStatus(booking) === 'finished').length
       };
 
-      vehicleDetailsContentEl.innerHTML = '';
-      vehicleDetailsContentEl.appendChild(buildList('Upcoming', upcomingRows));
-      vehicleDetailsContentEl.appendChild(buildList('Past', pastRows));
+      if (vehicleDetailsMetaEl) {
+        const metaItems = [
+          ['Total Bookings', counts.total],
+          ['Upcoming', counts.upcoming],
+          ['Ongoing', counts.ongoing],
+          ['Completed', counts.completed]
+        ];
+        vehicleDetailsMetaEl.innerHTML = metaItems.map(([label, value]) => `
+          <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+            <span class="text-slate-400">${escapeHtml(label)}</span>
+            <span class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-700">${escapeHtml(String(value))}</span>
+          </span>
+        `).join('');
+      }
+
+      renderTimelineSections(rows, { showAll: false, maxVisible: 4 });
     })
     .catch(err => {
       console.error('Error loading history details:', err);
-      if (vehicleDetailsContentEl) vehicleDetailsContentEl.innerHTML = '<p class="text-xs text-rose-500 text-center py-1">Failed to load history</p>';
+      if (vehicleDetailsContentEl) vehicleDetailsContentEl.innerHTML = '<p class="text-xs text-rose-500 text-center py-1">Failed to load booking timeline</p>';
     });
   }
 
-  // Load booking by id into booking modal in read-only mode
-  function loadBookingReadOnly(id) {
+  function setBookingPreviewStatus(label, tone = 'neutral') {
+    if (!bookingPreviewStatusEl) return;
+    const toneClasses = {
+      neutral: 'border-slate-200 bg-white text-slate-600',
+      pending: 'border-amber-200 bg-amber-50 text-amber-700',
+      ongoing: 'border-blue-200 bg-blue-50 text-blue-700',
+      finished: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      cancelled: 'border-rose-200 bg-rose-50 text-rose-700'
+    };
+    bookingPreviewStatusEl.className = `rounded-full border px-2.5 py-1 text-[10px] font-medium ${toneClasses[tone] || toneClasses.neutral}`;
+    bookingPreviewStatusEl.textContent = label;
+  }
+
+  function toggleFleetSnapshotVisibility(show) {
+    if (fleetSnapshotSectionEl) {
+      fleetSnapshotSectionEl.classList.toggle('hidden', !show);
+    }
+  }
+
+  function resetBookingPreviewPanel() {
+    if (bookingPreviewForm) bookingPreviewForm.classList.add('hidden');
+    if (bookingPreviewEmptyEl) bookingPreviewEmptyEl.classList.remove('hidden');
+    toggleFleetSnapshotVisibility(true);
+    if (previewBookingIdEl) previewBookingIdEl.value = '';
+    if (previewPurposeEl) previewPurposeEl.value = '';
+    if (previewDestinationsEl) previewDestinationsEl.value = '';
+    if (previewDateTripEl) previewDateTripEl.value = '';
+    if (previewDateRequestedEl) previewDateRequestedEl.value = '';
+    if (previewDepartureExpectedEl) previewDepartureExpectedEl.value = '';
+    if (previewReturnExpectedEl) previewReturnExpectedEl.value = '';
+    if (previewPassengersEl) previewPassengersEl.value = '';
+    if (previewVehicleIdEl) previewVehicleIdEl.value = '';
+    if (previewDriverIdEl) previewDriverIdEl.value = '';
+    if (previewSpecialInstructionsEl) previewSpecialInstructionsEl.value = '';
+    if (previewRemarksEl) previewRemarksEl.value = '';
+    setBookingPreviewStatus('No selection', 'neutral');
+  }
+
+  function populateBookingPreview(booking) {
+    if (!booking) return;
+    if (previewBookingIdEl) previewBookingIdEl.value = String(booking.id || '');
+    if (previewPurposeEl) previewPurposeEl.value = booking.purpose || '';
+    if (previewDestinationsEl) previewDestinationsEl.value = booking.destinations || '';
+    if (previewDateTripEl) previewDateTripEl.value = toLocalDateValue(booking.date_trip || booking.start_at || '');
+    if (previewDateRequestedEl) previewDateRequestedEl.value = toLocalDateValue(booking.date_requested || '');
+    if (previewDepartureExpectedEl) previewDepartureExpectedEl.value = toLocalInputValue(booking.start_at || booking.departure_expected || '');
+    if (previewReturnExpectedEl) previewReturnExpectedEl.value = toLocalInputValue(booking.end_at || booking.return_expected || '');
+    if (previewPassengersEl) previewPassengersEl.value = booking.passengers || booking.seat_count || '';
+    if (previewVehicleIdEl) previewVehicleIdEl.value = booking.vehicle_id || '';
+    if (previewDriverIdEl) previewDriverIdEl.value = booking.driver_id || '';
+    if (previewSpecialInstructionsEl) previewSpecialInstructionsEl.value = booking.special_instructions || '';
+    if (previewRemarksEl) previewRemarksEl.value = booking.remarks || booking.notes || '';
+
+    const serverStatus = String(booking.status || '').toLowerCase();
+    const departureExpected = booking.departure_expected || booking.start_at || '';
+    const returnExpected = booking.return_expected || booking.end_at || '';
+    const computedStatus = serverStatus === 'cancelled' || serverStatus === 'canceled'
+      ? 'cancelled'
+      : getBookingStatus(departureExpected, returnExpected);
+
+    if (bookingPreviewEmptyEl) bookingPreviewEmptyEl.classList.add('hidden');
+    if (bookingPreviewForm) bookingPreviewForm.classList.remove('hidden');
+    toggleFleetSnapshotVisibility(false);
+
+    const tone = computedStatus === 'pending' ? 'pending' : computedStatus === 'ongoing' ? 'ongoing' : computedStatus === 'finished' ? 'finished' : computedStatus === 'cancelled' ? 'cancelled' : 'neutral';
+    setBookingPreviewStatus(computedStatus.toUpperCase(), tone);
+  }
+
+  function loadBookingPreview(id) {
     if (!id) return;
     const url = getBookingUrl + '&id=' + encodeURIComponent(id) + '&t=' + Date.now();
     fetch(url, { method: 'GET', headers: {'X-Requested-With': 'XMLHttpRequest'} })
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
         if (!data || !data.success || !data.booking) {
-          alert('Failed to load booking details');
+          showNotification('Unable to load booking preview', 'error');
           return;
         }
-        const b = data.booking;
-        // populate form fields
-        bookingId.value = String(b.id || '');
-        document.getElementById('dateTrip').value = toLocalDateValue(b.date_trip || b.start_at || '');
-        document.getElementById('dateRequested').value = toLocalDateValue(b.date_requested || '');
-        document.getElementById('departureExpected').value = toLocalInputValue(b.start_at || b.departure_expected || '');
-        document.getElementById('returnExpected').value = toLocalInputValue(b.end_at || b.return_expected || '');
-        document.getElementById('destinations').value = b.destinations || '';
-        document.getElementById('purpose').value = b.purpose || '';
-        document.getElementById('passengers').value = b.passengers || '';
-        document.getElementById('vehicleId').value = b.vehicle_id || '';
-        document.getElementById('driverId').value = b.driver_id || '';
-        document.getElementById('specialInstructions').value = b.special_instructions || '';
-        document.getElementById('remarks').value = b.remarks || '';
-
-        // make form read-only
-        bookingForm.querySelectorAll('input,textarea,select,button').forEach(el => {
-          // keep close/cancel buttons enabled by leaving them as type=button with specific ids
-          if (el.id === 'closeBookingModalBtn' || el.id === 'cancelBookingModalBtn') return;
-          el.disabled = true;
-        });
-
-        // hide save & delete buttons
-        const saveBtn = document.getElementById('saveBookingBtn');
-        const delBtn = document.getElementById('deleteBookingBtn');
-        if (saveBtn) saveBtn.style.display = 'none';
-        if (delBtn) delBtn.style.display = 'none';
-
-        // Update modal title for read-only details vs create mode
-        const titleEl = document.getElementById('bookingModalTitle');
-        if (titleEl) titleEl.textContent = 'Booking details';
-
-        openModal(bookingModalEl);
+        populateBookingPreview(data.booking);
       })
-      .catch(err => { console.error('Failed to load booking:', err); alert('Failed to load booking details'); });
+      .catch(err => {
+        console.error('Failed to load booking preview:', err);
+        showNotification('Failed to load booking preview', 'error');
+      });
+  }
+
+  function loadBookingReadOnly(id) {
+    loadBookingPreview(id);
+  }
+
+  if (bookingPreviewForm) {
+    bookingPreviewForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const id = previewBookingIdEl && previewBookingIdEl.value ? previewBookingIdEl.value : '';
+      if (!id) return;
+
+      const formData = new FormData(bookingPreviewForm);
+      formData.set('id', id);
+      fetch(updateBookingUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        if (!data || !data.success) {
+          throw new Error((data && data.message) ? data.message : 'Unable to save booking');
+        }
+        showNotification('Booking updated', 'success');
+        loadBookingPreview(id);
+        refetchCalendarEvents();
+        loadVehicleCards();
+      })
+      .catch(err => {
+        console.error('Failed to update booking from preview:', err);
+        showNotification(err.message || 'Failed to update booking', 'error');
+      });
+    });
+  }
+
+  if (previewCancelViewBtn) {
+    previewCancelViewBtn.addEventListener('click', function () {
+      resetBookingPreviewPanel();
+    });
+  }
+
+  if (previewCancelBtn) {
+    previewCancelBtn.addEventListener('click', function () {
+      const id = previewBookingIdEl && previewBookingIdEl.value ? previewBookingIdEl.value : '';
+      if (!id) return;
+      const body = new URLSearchParams({ id });
+      fetch(deleteBookingUrl, {
+        method: 'POST',
+        body,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        if (!data || !data.success) {
+          throw new Error((data && data.message) ? data.message : 'Unable to cancel booking');
+        }
+        showNotification('Booking cancelled', 'warning');
+        resetBookingPreviewPanel();
+        refetchCalendarEvents();
+        loadVehicleCards();
+      })
+      .catch(err => {
+        console.error('Failed to cancel booking from preview:', err);
+        showNotification(err.message || 'Failed to cancel booking', 'error');
+      });
+    });
   }
 
   // restore booking modal to editable state when closed
@@ -2596,72 +3401,13 @@ driverForm.addEventListener('submit', function (e) {
       const id = event.id;
       if (!id) return;
 
-      // Show status immediately from the event payload
       const statusFromEvent = event.extendedProps && event.extendedProps.status ? String(event.extendedProps.status) : null;
       const departureExpected = event.extendedProps ? (event.extendedProps.departure_expected || event.extendedProps.start_at) : null;
       const returnExpected = event.extendedProps ? (event.extendedProps.return_expected || event.extendedProps.end_at) : null;
       const computedStatus = statusFromEvent || getBookingStatus(departureExpected, returnExpected);
-
-      // Ensure there is an info line inside the modal header/body
-      let statusLine = document.getElementById('bookingScheduleStatusLine');
-      if (!statusLine) {
-        // Insert right under the modal title area
-        const modalHeader = bookingModalEl.querySelector('h2');
-        if (modalHeader) {
-          statusLine = document.createElement('div');
-          statusLine.id = 'bookingScheduleStatusLine';
-          statusLine.className = 'mt-2 text-xs font-medium';
-          modalHeader.parentElement.appendChild(statusLine);
-        }
-      }
-      if (statusLine) {
-        const badgeClass = (() => {
-          switch (computedStatus) {
-            case 'pending': return 'bg-amber-50 text-amber-700 border-amber-200';
-            case 'ongoing': return 'bg-blue-50 text-blue-700 border-blue-200';
-            case 'finished': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-            default: return 'bg-slate-50 text-slate-700 border-slate-200';
-          }
-        })();
-        statusLine.innerHTML = `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${badgeClass}">
-          ${getStatusIcon(computedStatus)} ${computedStatus.toUpperCase()}\n        </span>`;
-      }
-
-      fetch(getBookingUrl + '&id=' + encodeURIComponent(id), { headers: {'X-Requested-With': 'XMLHttpRequest'} })
-        .then(parseJsonResponse)
-        .then(data => {
-          if (!data || !data.success || !data.booking) {
-            alert(data && data.message ? data.message : 'Unable to load booking');
-            return;
-          }
-          const b = data.booking;
-          // populate modal
-          bookingId.value = b.id || '';
-          document.getElementById('dateTrip').value = toLocalDateValue(b.date_trip || b.start_at || '');
-          document.getElementById('dateRequested').value = toLocalDateValue(b.date_requested || '');
-          document.getElementById('destinations').value = b.destinations || '';
-          document.getElementById('purpose').value = b.purpose || '';
-          document.getElementById('passengers').value = b.passengers || b.seat_count || '';
-          document.getElementById('departureExpected').value = toLocalInputValue(b.start_at || b.departure_expected || '');
-          document.getElementById('returnExpected').value = toLocalInputValue(b.end_at || b.return_expected || '');
-          document.getElementById('vehicleId').value = b.vehicle_id || '';
-          document.getElementById('driverId').value = b.driver_id || '';
-          document.getElementById('specialInstructions').value = b.special_instructions || '';
-          document.getElementById('remarks').value = b.remarks || b.notes || '';
-
-          const deleteBookingBtn = document.getElementById('deleteBookingBtn');
-          if (deleteBookingBtn) deleteBookingBtn.classList.remove('hidden');
-          // Update modal title for read-only details vs create mode
-          const titleEl = document.getElementById('bookingModalTitle');
-          if (titleEl) titleEl.textContent = 'Booking details';
-
-          openModal(bookingModalEl);
-        })
-
-        .catch(err => {
-          console.error('Failed to load booking:', err);
-          alert('Failed to load booking');
-        });
+      const tone = computedStatus === 'pending' ? 'pending' : computedStatus === 'ongoing' ? 'ongoing' : computedStatus === 'finished' ? 'finished' : computedStatus === 'cancelled' ? 'cancelled' : 'neutral';
+      setBookingPreviewStatus(String(computedStatus).toUpperCase(), tone);
+      loadBookingPreview(id);
     },
 
   eventDrop: function (info) {

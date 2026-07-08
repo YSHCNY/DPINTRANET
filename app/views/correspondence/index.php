@@ -92,94 +92,54 @@
     <!-- Controls -->
     <!-- ========================= -->
 
-    <div class="px-6 py-6">
-
-        <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-
-            <!-- Left Filters -->
-
-                <div class="flex flex-1 flex-wrap items-end gap-4">
-
-                <!-- <div class="w-full md:w-80">
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Search
-                    </label>
-
-                    <input
-                        id="repoSearch"
-                        type="search"
-                        placeholder="Search correspondence..."
-                        class="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
-                </div> -->
-
-                <div class="w-52">
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Priority
-                    </label>
-
+    <div class="p-2">
+        <div class="flex flex-col gap-3 rounded-xl  bg-slate-50/70 p-3 lg:flex-row lg:items-end lg:justify-between">
+            <div class="flex flex-1 flex-col gap-3 md:flex-row md:items-end">
+                <div class="w-full md:w-44">
+                    <label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Priority</label>
                     <select id="priorityFilter"
-                        class="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
-
+                        class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
                         <option value="">All priorities</option>
                         <option>Low</option>
                         <option>Medium</option>
                         <option>High</option>
                         <option>Urgent</option>
-
                     </select>
                 </div>
 
-                <div class="w-52">
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Status
-                    </label>
-
+                <div class="w-full md:w-44">
+                    <label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Status</label>
                     <select id="statusFilter"
-                        class="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
-
+                        class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
                         <option value="">All status</option>
                         <option>Inprogress</option>
                         <option>Done</option>
                         <option>Suspended</option>
                         <option>Draft</option>
-
                     </select>
                 </div>
 
-            <label class="flex h-12 items-center gap-3 rounded-2xl border border-slate-300 bg-white px-5">
-
-                    <span class="h-2.5 w-2.5 rounded-full <?= !empty($showRemovedItems) ? 'bg-amber-500' : 'bg-slate-400' ?>"></span>
-
-                    <span class="text-sm font-medium text-slate-700">
-                        Show Removed
-                    </span>
-
+                <label class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                    <span class="h-2 w-2 rounded-full <?= !empty($showRemovedItems) ? 'bg-amber-500' : 'bg-slate-400' ?>"></span>
+                    <span class="font-medium">Show Removed</span>
                     <input
                         id="showRemovedItems"
                         type="checkbox"
                         <?= !empty($showRemovedItems) ? 'checked' : '' ?>
-                        class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                        class="h-10 w-4 rounded rounded-2xl border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                </label>
 
+                <label class="flex h-9 w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-500 md:w-72">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
+                    <input id="repoSearch" type="search" placeholder="Search documents" class="w-full border-0 bg-transparent p-0 text-sm text-slate-700 outline-none placeholder:text-slate-400">
                 </label>
             </div>
 
-            <!-- Right Actions -->
-
-            <div class="flex items-center gap-4">
-
-              
-
-                <a href="index.php?controller=correspondence&action=newCirculation"
-                    class="inline-flex h-12 items-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
-
-                    Create Correspondence
-
-                </a>
-
-            </div>
-
+            <a href="index.php?controller=correspondence&action=newCirculation"
+                class="inline-flex h-9 items-center rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                Create Correspondence
+            </a>
         </div>
-
     </div>
 
 </div>
@@ -202,20 +162,6 @@
                 </div>
 
                     <div class="p-5">
-                <!-- Toolbar -->
-                <div class="mb-4 flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
-                    <div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        <span>Repository</span>
-                        <span class="text-slate-300">•</span>
-                        <span class="font-medium text-slate-400">Search and filter</span>
-                    </div>
-
-                    <label class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 shadow-sm transition focus-within:border-slate-400 focus-within:shadow-md md:w-80">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
-                        <input id="repoSearch" type="search" placeholder="Search documents" class="w-full border-0 bg-transparent p-0 text-sm text-slate-700 outline-none placeholder:text-slate-400">
-                    </label>
-                </div>
-
                 <div id="dropdown-root" class="pointer-events-none fixed inset-0 z-[9999]"></div>
 
                 <!-- Desktop: table view -->
@@ -692,7 +638,7 @@ $(document).ready(function() {
         columnDefs: [
             { targets: 9, visible: false, searchable: true }
         ],
-        dom: '<"flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4"lf>rt<"flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4"ip>',
+        dom: '<"flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4"l>rt<"flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4"ip>',
         language: {
             search: '',
             searchPlaceholder: 'Search documents'
