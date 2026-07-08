@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jun 26, 2026 at 04:14 PM
+-- Generation Time: Jul 08, 2026 at 09:48 PM
 -- Server version: 10.6.23-MariaDB-0ubuntu0.22.04.1
 -- PHP Version: 8.1.2-1ubuntu2.24
 
@@ -29,13 +29,13 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `car_bookings` (
   `id` int(11) NOT NULL,
-  `date_trip` date NOT NULL,
-  `date_requested` date NOT NULL,
+  `date_trip` datetime NOT NULL,
+  `date_requested` datetime NOT NULL,
   `destinations` varchar(255) NOT NULL,
   `purpose` varchar(180) NOT NULL,
   `passengers` int(11) NOT NULL,
-  `departure_expected` datetime NOT NULL,
-  `return_expected` datetime NOT NULL,
+  `departure_expected` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `return_expected` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `special_instructions` text DEFAULT NULL,
   `remarks` text DEFAULT NULL,
   `vehicle_id` int(11) NOT NULL,
@@ -93,53 +93,6 @@ CREATE TABLE `car_vehicles` (
   `created_by` int(11) DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `rooms`
---
-
-CREATE TABLE `rooms` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `room_name` varchar(120) NOT NULL,
-  `room_code` varchar(32) NOT NULL,
-  `capacity` int(11) NOT NULL DEFAULT 1,
-  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uniq_room_code` (`room_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `room_bookings`
---
-
-CREATE TABLE `room_bookings` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `date_trip` date NOT NULL,
-  `date_requested` date NOT NULL,
-  `purpose` varchar(180) NOT NULL,
-  `attendees` int(11) NOT NULL,
-  `departure_expected` datetime NOT NULL,
-  `return_expected` datetime NOT NULL,
-  `special_instructions` text DEFAULT NULL,
-  `remarks` text DEFAULT NULL,
-  `room_id` int(11) NOT NULL,
-  `status` enum('scheduled','cancelled') NOT NULL DEFAULT 'scheduled',
-  `created_by` int(11) DEFAULT NULL,
-  `start_at` datetime NOT NULL,
-  `end_at` datetime NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_room_booking_range` (`start_at`,`end_at`),
-  KEY `idx_room_booking_room` (`room_id`,`start_at`),
-  CONSTRAINT `fk_room_bookings_room` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -387,6 +340,86 @@ CREATE TABLE `notifications` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `password_reset_otps`
+--
+
+CREATE TABLE `password_reset_otps` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `otp_hash` varchar(255) NOT NULL,
+  `attempts` int(11) NOT NULL DEFAULT 0,
+  `expires_at` datetime NOT NULL,
+  `verified_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rooms`
+--
+
+CREATE TABLE `rooms` (
+  `id` int(11) NOT NULL,
+  `room_name` varchar(120) NOT NULL,
+  `room_code` varchar(32) NOT NULL,
+  `capacity` int(11) NOT NULL DEFAULT 1,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `room_bookings`
+--
+
+CREATE TABLE `room_bookings` (
+  `id` int(11) NOT NULL,
+  `date_trip` date NOT NULL,
+  `date_requested` date NOT NULL,
+  `purpose` varchar(180) NOT NULL,
+  `attendees` int(11) NOT NULL,
+  `departure_expected` datetime NOT NULL,
+  `return_expected` datetime NOT NULL,
+  `special_instructions` text DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `room_id` int(11) NOT NULL,
+  `status` enum('scheduled','cancelled') NOT NULL DEFAULT 'scheduled',
+  `created_by` int(11) DEFAULT NULL,
+  `start_at` datetime NOT NULL,
+  `end_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff_directory`
+--
+
+CREATE TABLE `staff_directory` (
+  `id` int(11) NOT NULL,
+  `staff_id` varchar(32) NOT NULL,
+  `firstName` varchar(150) NOT NULL,
+  `lastName` varchar(150) NOT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  `position` varchar(120) DEFAULT NULL,
+  `firm` varchar(250) NOT NULL,
+  `department` varchar(100) DEFAULT NULL,
+  `email` varchar(150) DEFAULT NULL,
+  `contact_number` varchar(30) DEFAULT NULL,
+  `deployment_date` date DEFAULT NULL,
+  `status` enum('active','inactive','on_leave','contract') NOT NULL DEFAULT 'active',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `standardUsers`
 --
 
@@ -568,6 +601,39 @@ ALTER TABLE `notifications`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `password_reset_otps`
+--
+ALTER TABLE `password_reset_otps`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_password_reset_otps_user` (`user_id`),
+  ADD KEY `idx_password_reset_otps_expires` (`expires_at`);
+
+--
+-- Indexes for table `rooms`
+--
+ALTER TABLE `rooms`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_room_code` (`room_code`);
+
+--
+-- Indexes for table `room_bookings`
+--
+ALTER TABLE `room_bookings`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_room_booking_range` (`start_at`,`end_at`),
+  ADD KEY `idx_room_booking_room` (`room_id`,`start_at`);
+
+--
+-- Indexes for table `staff_directory`
+--
+ALTER TABLE `staff_directory`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_staff_id` (`staff_id`),
+  ADD KEY `idx_department` (`department`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_deployment_date` (`deployment_date`);
+
+--
 -- Indexes for table `standardUsers`
 --
 ALTER TABLE `standardUsers`
@@ -697,6 +763,30 @@ ALTER TABLE `notifications`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `password_reset_otps`
+--
+ALTER TABLE `password_reset_otps`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `rooms`
+--
+ALTER TABLE `rooms`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `room_bookings`
+--
+ALTER TABLE `room_bookings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `staff_directory`
+--
+ALTER TABLE `staff_directory`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `standardUsers`
 --
 ALTER TABLE `standardUsers`
@@ -755,6 +845,12 @@ ALTER TABLE `document_thread_entries`
 --
 ALTER TABLE `document_thread_entry_files`
   ADD CONSTRAINT `document_thread_entry_files_ibfk_1` FOREIGN KEY (`thread_entry_id`) REFERENCES `document_thread_entries` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `room_bookings`
+--
+ALTER TABLE `room_bookings`
+  ADD CONSTRAINT `fk_room_bookings_room` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
