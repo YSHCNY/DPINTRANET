@@ -5,16 +5,26 @@ require_once '../app/models/User.php';
 require_once "../app/models/correspondence.php";
 require_once '../app/models/UserModel.php';
 require_once '../app/config.php';
+require_once '../app/Services/CorrespondenceEmailService.php';
+require_once '../app/Services/CorrespondenceService.php';
+require_once '../app/Services/EmailProgressService.php';
 
+use App\Services\CorrespondenceEmailService;
+use App\Services\CorrespondenceService;
+use App\Services\EmailProgressService;
 
 class CorrespondenceController extends Controller {
 
     private $model;
+    private CorrespondenceService $correspondenceService;
+    private EmailProgressService $emailProgressService;
     private const MAX_ATTACHMENT_FILES = 4;
     private const MAX_ATTACHMENT_BYTES = 41943040; // 40 MB
 
     public function __construct() {
         $this->model = new CorrespondenceModel();
+        $this->correspondenceService = new CorrespondenceService();
+        $this->emailProgressService = new EmailProgressService();
     }
 
     /**
@@ -1435,6 +1445,8 @@ public function getDocumentData() {
             $this->redirect('index.php?controller=Auth&action=login');
         }
 
+        $ajaxResponse = null;
+
         if (!$this->canEditCorrespondence()) {
             $this->redirect('index.php?controller=correspondence&action=correspondence');
         }
@@ -1555,8 +1567,31 @@ public function getDocumentData() {
                     error_log('Finalize notifications failed: ' . $e->getMessage());
                 }
 
+                try {
+                    $doc = $this->model->getById($id);
+                    if ($doc) {
+                        $attachments = $this->model->getAttachments($id);
+                        $circulations = $this->model->getCirculationDetails($id);
+                        $creatorName = null;
+                        try {
+                            $userModel = new UserModel();
+                            $creator = $userModel->getUserById((int)($doc['created_by'] ?? 0));
+                            $creatorName = trim((string)($creator['firstName'] ?? '') . ' ' . (string)($creator['lastName'] ?? '')) ?: null;
+                        } catch (Throwable $e) {
+                            error_log('Creator name lookup failed: ' . $e->getMessage());
+                        }
+                        if ($creatorName !== null) {
+                            $doc['created_by_name'] = $creatorName;
+                        }
+                        $this->correspondenceService->queueCorrespondenceNotifications($id, $doc, $circulations, $attachments, 'finalized');
+                    }
+                } catch (Throwable $e) {
+                    error_log('Finalize email queue failed: ' . $e->getMessage());
+                }
+
                 $_SESSION['message'] = 'Draft finalized and circulated.';
                 $_SESSION['msg_type'] = 'success';
+                $ajaxResponse = ['success' => true, 'message' => 'Draft finalized and circulated.', 'document_id' => $id];
             } elseif (!empty($_POST['save_draft'])) {
                 // Ensure draft recipients/cc are stored
                 try {
@@ -1577,13 +1612,22 @@ public function getDocumentData() {
 
                 $_SESSION['message'] = 'Draft saved.';
                 $_SESSION['msg_type'] = 'success';
+                $ajaxResponse = ['success' => true, 'message' => 'Draft saved.', 'document_id' => $id];
             } else {
                 $_SESSION['message'] = 'Document updated successfully.';
                 $_SESSION['msg_type'] = 'success';
+                $ajaxResponse = ['success' => true, 'message' => 'Document updated successfully.', 'document_id' => $id];
             }
         } catch (Exception $e) {
             $_SESSION['message'] = $e->getMessage();
             $_SESSION['msg_type'] = 'error';
+            $ajaxResponse = ['success' => false, 'message' => $e->getMessage(), 'document_id' => $id];
+        }
+
+        if ($this->isAjaxRequest()) {
+            header('Content-Type: application/json');
+            echo json_encode($ajaxResponse ?? ['success' => false, 'message' => 'Request could not be completed.']);
+            exit;
         }
 
         header("Location: index.php?controller=correspondence&action=correspondence");
@@ -1719,6 +1763,8 @@ public function getDocumentData() {
         $this->redirect('index.php?controller=Auth&action=login');
     }
 
+    $ajaxResponse = null;
+
     if (!$this->canCreateCorrespondence()) {
         $_SESSION['message'] = 'You do not have permission to create correspondence.';
         $_SESSION['msg_type'] = 'error';
@@ -1782,6 +1828,7 @@ public function getDocumentData() {
             $this->model->notifyAdminsOfDraft($documentId);
             $_SESSION['message'] = "Draft saved and admin(s) notified. Tracking ID: " . $data['tracking_id'];
             $_SESSION['msg_type'] = "success";
+            $ajaxResponse = ['success' => true, 'message' => 'Draft saved and admin(s) notified.', 'document_id' => $documentId];
         } else {
             // Process into document_circulations for normal users
             if (!$this->processRecipients($documentId, $data['recipients'], $data['cc'])) {
@@ -1826,8 +1873,31 @@ public function getDocumentData() {
                 error_log('Post-circulation notification failed: ' . $e->getMessage());
             }
 
+            try {
+                $doc = $this->model->getById($documentId);
+                if ($doc) {
+                    $attachments = $this->model->getAttachments($documentId);
+                    $circulations = $this->model->getCirculationDetails($documentId);
+                    $creatorName = null;
+                    try {
+                        $userModel = new UserModel();
+                        $creator = $userModel->getUserById((int)($doc['created_by'] ?? 0));
+                        $creatorName = trim((string)($creator['firstName'] ?? '') . ' ' . (string)($creator['lastName'] ?? '')) ?: null;
+                    } catch (Throwable $e) {
+                        error_log('Creator name lookup failed: ' . $e->getMessage());
+                    }
+                    if ($creatorName !== null) {
+                        $doc['created_by_name'] = $creatorName;
+                    }
+                    $this->correspondenceService->queueCorrespondenceNotifications($documentId, $doc, $circulations, $attachments, 'circulated');
+                }
+            } catch (Throwable $e) {
+                error_log('Post-circulation email queue failed: ' . $e->getMessage());
+            }
+
             $_SESSION['message'] = "Document circulated successfully! Tracking ID: " . $data['tracking_id'];
             $_SESSION['msg_type'] = "success";
+            $ajaxResponse = ['success' => true, 'message' => 'Document circulated successfully.', 'document_id' => $documentId];
         }
 
         // commit DB transaction after all operations
@@ -1846,6 +1916,13 @@ public function getDocumentData() {
 
         $_SESSION['message'] = $e->getMessage();
         $_SESSION['msg_type'] = "error";
+        $ajaxResponse = ['success' => false, 'message' => $e->getMessage()];
+    }
+
+    if ($this->isAjaxRequest()) {
+        header('Content-Type: application/json');
+        echo json_encode($ajaxResponse ?? ['success' => false, 'message' => 'Request could not be completed.']);
+        exit;
     }
 
     header("Location: index.php?controller=correspondence&action=correspondence");
@@ -1996,6 +2073,30 @@ public function getDocumentData() {
         }
 
         return $saved;
+    }
+
+    private function isAjaxRequest(): bool
+    {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+
+    public function emailProgress(): void
+    {
+        if (!isset($_SESSION['user'])) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        $documentId = (int)($_GET['id'] ?? 0);
+        if ($documentId <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Document id is required']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode(array_merge(['success' => true], $this->emailProgressService->getProgressForCorrespondence($documentId)));
     }
 
        public function download() {

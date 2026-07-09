@@ -14,6 +14,7 @@ function avatarUrl($avatar) {
     return !empty($avatar)
         ? BASE_URL . 'uploads/standard_users/' . htmlspecialchars($avatar)
         : BASE_URL . 'uploads/standard_users/default.png';
+        
 }
 ?>
 

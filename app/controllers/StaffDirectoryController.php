@@ -3,6 +3,14 @@ session_start();
 require_once '../app/core/Controller.php';
 require_once '../app/models/StaffDirectoryModel.php';
 
+if (file_exists(__DIR__ . '/../config.php')) {
+    require_once __DIR__ . '/../config.php';
+} elseif (file_exists(__DIR__ . '/../../app/config.php')) {
+    require_once __DIR__ . '/../../app/config.php';
+}
+
+
+
 class StaffDirectoryController extends Controller {
     private StaffDirectoryModel $directoryModel;
 
@@ -170,9 +178,9 @@ class StaffDirectoryController extends Controller {
 
         $imageName = $staff['image'] ?? null;
         if (!empty($_FILES['profile_photo']['name']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = dirname(__DIR__, 2) . '/uploads/staff_directory/';
+            $uploadDir = dirname(__DIR__, 2) . '/uploads/staff_directory';
             if ($uploadDir === false) {
-                $uploadDir = dirname(__DIR__, 2) . '/uploads/staff_directory/';
+                $uploadDir = dirname(__DIR__, 2) . '/uploads/staff_directory';
             }
 
             if (!is_dir($uploadDir)) {

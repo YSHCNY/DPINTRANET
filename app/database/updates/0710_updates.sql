@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS email_queue (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    correspondence_id INT NOT NULL,
+    recipient_type VARCHAR(20) NOT NULL DEFAULT 'recipient',
+    recipient_email VARCHAR(255) NOT NULL,
+    notification_type VARCHAR(30) NOT NULL DEFAULT 'circulated',
+    subject VARCHAR(255) NULL,
+    body LONGTEXT NULL,
+    attachments JSON NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+    attempts INT NOT NULL DEFAULT 0,
+    error_message TEXT NULL,
+    queued_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    started_at DATETIME NULL,
+    completed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email_queue_status (status),
+    INDEX idx_email_queue_correspondence (correspondence_id),
+    INDEX idx_email_queue_queued_at (queued_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

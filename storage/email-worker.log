@@ -1,0 +1,4 @@
+Mail Error: The following From address failed: testmail@philkoei.com.ph : MAIL FROM command failed,server.philkoei.com.ph: SMTP command timeout - closing connection
+,421, SMTP server error: MAIL FROM command failed Detail: server.philkoei.com.ph: SMTP command timeout - closing connection
+ SMTP code: 421 SMTP server error: RSET command failed
+
