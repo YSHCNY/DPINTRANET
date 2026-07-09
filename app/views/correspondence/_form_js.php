@@ -1,4 +1,119 @@
 // Form-related behaviors: recipient drawer, chips, attachments, and form submit
+function isValidEmail(value) {
+    if (!value) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function setCustomEmailFeedback(section, message, tone = 'default') {
+    const feedback = document.getElementById(section === 'cc' ? 'cc-email-feedback' : 'recipients-email-feedback');
+    if (!feedback) return;
+    feedback.textContent = message;
+    feedback.classList.remove('text-slate-500', 'text-rose-600', 'text-emerald-600');
+    if (tone === 'error') {
+        feedback.classList.add('text-rose-600');
+    } else if (tone === 'success') {
+        feedback.classList.add('text-emerald-600');
+    } else {
+        feedback.classList.add('text-slate-500');
+    }
+}
+
+function getCurrentSectionValues(section) {
+    return Array.from(document.querySelectorAll(`input[name="${section}[]"]`))
+        .filter(input => input.checked)
+        .map(input => String(input.value));
+}
+
+function appendSelectionItem(section, value, label, options = {}) {
+    const normalizedValue = String(value);
+    const hiddenContainer = document.getElementById(section === 'cc' ? 'hidden-cc-inputs' : 'hidden-recipient-inputs');
+    const visibleContainer = document.getElementById(section === 'cc' ? 'cc-chips' : 'recipients-chips');
+
+    if (!hiddenContainer || !visibleContainer) return false;
+    if (getCurrentSectionValues(section).some(current => String(current).toLowerCase() === normalizedValue.toLowerCase())) {
+        return false;
+    }
+
+    const existingChip = Array.from(visibleContainer.querySelectorAll('[data-user-id]')).some(chip => String(chip.dataset.userId || '').toLowerCase() === normalizedValue.toLowerCase());
+    if (existingChip) {
+        return false;
+    }
+
+    const placeholder = visibleContainer.querySelector('[id$="-placeholder"]');
+    if (placeholder) placeholder.remove();
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'checkbox';
+    hiddenInput.name = `${section}[]`;
+    hiddenInput.value = normalizedValue;
+    hiddenInput.checked = true;
+    hiddenInput.hidden = true;
+    hiddenInput.setAttribute('data-selection-section', section);
+    hiddenInput.setAttribute('data-user-id', normalizedValue);
+    hiddenContainer.appendChild(hiddenInput);
+
+    const chip = document.createElement('span');
+    chip.className = options.kind === 'custom'
+        ? 'inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700'
+        : 'inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700';
+    chip.setAttribute('data-user-id', normalizedValue);
+    chip.setAttribute('data-selection-section', section);
+
+    const initials = document.createElement('span');
+    initials.className = options.kind === 'custom'
+        ? 'flex h-6 w-6 items-center justify-center rounded-full bg-amber-200 text-[10px] font-semibold uppercase text-amber-700'
+        : 'flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-semibold uppercase text-slate-700';
+    initials.textContent = options.kind === 'custom' ? 'EM' : String(label || '•').charAt(0).toUpperCase();
+
+    const labelEl = document.createElement('span');
+    labelEl.textContent = label;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'chip-remove ml-1 h-5 w-5 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700';
+    removeBtn.setAttribute('aria-label', `Remove ${section} recipient`);
+    removeBtn.setAttribute('data-user-id', normalizedValue);
+    removeBtn.setAttribute('data-selection-section', section);
+    removeBtn.textContent = '×';
+
+    chip.appendChild(initials);
+    chip.appendChild(labelEl);
+    chip.appendChild(removeBtn);
+    visibleContainer.appendChild(chip);
+
+    return true;
+}
+
+function addCustomEmailRecipient(section) {
+    const input = document.getElementById(section === 'cc' ? 'cc-email-input' : 'recipients-email-input');
+    if (!input) return;
+
+    const rawValue = input.value.trim().toLowerCase();
+    if (!rawValue) {
+        setCustomEmailFeedback(section, 'Enter an email address to add an external recipient.', 'error');
+        return;
+    }
+
+    if (!isValidEmail(rawValue)) {
+        setCustomEmailFeedback(section, 'Please enter a valid email address.', 'error');
+        return;
+    }
+
+    const normalizedValue = `email:${rawValue}`;
+    if (!appendSelectionItem(section, normalizedValue, rawValue, { kind: 'custom' })) {
+        setCustomEmailFeedback(section, 'That email address is already in the list.', 'error');
+        return;
+    }
+
+    input.value = '';
+    setCustomEmailFeedback(section, 'External recipient added.', 'success');
+    syncSelectionState();
+    updateRecipientBadge();
+    updateSummaryPanel();
+    updateRecipientTitleCounts();
+    bindChipRemoval();
+}
+
 function syncSelectionState() {
     const recipientChecks = Array.from(document.querySelectorAll('input[data-selection-section="recipients"]'));
     const ccChecks = Array.from(document.querySelectorAll('input[data-selection-section="cc"]'));
@@ -132,9 +247,9 @@ function bindChipRemoval() {
             event.stopPropagation();
             const userId = this.dataset.userId;
             const section = this.dataset.selectionSection;
-            const input = document.querySelector(`input[data-selection-section="${section}"][data-user-id="${userId}"]`);
-            if (input) {
-                input.checked = false;
+            const hiddenInput = document.querySelector(`input[name="${section}[]"][data-user-id="${userId}"]`);
+            if (hiddenInput) {
+                hiddenInput.remove();
             }
             const chip = this.closest('span[data-user-id]');
             if (chip) {
@@ -153,21 +268,33 @@ bindSelectionFilter('cc');
 syncSelectionState();
 bindChipRemoval();
 
+document.querySelectorAll('[data-custom-email-input]').forEach(input => {
+    input.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addCustomEmailRecipient(this.dataset.customEmailInput);
+        }
+    });
+});
+
 // Drawer for recipient/CC picker
 const recipientDrawer = document.getElementById('recipientDrawer');
 const recipientDrawerOverlay = document.getElementById('recipientDrawerOverlay');
 const drawerSearch = document.getElementById('drawer-search');
 let drawerMode = 'recipients';
 
+function syncDrawerCheckboxesWithSelection(mode) {
+    const existing = getCurrentSectionValues(mode);
+    document.querySelectorAll('[data-drawer-id]').forEach(cb => {
+        cb.checked = existing.includes(String(cb.dataset.drawerId));
+    });
+}
+
 function openRecipientDrawer(mode) {
     drawerMode = mode === 'cc' ? 'cc' : 'recipients';
     document.getElementById('drawerTitleSmall').textContent = mode === 'cc' ? 'Add CC' : 'Add Recipients';
     document.getElementById('drawerTitle').textContent = mode === 'cc' ? 'Select CC recipients' : 'Select recipients';
-    // pre-check boxes based on existing hidden inputs
-    const existing = Array.from(document.querySelectorAll(`input[name="${mode}[]"]`)).map(i => String(i.value));
-    document.querySelectorAll('[data-drawer-id]').forEach(cb => {
-        cb.checked = existing.includes(String(cb.dataset.drawerId));
-    });
+    syncDrawerCheckboxesWithSelection(drawerMode);
     recipientDrawer.classList.remove('hidden');
     recipientDrawerOverlay.classList.remove('hidden');
     // slide in
@@ -178,9 +305,16 @@ function openRecipientDrawer(mode) {
 }
 
 function closeRecipientDrawer() {
-    recipientDrawer.classList.add('translate-x-full');
-    recipientDrawerOverlay.classList.add('hidden');
-    setTimeout(() => recipientDrawer.classList.add('hidden'), 250);
+    if (recipientDrawer) {
+        syncDrawerCheckboxesWithSelection(drawerMode);
+        recipientDrawer.classList.add('translate-x-full');
+    }
+    if (recipientDrawerOverlay) {
+        recipientDrawerOverlay.classList.add('hidden');
+    }
+    setTimeout(() => {
+        if (recipientDrawer) recipientDrawer.classList.add('hidden');
+    }, 250);
 }
 
 if (drawerSearch) {
@@ -194,46 +328,22 @@ if (drawerSearch) {
 }
 
 function applyRecipientDrawer() {
-    // gather checked
     const checked = Array.from(document.querySelectorAll('#drawerList input[type="checkbox"]:checked'));
     const hiddenContainer = document.getElementById(drawerMode === 'recipients' ? 'hidden-recipient-inputs' : 'hidden-cc-inputs');
     const visibleContainer = document.getElementById(drawerMode === 'recipients' ? 'recipients-chips' : 'cc-chips');
 
     if (!hiddenContainer || !visibleContainer) return;
 
-    // remove existing hidden inputs for current mode
-    hiddenContainer.querySelectorAll(`input[name="${drawerMode}[]"]`).forEach(n => n.remove());
-    visibleContainer.innerHTML = '';
-
+    let addedCount = 0;
     checked.forEach(cb => {
-        const id = cb.dataset.drawerId;
+        const id = String(cb.dataset.drawerId || '');
         const name = cb.dataset.drawerName || cb.dataset.drawerEmail || id;
-
-        // create a hidden checkbox input for form submission
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.name = `${drawerMode}[]`;
-        input.value = id;
-        input.checked = true;
-        input.hidden = true;
-        input.setAttribute('data-selection-section', drawerMode);
-        input.setAttribute('data-user-id', id);
-        hiddenContainer.appendChild(input);
-
-        // create chip with remove button
-        const chip = document.createElement('span');
-        chip.className = 'inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700';
-        chip.setAttribute('data-user-id', id);
-        chip.setAttribute('data-selection-section', drawerMode);
-        chip.innerHTML = `
-            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-semibold uppercase text-slate-700">${name.charAt(0)}</span>
-            <span>${name}</span>
-            <button type="button" class="chip-remove ml-1 h-5 w-5 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700" aria-label="Remove ${drawerMode} recipient" data-user-id="${id}" data-selection-section="${drawerMode}">×</button>
-        `;
-        visibleContainer.appendChild(chip);
+        if (appendSelectionItem(drawerMode, id, name, { kind: 'user' })) {
+            addedCount += 1;
+        }
     });
 
-    if (!visibleContainer.children.length) {
+    if (addedCount === 0 && !visibleContainer.querySelector('[data-user-id]')) {
         visibleContainer.innerHTML = drawerMode === 'recipients'
             ? '<span id="recipients-placeholder" class="text-sm text-slate-500">No recipients selected.</span>'
             : '<span id="cc-placeholder" class="text-sm text-slate-500">No CC selected.</span>';
@@ -248,8 +358,8 @@ function applyRecipientDrawer() {
 }
 
 function updateRecipientTitleCounts() {
-    const recipientsCount = document.querySelectorAll('input[name="recipients[]"]').length;
-    const ccCount = document.querySelectorAll('input[name="cc[]"]').length;
+    const recipientsCount = document.querySelectorAll('input[name="recipients[]"]:checked').length;
+    const ccCount = document.querySelectorAll('input[name="cc[]"]:checked').length;
     const recipientsTitle = document.getElementById('recipients-count-title');
     const ccTitle = document.getElementById('cc-count-title');
 
@@ -265,7 +375,7 @@ function updateRecipientTitleCounts() {
 function updateRecipientBadge() {
     const badge = document.getElementById('recipients-count-badge');
     if (!badge) return;
-    const count = document.querySelectorAll('input[name="recipients[]"]').length;
+    const count = document.querySelectorAll('input[name="recipients[]"]:checked').length;
     if (count > 0) {
         badge.textContent = String(count);
         badge.classList.remove('hidden');
@@ -288,8 +398,8 @@ updateRecipientBadge();
 
 // update summary counts (recipients, cc, attachments, due date)
 function updateSummaryPanel() {
-    const rCount = document.querySelectorAll('input[name="recipients[]"]').length;
-    const cCount = document.querySelectorAll('input[name="cc[]"]').length;
+    const rCount = document.querySelectorAll('input[name="recipients[]"]:checked').length;
+    const cCount = document.querySelectorAll('input[name="cc[]"]:checked').length;
     const aCount = (document.querySelector('input[name="attachments[]"]')?.files || []).length;
     const due = document.querySelector('input[name="due_date"]')?.value || '—';
 

@@ -82,25 +82,53 @@ class CorrespondenceController extends Controller {
                 try {
                     require_once __DIR__ . '/../models/UserModel.php';
                     $userModel = new UserModel();
-                    $draftRecipientsRaw = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
-                    $draftCcRaw = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+                    $draftRecipientsRaw = $this->normalizeRecipientValues($doc['draft_recipients'] ?? '');
+                    $draftCcRaw = $this->normalizeRecipientValues($doc['draft_cc'] ?? '');
 
-                    foreach ($draftRecipientsRaw as $rid) {
-                        $user = $userModel->getUserById((int)$rid);
-                        $draftRecipients[] = [
-                            'id' => (int)$rid,
-                            'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$rid),
-                            'email' => $user['email'] ?? null,
-                        ];
+                    foreach ($draftRecipientsRaw as $entry) {
+                        if (preg_match('/^\d+$/', (string)$entry)) {
+                            $user = $userModel->getUserById((int)$entry);
+                            $draftRecipients[] = [
+                                'kind' => 'user',
+                                'id' => (int)$entry,
+                                'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$entry),
+                                'email' => $user['email'] ?? null,
+                            ];
+                        } else {
+                            $email = preg_match('/^email:(.+)$/i', (string)$entry, $matches) ? trim($matches[1]) : trim((string)$entry);
+                            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                                $draftRecipients[] = [
+                                    'kind' => 'custom',
+                                    'id' => 0,
+                                    'name' => $email,
+                                    'email' => $email,
+                                    'value' => 'email:' . strtolower($email),
+                                ];
+                            }
+                        }
                     }
 
-                    foreach ($draftCcRaw as $rid) {
-                        $user = $userModel->getUserById((int)$rid);
-                        $draftCc[] = [
-                            'id' => (int)$rid,
-                            'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$rid),
-                            'email' => $user['email'] ?? null,
-                        ];
+                    foreach ($draftCcRaw as $entry) {
+                        if (preg_match('/^\d+$/', (string)$entry)) {
+                            $user = $userModel->getUserById((int)$entry);
+                            $draftCc[] = [
+                                'kind' => 'user',
+                                'id' => (int)$entry,
+                                'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$entry),
+                                'email' => $user['email'] ?? null,
+                            ];
+                        } else {
+                            $email = preg_match('/^email:(.+)$/i', (string)$entry, $matches) ? trim($matches[1]) : trim((string)$entry);
+                            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                                $draftCc[] = [
+                                    'kind' => 'custom',
+                                    'id' => 0,
+                                    'name' => $email,
+                                    'email' => $email,
+                                    'value' => 'email:' . strtolower($email),
+                                ];
+                            }
+                        }
                     }
                 } catch (Throwable $e) {
                     // ignore
@@ -134,6 +162,54 @@ class CorrespondenceController extends Controller {
         ]);
 
         $this->view('layout/main', ['content' => $content]);
+    }
+
+    private function normalizeRecipientValues($rawValues): array {
+        if (is_array($rawValues)) {
+            $values = array_filter(array_map(function ($value) {
+                return trim((string)$value);
+            }, $rawValues));
+        } else {
+            $values = array_filter(array_map('trim', preg_split('/\s*,\s*/', trim((string)$rawValues))));
+        }
+
+        $normalized = [];
+        foreach ($values as $value) {
+            $value = trim((string)$value);
+            if ($value === '') {
+                continue;
+            }
+
+            if (preg_match('/^\d+$/', $value)) {
+                $normalized[] = $value;
+                continue;
+            }
+
+            if (preg_match('/^email:(.+)$/i', $value, $matches)) {
+                $email = trim($matches[1]);
+                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $normalized[] = 'email:' . strtolower($email);
+                }
+                continue;
+            }
+
+            if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                $normalized[] = 'email:' . strtolower($value);
+            }
+        }
+
+        return $normalized;
+    }
+
+    private function extractInternalRecipientIds($rawValues): array {
+        $ids = [];
+        foreach ($this->normalizeRecipientValues($rawValues) as $value) {
+            if (preg_match('/^\d+$/', (string)$value)) {
+                $ids[] = (int)$value;
+            }
+        }
+
+        return array_values(array_unique(array_filter($ids)));
     }
 
     private function getRemovedItemsPreference(): bool {
@@ -202,33 +278,59 @@ class CorrespondenceController extends Controller {
                 try {
                     require_once __DIR__ . '/../models/UserModel.php';
                     $userModel = new UserModel();
-                    $draftRecipients = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
-                    $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+                    $draftRecipients = $this->normalizeRecipientValues($doc['draft_recipients'] ?? '');
+                    $draftCc = $this->normalizeRecipientValues($doc['draft_cc'] ?? '');
 
-                    foreach ($draftRecipients as $rid) {
-                        $user = $userModel->getUserById((int)$rid);
-                        $circulations[] = [
-                            'recipient_id' => (int)$rid,
-                            'cc' => 0,
-                            'status' => 'Pending',
-                            'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: null,
-                            'position' => $user['position'] ?? null,
-                            'department' => $user['department'] ?? null,
-                            'email' => $user['email'] ?? null,
-                        ];
+                    foreach ($draftRecipients as $entry) {
+                        if (preg_match('/^\d+$/', (string)$entry)) {
+                            $user = $userModel->getUserById((int)$entry);
+                            $circulations[] = [
+                                'recipient_id' => (int)$entry,
+                                'cc' => 0,
+                                'status' => 'Pending',
+                                'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: null,
+                                'position' => $user['position'] ?? null,
+                                'department' => $user['department'] ?? null,
+                                'email' => $user['email'] ?? null,
+                            ];
+                        } else {
+                            $email = preg_match('/^email:(.+)$/i', (string)$entry, $matches) ? trim($matches[1]) : trim((string)$entry);
+                            $circulations[] = [
+                                'recipient_id' => null,
+                                'cc' => 0,
+                                'status' => 'Pending',
+                                'recipient_name' => $email,
+                                'position' => null,
+                                'department' => null,
+                                'email' => $email,
+                            ];
+                        }
                     }
 
-                    foreach ($draftCc as $rid) {
-                        $user = $userModel->getUserById((int)$rid);
-                        $circulations[] = [
-                            'recipient_id' => (int)$rid,
-                            'cc' => 1,
-                            'status' => 'Pending',
-                            'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: null,
-                            'position' => $user['position'] ?? null,
-                            'department' => $user['department'] ?? null,
-                            'email' => $user['email'] ?? null,
-                        ];
+                    foreach ($draftCc as $entry) {
+                        if (preg_match('/^\d+$/', (string)$entry)) {
+                            $user = $userModel->getUserById((int)$entry);
+                            $circulations[] = [
+                                'recipient_id' => (int)$entry,
+                                'cc' => 1,
+                                'status' => 'Pending',
+                                'recipient_name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: null,
+                                'position' => $user['position'] ?? null,
+                                'department' => $user['department'] ?? null,
+                                'email' => $user['email'] ?? null,
+                            ];
+                        } else {
+                            $email = preg_match('/^email:(.+)$/i', (string)$entry, $matches) ? trim($matches[1]) : trim((string)$entry);
+                            $circulations[] = [
+                                'recipient_id' => null,
+                                'cc' => 1,
+                                'status' => 'Pending',
+                                'recipient_name' => $email,
+                                'position' => null,
+                                'department' => null,
+                                'email' => $email,
+                            ];
+                        }
                     }
                 } catch (Throwable $e) {
                     // ignore - gracefully degrade to showing no recipients
@@ -1000,25 +1102,43 @@ public function getDocumentData() {
             try {
                 require_once __DIR__ . '/../models/UserModel.php';
                 $userModel = new UserModel();
-                $draftRecipients = !empty($doc['draft_recipients']) ? array_filter(array_map('trim', explode(',', $doc['draft_recipients']))) : [];
-                $draftCc = !empty($doc['draft_cc']) ? array_filter(array_map('trim', explode(',', $doc['draft_cc']))) : [];
+                $draftRecipients = $this->normalizeRecipientValues($doc['draft_recipients'] ?? '');
+                $draftCc = $this->normalizeRecipientValues($doc['draft_cc'] ?? '');
 
-                foreach ($draftRecipients as $rid) {
-                    $user = $userModel->getUserById((int)$rid);
-                    $recipients[] = [
-                        'id' => (int)$rid,
-                        'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$rid),
-                        'email' => $user['email'] ?? null,
-                    ];
+                foreach ($draftRecipients as $entry) {
+                    if (preg_match('/^\d+$/', (string)$entry)) {
+                        $user = $userModel->getUserById((int)$entry);
+                        $recipients[] = [
+                            'id' => (int)$entry,
+                            'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$entry),
+                            'email' => $user['email'] ?? null,
+                        ];
+                    } else {
+                        $email = preg_match('/^email:(.+)$/i', (string)$entry, $matches) ? trim($matches[1]) : trim((string)$entry);
+                        $recipients[] = [
+                            'id' => 0,
+                            'name' => $email,
+                            'email' => $email,
+                        ];
+                    }
                 }
 
-                foreach ($draftCc as $rid) {
-                    $user = $userModel->getUserById((int)$rid);
-                    $cc[] = [
-                        'id' => (int)$rid,
-                        'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$rid),
-                        'email' => $user['email'] ?? null,
-                    ];
+                foreach ($draftCc as $entry) {
+                    if (preg_match('/^\d+$/', (string)$entry)) {
+                        $user = $userModel->getUserById((int)$entry);
+                        $cc[] = [
+                            'id' => (int)$entry,
+                            'name' => trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? '')) ?: ($user['email'] ?? (string)$entry),
+                            'email' => $user['email'] ?? null,
+                        ];
+                    } else {
+                        $email = preg_match('/^email:(.+)$/i', (string)$entry, $matches) ? trim($matches[1]) : trim((string)$entry);
+                        $cc[] = [
+                            'id' => 0,
+                            'name' => $email,
+                            'email' => $email,
+                        ];
+                    }
                 }
             } catch (Throwable $e) {
                 // ignore and fallthrough to empty lists
@@ -1337,8 +1457,8 @@ public function getDocumentData() {
             // Gather recipients/cc from POST (string or array)
             $recipientsRaw = $_POST['recipients'] ?? '';
             $ccRaw = $_POST['cc'] ?? '';
-            if (is_array($recipientsRaw)) $recipientsRaw = implode(',', array_filter($recipientsRaw)); else $recipientsRaw = trim($recipientsRaw);
-            if (is_array($ccRaw)) $ccRaw = implode(',', array_filter($ccRaw)); else $ccRaw = trim($ccRaw);
+            $recipientsRaw = implode(',', $this->normalizeRecipientValues($recipientsRaw));
+            $ccRaw = implode(',', $this->normalizeRecipientValues($ccRaw));
             if (empty($data['title'])) {
                 throw new Exception('Document title is required.');
             }
@@ -1612,18 +1732,8 @@ public function getDocumentData() {
         $recipientsRaw = $_POST['recipients'] ?? '';
         $ccRaw         = $_POST['cc'] ?? '';
 
-        // Convert array to comma-separated string
-        if (is_array($recipientsRaw)) {
-            $recipientsRaw = implode(',', array_filter($recipientsRaw));
-        } else {
-            $recipientsRaw = trim($recipientsRaw);
-        }
-
-        if (is_array($ccRaw)) {
-            $ccRaw = implode(',', array_filter($ccRaw));
-        } else {
-            $ccRaw = trim($ccRaw);
-        }
+        $recipientsRaw = implode(',', $this->normalizeRecipientValues($recipientsRaw));
+        $ccRaw = implode(',', $this->normalizeRecipientValues($ccRaw));
 
         $userLevel = (int)($_SESSION['user_level'] ?? 3);
 
@@ -1703,10 +1813,10 @@ public function getDocumentData() {
                 // notify recipients (standard users) parsed from recipients / cc
                 $recipientIds = [];
                 if (!empty($data['recipients'])) {
-                    $recipientIds = array_merge($recipientIds, array_map('intval', array_filter(array_map('trim', explode(',', $data['recipients'])))));
+                    $recipientIds = array_merge($recipientIds, $this->extractInternalRecipientIds($data['recipients']));
                 }
                 if (!empty($data['cc'])) {
-                    $recipientIds = array_merge($recipientIds, array_map('intval', array_filter(array_map('trim', explode(',', $data['cc'])))));
+                    $recipientIds = array_merge($recipientIds, $this->extractInternalRecipientIds($data['cc']));
                 }
                 $recipientIds = array_values(array_unique(array_filter($recipientIds)));
                 if (!empty($recipientIds)) {

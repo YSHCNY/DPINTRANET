@@ -9,6 +9,7 @@ class CorrespondenceModel {
     public function __construct() {
         $this->conn = Database::connect();
         $this->ensureLifecycleColumns();
+        $this->ensureRecipientColumns();
         $this->ensureThreadTables();
     }
 
@@ -135,6 +136,25 @@ class CorrespondenceModel {
         }
     }
 
+    private function ensureRecipientColumns() {
+        $columns = [
+            'recipient_email' => "ALTER TABLE document_circulations ADD COLUMN recipient_email VARCHAR(255) NULL",
+            'recipient_name' => "ALTER TABLE document_circulations ADD COLUMN recipient_name VARCHAR(191) NULL",
+        ];
+
+        foreach ($columns as $column => $sql) {
+            try {
+                $stmt = $this->conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'document_circulations' AND COLUMN_NAME = ?");
+                $stmt->execute([$column]);
+                if ((int)$stmt->fetchColumn() === 0) {
+                    $this->conn->exec($sql);
+                }
+            } catch (PDOException $e) {
+                error_log("Correspondence recipient column setup failed for {$column}: " . $e->getMessage());
+            }
+        }
+    }
+
     private function ensureLifecycleColumns() {
 
         $columns = [
@@ -238,14 +258,16 @@ class CorrespondenceModel {
             return true;
         }
 
-        // Convert comma-separated or array to clean integer IDs
+        // Convert comma-separated or array to clean recipient values
         if (!is_array($recipientInput)) {
-            $recipientIds = array_filter(array_map('trim', explode(',', $recipientInput)));
+            $recipientItems = array_filter(array_map('trim', preg_split('/\s*,\s*/', trim((string)$recipientInput))));
         } else {
-            $recipientIds = array_filter($recipientInput);
+            $recipientItems = array_filter(array_map(function ($value) {
+                return trim((string)$value);
+            }, $recipientInput));
         }
 
-        if (empty($recipientIds)) {
+        if (empty($recipientItems)) {
             return true;
         }
 
@@ -253,14 +275,40 @@ class CorrespondenceModel {
         $placeholders = [];
         $ccFlag = $isCc ? 1 : 0;
 
-        foreach ($recipientIds as $id) {
-            $recipientId = (int)$id;
-            if ($recipientId > 0) {
-                $placeholders[] = "(?, ?, ?, 'Pending', NULL, NULL, NULL)";
-                $values[] = $documentId;
-                $values[] = $recipientId;
-                $values[] = $ccFlag;
+        foreach ($recipientItems as $item) {
+            $item = trim((string)$item);
+            if ($item === '') {
+                continue;
             }
+
+            if (preg_match('/^\d+$/', $item)) {
+                $recipientId = (int)$item;
+                if ($recipientId > 0) {
+                    $placeholders[] = "(?, ?, ?, 'Pending', NULL, NULL, NULL, NULL, NULL)";
+                    $values[] = $documentId;
+                    $values[] = $recipientId;
+                    $values[] = $ccFlag;
+                }
+                continue;
+            }
+
+            if (preg_match('/^email:(.+)$/i', $item, $matches)) {
+                $email = trim($matches[1]);
+            } else {
+                $email = $item;
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+
+            $displayName = $email;
+            $placeholders[] = "(?, ?, ?, 'Pending', NULL, NULL, NULL, ?, ?)";
+            $values[] = $documentId;
+            $values[] = null;
+            $values[] = $ccFlag;
+            $values[] = strtolower($email);
+            $values[] = $displayName;
         }
 
         if (empty($placeholders)) {
@@ -268,7 +316,7 @@ class CorrespondenceModel {
         }
 
         $sql = "INSERT INTO document_circulations 
-                (document_id, recipient_id, cc, status, received_at, pin_code, remarks) 
+                (document_id, recipient_id, cc, status, received_at, pin_code, remarks, recipient_email, recipient_name) 
                 VALUES " . implode(', ', $placeholders);
 
         $stmt = $this->conn->prepare($sql);
@@ -308,8 +356,8 @@ class CorrespondenceModel {
      */
     public function getAllDocuments($includeDeleted = false) {
         $sql = "SELECT d.*, 
-                       COUNT(dc.id) as total_recipients,
-                       SUM(CASE WHEN dc.status = 'Received' THEN 1 ELSE 0 END) as received_count
+                       SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 THEN 1 ELSE 0 END) as total_recipients,
+                       SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 AND dc.status = 'Received' THEN 1 ELSE 0 END) as received_count
                 FROM documents d
                 LEFT JOIN document_circulations dc ON d.id = dc.document_id";
 
@@ -349,9 +397,9 @@ class CorrespondenceModel {
                     COUNT(*) as total_documents,
                     SUM(CASE WHEN COALESCE(d.is_draft, 0) = 1 THEN 1 ELSE 0 END) as draft_documents,
                     SUM(CASE WHEN LOWER(d.status) = 'inprogress' THEN 1 ELSE 0 END) as inprogress_documents,
-                    COUNT(dc.id) as total_recipients,
-                    SUM(CASE WHEN dc.status = 'Received' THEN 1 ELSE 0 END) as received_recipients,
-                    SUM(CASE WHEN dc.status != 'Received' THEN 1 ELSE 0 END) as pending_recipients
+                    SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 THEN 1 ELSE 0 END) as total_recipients,
+                    SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 AND dc.status = 'Received' THEN 1 ELSE 0 END) as received_recipients,
+                    SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 AND dc.status != 'Received' THEN 1 ELSE 0 END) as pending_recipients
                 FROM documents d
                 LEFT JOIN document_circulations dc ON dc.document_id = d.id
                 WHERE COALESCE(d.is_deleted, 0) = 0";
@@ -373,9 +421,9 @@ class CorrespondenceModel {
     public function getRecentDocuments(int $limit = 6): array {
         $sql = "SELECT d.id, d.tracking_id, d.title, d.type, d.priority, d.status, d.is_draft,
                        d.created_at,
-                       SUM(CASE WHEN dc.status = 'Received' THEN 1 ELSE 0 END) as received_count,
-                       SUM(CASE WHEN dc.status != 'Received' THEN 1 ELSE 0 END) as pending_count,
-                       COUNT(dc.id) as recipient_count
+                       SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 AND dc.status = 'Received' THEN 1 ELSE 0 END) as received_count,
+                       SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 AND dc.status != 'Received' THEN 1 ELSE 0 END) as pending_count,
+                       SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 THEN 1 ELSE 0 END) as recipient_count
                 FROM documents d
                 LEFT JOIN document_circulations dc ON dc.document_id = d.id
                 WHERE COALESCE(d.is_deleted, 0) = 0
@@ -739,8 +787,8 @@ class CorrespondenceModel {
      */
     public function getDocumentWithDetails($id) {
         $sql = "SELECT d.*, 
-                       COUNT(dc.id) as total_recipients,
-                       SUM(CASE WHEN dc.status = 'Received' THEN 1 ELSE 0 END) as received_count
+                       SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 THEN 1 ELSE 0 END) as total_recipients,
+                       SUM(CASE WHEN dc.recipient_id IS NOT NULL AND dc.recipient_id > 0 AND dc.status = 'Received' THEN 1 ELSE 0 END) as received_count
                 FROM documents d
                 LEFT JOIN document_circulations dc ON d.id = dc.document_id
                 WHERE d.id = ?
@@ -795,22 +843,22 @@ class CorrespondenceModel {
     /**
      * Get full circulation details (for modal and portal)
      */
-	    public function getCirculationDetails($documentId) {
-	        $sql = "SELECT
-	                    dc.*,
-	                    d.tracking_id,
-	                    d.title,
-	                    d.created_at AS circulated_at,
-	                    d.due_date,
-	                    TRIM(CONCAT(COALESCE(su.firstName, ''), ' ', COALESCE(su.lastName, ''))) AS recipient_name,
-	                    su.position,
-	                    su.department,
-	                    su.email
-	                FROM document_circulations dc
-	                INNER JOIN documents d ON d.id = dc.document_id
-	                LEFT JOIN standardUsers su ON dc.recipient_id = su.id
-	                WHERE dc.document_id = ?
-	                ORDER BY dc.cc ASC, COALESCE(su.firstName, '') ASC, COALESCE(su.lastName, '') ASC";
+    public function getCirculationDetails($documentId) {
+        $sql = "SELECT
+                    dc.*,
+                    d.tracking_id,
+                    d.title,
+                    d.created_at AS circulated_at,
+                    d.due_date,
+                    COALESCE(dc.recipient_name, TRIM(CONCAT(COALESCE(su.firstName, ''), ' ', COALESCE(su.lastName, '')))) AS recipient_name,
+                    su.position,
+                    su.department,
+                    COALESCE(dc.recipient_email, su.email) AS email
+                FROM document_circulations dc
+                INNER JOIN documents d ON d.id = dc.document_id
+                LEFT JOIN standardUsers su ON dc.recipient_id = su.id
+                WHERE dc.document_id = ?
+                ORDER BY dc.cc ASC, COALESCE(dc.recipient_name, TRIM(CONCAT(COALESCE(su.firstName, ''), ' ', COALESCE(su.lastName, '')))) ASC";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$documentId]);

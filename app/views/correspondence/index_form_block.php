@@ -19,30 +19,43 @@
             <!-- Recipients & CC moved to top for email-like flow -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 items-stretch">
                 <section class="flex h-full flex-col rounded-md border border-slate-200 bg-white p-3 shadow-sm">
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Recipients</p>
                             <p class="mt-1 text-sm font-semibold text-slate-900">Recipients <span id="recipients-count-title" class="text-slate-500">(<?= count($draftRecipients ?? []) ?>)</span></p>
                         </div>
-                        <button type="button" onclick="openRecipientDrawer('recipients')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
-                            Add
-                        </button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+                                <input type="email" id="recipients-email-input" data-custom-email-input="recipients" placeholder="name@example.com" class="w-36 border-0 bg-transparent px-1 py-0 text-xs text-slate-700 outline-none placeholder:text-slate-400">
+                                <button type="button" onclick="addCustomEmailRecipient('recipients')" class="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-amber-700">Add Email</button>
+                            </div>
+                            <button type="button" onclick="openRecipientDrawer('recipients')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+                                Select
+                            </button>
+                        </div>
                     </div>
+                    <p id="recipients-email-feedback" class="mt-2 text-xs text-slate-500">Use the email button for external recipients and the selector for staff directory users.</p>
 
                     <div id="hidden-recipient-inputs" class="hidden">
                         <?php if (!empty($draftRecipients)): ?>
                             <?php foreach ($draftRecipients as $r): ?>
-                                <input type="checkbox" name="recipients[]" value="<?= (int)$r['id'] ?>" checked data-selection-section="recipients" data-user-id="<?= (int)$r['id'] ?>">
+                                <?php $recipientValue = (($r['kind'] ?? '') === 'custom') ? ('email:' . strtolower((string)($r['email'] ?? ''))) : (string)((int)($r['id'] ?? 0)); ?>
+                                <input type="checkbox" name="recipients[]" value="<?= htmlspecialchars($recipientValue) ?>" checked data-selection-section="recipients" data-user-id="<?= htmlspecialchars($recipientValue) ?>">
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                     <div class="mt-3 flex flex-wrap gap-2" id="recipients-chips">
                         <?php if (!empty($draftRecipients)): ?>
                             <?php foreach ($draftRecipients as $r): ?>
-                                <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700" data-user-id="<?= (int)$r['id'] ?>" data-selection-section="recipients">
-                                    <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-semibold uppercase text-slate-700"><?= htmlspecialchars(substr($r['name'], 0, 1)) ?></span>
-                                    <span><?= htmlspecialchars($r['name']) ?></span>
-                                    <button type="button" class="chip-remove ml-1 h-5 w-5 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700" aria-label="Remove recipient" data-user-id="<?= (int)$r['id'] ?>" data-selection-section="recipients">×</button>
+                                <?php $recipientKind = (($r['kind'] ?? '') === 'custom') ? 'custom' : 'user'; ?>
+                                <?php $recipientValue = ($recipientKind === 'custom') ? ('email:' . strtolower((string)($r['email'] ?? ''))) : (string)((int)($r['id'] ?? 0)); ?>
+                                <?php $recipientName = $r['name'] ?? ($r['email'] ?? ''); ?>
+                                <span class="inline-flex items-center gap-2 rounded-full <?= $recipientKind === 'custom' ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700' ?> px-2.5 py-1 text-xs font-medium" data-user-id="<?= htmlspecialchars($recipientValue) ?>" data-selection-section="recipients">
+                                    <span class="flex h-6 w-6 items-center justify-center rounded-full <?= $recipientKind === 'custom' ? 'bg-amber-200 text-amber-700' : 'bg-slate-200 text-slate-700' ?> text-[10px] font-semibold uppercase">
+                                        <?= $recipientKind === 'custom' ? 'EM' : htmlspecialchars(substr($recipientName, 0, 1)) ?>
+                                    </span>
+                                    <span><?= htmlspecialchars($recipientName) ?></span>
+                                    <button type="button" class="chip-remove ml-1 h-5 w-5 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700" aria-label="Remove recipient" data-user-id="<?= htmlspecialchars($recipientValue) ?>" data-selection-section="recipients">×</button>
                                 </span>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -52,30 +65,43 @@
                 </section>
 
                 <section class="flex h-full flex-col rounded-md border border-slate-200 bg-white p-3 shadow-sm">
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">CC</p>
                             <p class="mt-1 text-sm font-semibold text-slate-900">CC <span id="cc-count-title" class="text-slate-500">(<?= count($draftCc ?? []) ?>)</span></p>
                         </div>
-                        <button type="button" onclick="openRecipientDrawer('cc')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
-                            Add
-                        </button>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+                                <input type="email" id="cc-email-input" data-custom-email-input="cc" placeholder="name@example.com" class="w-36 border-0 bg-transparent px-1 py-0 text-xs text-slate-700 outline-none placeholder:text-slate-400">
+                                <button type="button" onclick="addCustomEmailRecipient('cc')" class="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-amber-700">Add Email</button>
+                            </div>
+                            <button type="button" onclick="openRecipientDrawer('cc')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
+                                Select
+                            </button>
+                        </div>
                     </div>
+                    <p id="cc-email-feedback" class="mt-2 text-xs text-slate-500">Use the email button for external recipients and the selector for staff directory users.</p>
 
                     <div id="hidden-cc-inputs" class="hidden">
                         <?php if (!empty($draftCc)): ?>
                             <?php foreach ($draftCc as $c): ?>
-                                <input type="checkbox" name="cc[]" value="<?= (int)$c['id'] ?>" checked data-selection-section="cc" data-user-id="<?= (int)$c['id'] ?>">
+                                <?php $ccValue = (($c['kind'] ?? '') === 'custom') ? ('email:' . strtolower((string)($c['email'] ?? ''))) : (string)((int)($c['id'] ?? 0)); ?>
+                                <input type="checkbox" name="cc[]" value="<?= htmlspecialchars($ccValue) ?>" checked data-selection-section="cc" data-user-id="<?= htmlspecialchars($ccValue) ?>">
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                     <div class="mt-3 flex flex-wrap gap-2" id="cc-chips">
                         <?php if (!empty($draftCc)): ?>
                             <?php foreach ($draftCc as $c): ?>
-                                <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700" data-user-id="<?= (int)$c['id'] ?>" data-selection-section="cc">
-                                    <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-semibold uppercase text-slate-700"><?= htmlspecialchars(substr($c['name'], 0, 1)) ?></span>
-                                    <span><?= htmlspecialchars($c['name']) ?></span>
-                                    <button type="button" class="chip-remove ml-1 h-5 w-5 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700" aria-label="Remove CC recipient" data-user-id="<?= (int)$c['id'] ?>" data-selection-section="cc">×</button>
+                                <?php $ccKind = (($c['kind'] ?? '') === 'custom') ? 'custom' : 'user'; ?>
+                                <?php $ccValue = ($ccKind === 'custom') ? ('email:' . strtolower((string)($c['email'] ?? ''))) : (string)((int)($c['id'] ?? 0)); ?>
+                                <?php $ccName = $c['name'] ?? ($c['email'] ?? ''); ?>
+                                <span class="inline-flex items-center gap-2 rounded-full <?= $ccKind === 'custom' ? 'border border-amber-200 bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700' ?> px-2.5 py-1 text-xs font-medium" data-user-id="<?= htmlspecialchars($ccValue) ?>" data-selection-section="cc">
+                                    <span class="flex h-6 w-6 items-center justify-center rounded-full <?= $ccKind === 'custom' ? 'bg-amber-200 text-amber-700' : 'bg-slate-200 text-slate-700' ?> text-[10px] font-semibold uppercase">
+                                        <?= $ccKind === 'custom' ? 'EM' : htmlspecialchars(substr($ccName, 0, 1)) ?>
+                                    </span>
+                                    <span><?= htmlspecialchars($ccName) ?></span>
+                                    <button type="button" class="chip-remove ml-1 h-5 w-5 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700" aria-label="Remove CC recipient" data-user-id="<?= htmlspecialchars($ccValue) ?>" data-selection-section="cc">×</button>
                                 </span>
                             <?php endforeach; ?>
                         <?php else: ?>

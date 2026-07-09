@@ -574,12 +574,38 @@ class AuthController extends Controller {
         }
 
         $uploadDir = dirname(__DIR__, 2) . '/uploads/profile/';
+
+        clearstatcache();
+
+        echo '<pre>';
+        echo "uploadDir: $uploadDir\n";
+        echo "realpath: " . realpath($uploadDir) . "\n";
+        echo "exists: " . (file_exists($uploadDir) ? 'yes' : 'no') . "\n";
+        echo "is_dir: " . (is_dir($uploadDir) ? 'yes' : 'no') . "\n";
+        echo "is_writable: " . (is_writable($uploadDir) ? 'yes' : 'no') . "\n";
+        echo "owner uid: " . fileowner($uploadDir) . "\n";
+        echo "group gid: " . filegroup($uploadDir) . "\n";
+        echo "perms: " . substr(sprintf('%o', fileperms($uploadDir)), -4) . "\n";
+
+        echo "\nCurrent PHP user:\n";
+        echo trim(shell_exec('id 2>/dev/null')) . "\n";
+        echo '</pre>';
+        exit;
+
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
         $fileName = uniqid('core_user_', true) . '.' . $extensions[$mimeType];
         $targetFile = $uploadDir . $fileName;
+
+
+        var_dump($uploadDir);
+        var_dump($targetFile);
+        var_dump(is_dir($uploadDir));
+        var_dump(is_writable($uploadDir));
+        var_dump($_FILES['profile_picture']);
+        
 
         if (!move_uploaded_file($_FILES['profile_picture']['tmp_name'], $targetFile)) {
             throw new Exception('Failed to save profile picture.');

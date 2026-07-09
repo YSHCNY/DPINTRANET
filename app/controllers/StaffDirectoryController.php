@@ -72,9 +72,9 @@ class StaffDirectoryController extends Controller {
 
         $imageName = null;
         if (!empty($_FILES['profile_photo']['name']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = realpath(__DIR__ . '/../../uploads/staff_directory');
+            $uploadDir = dirname(__DIR__, 2) . '/uploads/staff_directory/';
             if ($uploadDir === false) {
-                $uploadDir = __DIR__ . '/../../uploads/staff_directory';
+                $uploadDir = dirname(__DIR__, 2) . '/uploads/staff_directory/';
             }
 
             if (!is_dir($uploadDir)) {
@@ -170,9 +170,9 @@ class StaffDirectoryController extends Controller {
 
         $imageName = $staff['image'] ?? null;
         if (!empty($_FILES['profile_photo']['name']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = realpath(__DIR__ . '/../../uploads/staff_directory');
+            $uploadDir = dirname(__DIR__, 2) . '/uploads/staff_directory/';
             if ($uploadDir === false) {
-                $uploadDir = __DIR__ . '/../../uploads/staff_directory';
+                $uploadDir = dirname(__DIR__, 2) . '/uploads/staff_directory/';
             }
 
             if (!is_dir($uploadDir)) {

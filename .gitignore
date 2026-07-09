@@ -10,6 +10,7 @@ app/core/Database.php
 
 # COMPOSER
 /vendor/
+node_modules/
 
 #UPLOADS
 app/uploads/standard_users/*

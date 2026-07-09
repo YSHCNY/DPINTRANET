@@ -28,7 +28,7 @@ $remainingAttempts = $remainingAttempts ?? 5;
           <span>Remaining attempts: <?= (int) $remainingAttempts ?></span>
           <a id="resendLink"
              href="index.php?controller=Auth&action=resendOtp"
-             data-cooldown-seconds="60"
+             data-cooldown-seconds="120"
              class="font-medium text-slate-600 transition hover:text-slate-900">
             Resend code
           </a>
@@ -45,12 +45,12 @@ $remainingAttempts = $remainingAttempts ?? 5;
     const resendLink = document.getElementById('resendLink');
     if (!resendLink) return;
 
-    const cooldownSeconds = parseInt(resendLink.dataset.cooldownSeconds || '60', 10);
+    const cooldownSeconds = parseInt(resendLink.dataset.cooldownSeconds || '120', 10);
     let remaining = cooldownSeconds;
 
     const updateResendLink = () => {
       if (remaining > 0) {
-        resendLink.textContent = `Resend in 00:${String(remaining).padStart(2, '0')}`;
+        resendLink.textContent = `Resend in ${String(remaining).padStart(2, '0')} seconds`;
         resendLink.classList.add('pointer-events-none', 'opacity-50', 'text-slate-400');
         resendLink.setAttribute('aria-disabled', 'true');
       } else {
