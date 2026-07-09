@@ -476,7 +476,7 @@ function getCorrespondenceEntryUrl() {
     const origin = window.location.origin || '';
     const normalizedPath = pathname.replace(/\/+$/, '');
 
-    if (normalizedPath.endsWith('/Public/index.php')) {
+    if (normalizedPath.endsWith('/Public/index.php') || normalizedPath.endsWith('/index.php')) {
         return `${origin}${normalizedPath}`;
     }
 
