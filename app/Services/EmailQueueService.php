@@ -135,7 +135,11 @@ class EmailQueueService
             return;
         }
 
-        $phpBinary = PHP_BINARY ?: 'php';
+        $phpBinary = '/usr/local/bin/php';
+
+        if (!file_exists($phpBinary)) {
+            $phpBinary = 'php';
+        }
         $scriptPath = dirname(__DIR__) . '/Services/EmailQueueWorkerCli.php';
         $logPath = dirname(__DIR__, 2) . '/storage/email-worker.log';
         if (!is_file($scriptPath)) {
@@ -151,8 +155,29 @@ class EmailQueueService
             return;
         }
 
-        $command = escapeshellcmd($phpBinary) . ' ' . escapeshellarg($scriptPath) . ' > ' . escapeshellarg($logPath) . ' 2>&1 &';
-        @exec($command);
+        $command = escapeshellcmd($phpBinary) . ' ' .
+                escapeshellarg($scriptPath) .
+                ' >> ' .
+                escapeshellarg($logPath) .
+                ' 2>&1 &';
+
+        file_put_contents(
+            dirname(__DIR__, 2) . '/storage/worker-command.log',
+            date('c') . PHP_EOL .
+            "PHP_BINARY = {$phpBinary}" . PHP_EOL .
+            "SCRIPT     = {$scriptPath}" . PHP_EOL .
+            "COMMAND    = {$command}" . PHP_EOL . PHP_EOL,
+            FILE_APPEND
+        );
+
+        exec($command, $output, $result);
+
+        file_put_contents(
+            dirname(__DIR__, 2) . '/storage/worker-command.log',
+            "RESULT={$result}" . PHP_EOL .
+            print_r($output, true) . PHP_EOL,
+            FILE_APPEND
+        );
     }
 
     public function claimBatch(int $limit = 20): array
