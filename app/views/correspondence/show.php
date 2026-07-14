@@ -360,6 +360,45 @@ $priorityDotClass = match (strtolower((string)($doc['priority'] ?? 'medium'))) {
                 });
             }
         })();
+
+        (function() {
+            const toggleButton = document.getElementById('toggleActionButton');
+            const modal = document.getElementById('confirmToggleStatusModal');
+            const modalTitle = document.getElementById('confirmToggleStatusTitle');
+            const modalMessage = document.getElementById('confirmToggleStatusMessage');
+            const confirmButton = document.getElementById('confirmToggleStatusButton');
+            const cancelButton = document.getElementById('cancelToggleStatusButton');
+            const toggleActionInput = document.getElementById('toggleActionInput');
+            const form = document.getElementById('toggleOpenCloseForm');
+
+            if (!toggleButton || !modal || !confirmButton || !cancelButton || !toggleActionInput || !form) {
+                return;
+            }
+
+            toggleButton.addEventListener('click', function() {
+                const action = this.dataset.action;
+                const isReopen = action === 'open';
+
+                modalTitle.textContent = isReopen ? 'Confirm Reopen Document' : 'Confirm Close Document';
+                modalMessage.textContent = isReopen
+                    ? 'Reopening will mark the document as suspended and resume its workflow. Do you want to continue?'
+                    : 'Closing will mark the document circulation as done. Do you want to continue?';
+                toggleActionInput.value = action;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+
+            cancelButton.addEventListener('click', function() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+
+            confirmButton.addEventListener('click', function() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                form.submit();
+            });
+        })();
     </script>
 </section>
 
@@ -569,14 +608,15 @@ $priorityDotClass = match (strtolower((string)($doc['priority'] ?? 'medium'))) {
                 <span class="text-xs font-medium text-slate-400"><?= $isClosedDocument ? 'Closed' : 'Open' ?></span>
             </div>
 
-            <form method="POST" action="index.php?controller=correspondence&action=toggleOpenClose" class="mt-3">
+            <form id="toggleOpenCloseForm" method="POST" action="index.php?controller=correspondence&action=toggleOpenClose" class="mt-3">
                 <input type="hidden" name="document_id" value="<?= (int)($doc['id'] ?? 0) ?>">
+                <input type="hidden" name="toggle_action" id="toggleActionInput" value="">
                 <?php if ($isClosedDocument): ?>
-                    <button type="submit" name="toggle_action" value="open" class="w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-400">
+                    <button type="button" id="toggleActionButton" data-action="open" onclick="(function(){var m=document.getElementById('confirmToggleStatusModal');document.getElementById('confirmToggleStatusTitle').textContent='Confirm Reopen Document';document.getElementById('confirmToggleStatusMessage').textContent='Reopening will mark the document as suspended and resume its workflow. Do you want to continue?';document.getElementById('toggleActionInput').value='open';m.classList.remove('hidden');m.classList.add('flex');})();" class="w-full rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:border-rose-300 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-400">
                         Reopen document
                     </button>
                 <?php else: ?>
-                    <button type="submit" name="toggle_action" value="close" class="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <button type="button" id="toggleActionButton" data-action="close" onclick="(function(){var m=document.getElementById('confirmToggleStatusModal');document.getElementById('confirmToggleStatusTitle').textContent='Confirm Close Document';document.getElementById('confirmToggleStatusMessage').textContent='Closing will mark the document circulation as done. Do you want to continue?';document.getElementById('toggleActionInput').value='close';m.classList.remove('hidden');m.classList.add('flex');})();" class="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         Close document
                     </button>
                 <?php endif; ?>
@@ -584,6 +624,21 @@ $priorityDotClass = match (strtolower((string)($doc['priority'] ?? 'medium'))) {
         </section>
         <?php endif; ?>
         </aside>
+    </div>
+
+    <div id="confirmToggleStatusModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 px-4 py-6">
+        <div class="w-full max-w-lg rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
+            <div class="px-6 py-5 border-b border-slate-200">
+                <h2 id="confirmToggleStatusTitle" class="text-lg font-semibold text-slate-900">Confirm action</h2>
+            </div>
+            <div class="px-6 py-5">
+                <p id="confirmToggleStatusMessage" class="text-sm leading-6 text-slate-700">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="flex flex-col gap-3 px-6 pb-6 md:flex-row md:justify-end">
+                <button type="button" id="cancelToggleStatusButton" onclick="(function(){var m=document.getElementById('confirmToggleStatusModal');m.classList.add('hidden');m.classList.remove('flex');})();" class="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
+                <button type="button" id="confirmToggleStatusButton" onclick="(function(){var m=document.getElementById('confirmToggleStatusModal');m.classList.add('hidden');m.classList.remove('flex');document.getElementById('toggleOpenCloseForm').submit();})();" class="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">Confirm</button>
+            </div>
+        </div>
     </div>
 </div>
 

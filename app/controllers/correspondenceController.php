@@ -941,6 +941,8 @@ class CorrespondenceController extends Controller {
             exit;
         }
 
+        error_log('postThreadEntry called by IP: ' . ($_SERVER['REMOTE_ADDR'] ?? 'cli') . ' | User: ' . ($_SESSION['user'] ?? 'guest'));
+
         if (!isset($_SESSION['user'])) {
             $_SESSION['message'] = 'Unauthorized';
             $_SESSION['msg_type'] = 'error';
@@ -975,42 +977,59 @@ class CorrespondenceController extends Controller {
         $maxFiles = 4;
         $maxBytes = 41943040; // 40MB
 
-        if (!empty($_FILES['thread_files'])) {
-            $files = $_FILES['thread_files'];
-            $count = min((int)count($files['name']), $maxFiles);
+        try {
+            if (!empty($_FILES['thread_files'])) {
+                $files = $_FILES['thread_files'];
+                $count = min((int)count($files['name']), $maxFiles);
 
-            $totalSize = 0;
-            for ($i = 0; $i < $count; $i++) {
-                $totalSize += (int)($files['size'][$i] ?? 0);
-            }
-            if ($totalSize > $maxBytes) {
-                $_SESSION['message'] = 'Thread upload exceeds the 40MB total limit.';
-                $_SESSION['msg_type'] = 'error';
-                $this->redirect('index.php?controller=correspondence&action=show&id=' . (int)$documentId);
-            }
+                $totalSize = 0;
+                for ($i = 0; $i < $count; $i++) {
+                    $totalSize += (int)($files['size'][$i] ?? 0);
+                }
+                if ($totalSize > $maxBytes) {
+                    $_SESSION['message'] = 'Thread upload exceeds the 40MB total limit.';
+                    $_SESSION['msg_type'] = 'error';
+                    $this->redirect('index.php?controller=correspondence&action=show&id=' . (int)$documentId);
+                }
 
-            $targetDir = dirname(__DIR__, 2) . '/uploads/thread/' . $documentId;
-            if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+                $targetDir = dirname(__DIR__, 2) . '/uploads/thread/' . $documentId;
+                if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
 
-            for ($i = 0; $i < $count; $i++) {
-                if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
+                for ($i = 0; $i < $count; $i++) {
+                    if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
 
-                $name = basename((string)($files['name'][$i] ?? ''));
-                if ($name === '') continue;
+                    $name = basename((string)($files['name'][$i] ?? ''));
+                    if ($name === '') continue;
 
-                $uniq = time() . '_' . bin2hex(random_bytes(6)) . '_' . $name;
-                $path = $targetDir . '/' . $uniq;
+                    try {
+                        $uniq = time() . '_' . bin2hex(random_bytes(6)) . '_' . $name;
+                    } catch (Throwable $e) {
+                        error_log('postThreadEntry random_bytes failed: ' . $e->getMessage());
+                        $uniq = time() . '_' . bin2hex(openssl_random_pseudo_bytes(6)) . '_' . $name;
+                    }
 
-                if (move_uploaded_file($files['tmp_name'][$i], $path)) {
-                    $uploaded[] = [
-                        'file_name' => $name,
-                        'file_path' => $path,
-                        'file_size' => (int)($files['size'][$i] ?? 0)
-                    ];
+                    $path = $targetDir . '/' . $uniq;
+
+                    if (@move_uploaded_file($files['tmp_name'][$i], $path)) {
+                        $uploaded[] = [
+                            'file_name' => $name,
+                            'file_path' => $path,
+                            'file_size' => (int)($files['size'][$i] ?? 0)
+                        ];
+                    } else {
+                        error_log('postThreadEntry: move_uploaded_file failed for ' . ($files['name'][$i] ?? 'unknown'));
+                    }
                 }
             }
+        } catch (Throwable $e) {
+            error_log('postThreadEntry file handling error: ' . $e->getMessage());
+            $_SESSION['message'] = 'Error processing uploaded files.';
+            $_SESSION['msg_type'] = 'error';
+            $this->redirect('index.php?controller=correspondence&action=show&id=' . (int)$documentId);
         }
 
+
+        error_log('postThreadEntry payload: document=' . $documentId . ' kind=' . $entryKind . ' user=' . ($actorUserId ?? 'null') . ' files=' . count($uploaded));
 
         $entryId = $this->model->addThreadEntry(
             $documentId,
@@ -1023,6 +1042,10 @@ class CorrespondenceController extends Controller {
             $cycleRef,
             $uploaded
         );
+
+        if (!$entryId) {
+            error_log('postThreadEntry: addThreadEntry returned 0 for document ' . $documentId);
+        }
 
         if ($entryId) {
             $_SESSION['message'] = 'Posted.';

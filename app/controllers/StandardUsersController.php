@@ -2,6 +2,7 @@
 session_start();
 require_once '../app/core/Controller.php';
 require_once '../app/models/UserModel.php';
+require_once '../app/Services/StandardUserImportService.php';
 
 class StandardUsersController extends Controller {
     private $userModel;
@@ -64,6 +65,42 @@ class StandardUsersController extends Controller {
         }
 
         $this->redirect('index.php?controller=StandardUsers&action=index');
+    }
+
+    public function import() {
+        $this->requireAnyRole([0, 1, 4, 5], 'Standard Users are available to Super Admin and Admin only.');
+
+        header('Content-Type: application/json');
+
+        $file = $_FILES['bulk_import_file'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode([
+                'total_rows' => 0,
+                'valid_rows' => 0,
+                'success_count' => 0,
+                'failed_count' => 0,
+                'inserted_rows' => 0,
+                'failed_rows' => [],
+                'errors' => [
+                    ['row_number' => '-', 'username' => null, 'errors' => ['Please upload a valid .csv or .xlsx file.']],
+                ],
+            ]);
+            exit;
+        }
+
+        $bulkAction = trim($_POST['bulk_action'] ?? 'validate');
+        $importService = new \App\Services\StandardUserImportService();
+
+        if ($bulkAction === 'import') {
+            $result = $importService->importUploadedFile($file);
+        } else {
+            $result = $importService->validateUploadedFile($file);
+            $result['success_count'] = 0;
+            $result['inserted_rows'] = 0;
+        }
+
+        echo json_encode($result);
+        exit;
     }
 
     public function update($id) {

@@ -150,6 +150,69 @@ class UserModel {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function getConnection() {
+        return $this->conn;
+    }
+
+    public function findExistingUsernames(array $usernames): array {
+        if (empty($usernames)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($usernames), '?'));
+        $sql = "SELECT LOWER(username) AS username FROM {$this->table} WHERE LOWER(username) IN ({$placeholders})";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($usernames);
+
+        return array_map(function ($row) {
+            return $row['username'];
+        }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function findExistingEmails(array $emails): array {
+        if (empty($emails)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($emails), '?'));
+        $sql = "SELECT LOWER(email) AS email FROM {$this->table} WHERE LOWER(email) IN ({$placeholders})";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($emails);
+
+        return array_map(function ($row) {
+            return $row['email'];
+        }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function insertStandardUser(array $data) {
+        $sql = "INSERT INTO {$this->table}
+                (username, password, firstName, lastName, middleName, email, phone,
+                 position, department, role, status, is_portal_user, pin_code, avatar, created_at, updated_at)
+                VALUES
+                (:username, :password, :firstName, :lastName, :middleName, :email, :phone,
+                 :position, :department, :role, :status, :is_portal_user, :pin_code, :avatar, NOW(), NOW())";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([
+            ':username' => $data['username'],
+            ':password' => $data['password'],
+            ':firstName' => $data['firstName'],
+            ':lastName' => $data['lastName'],
+            ':middleName' => $data['middleName'],
+            ':email' => $data['email'],
+            ':phone' => $data['phone'],
+            ':position' => $data['position'],
+            ':department' => $data['department'],
+            ':role' => $data['role'],
+            ':status' => $data['status'],
+            ':is_portal_user' => $data['is_portal_user'],
+            ':pin_code' => $data['pin_code'],
+            ':avatar' => $data['avatar'],
+        ]);
+
+        return $this->conn->lastInsertId();
+    }
+
     public function createStandardUser($data) {
         $sql = "INSERT INTO {$this->table}
                 (username, password, firstName, lastName, middleName, email, phone,
