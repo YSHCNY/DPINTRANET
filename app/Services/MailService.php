@@ -15,9 +15,8 @@ class MailService
     {
         $this->mailer = new PHPMailer(true);
 
-        $this->mailer->SMTPDebug = 0;
+        $this->mailer->SMTPDebug = 2;
         $this->mailer->Debugoutput = 'error_log';
-        $this->mailer->SMTPKeepAlive = true;
 
         /*
         |--------------------------------------------------------------------------
@@ -67,8 +66,7 @@ class MailService
     public function send(
         string $recipient,
         string $subject,
-        string $html,
-        array $attachments = []
+        string $html
     ): bool {
 
         try {
@@ -81,12 +79,6 @@ class MailService
             $this->mailer->Subject = $subject;
             $this->mailer->Body = $html;
             $this->mailer->AltBody = strip_tags($html);
-
-            foreach ($attachments as $attachment) {
-                if (is_string($attachment) && $attachment !== '' && file_exists($attachment)) {
-                    $this->mailer->addAttachment($attachment, basename($attachment));
-                }
-            }
 
             return $this->mailer->send();
 
