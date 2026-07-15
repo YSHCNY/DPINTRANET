@@ -24,7 +24,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="index.php?controller=StandardPortal&action=login" class="space-y-4 p-6 sm:px-8 sm:py-7">
+            <form id="standardPortalLoginForm" method="POST" action="index.php?controller=StandardPortal&action=login" class="space-y-4 p-6 sm:px-8 sm:py-7">
                 <?php if (!empty($flashMessage)): ?>
                     <div class="rounded-lg border <?= ($flashType ?? 'info') === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : (($flashType ?? 'info') === 'error' ? 'border-rose-200 bg-rose-50 text-rose-600' : 'border-slate-200 bg-slate-50 text-slate-600') ?> px-4 py-3 text-sm font-medium">
                         <?= htmlspecialchars($flashMessage) ?>
@@ -50,7 +50,7 @@
                     <a href="index.php?controller=StandardPortal&action=forgotPassword" class="mt-2 inline-flex text-sm text-slate-500 transition hover:text-slate-700">Forgot password?</a>
                 </div>
 
-                <button type="submit" class="h-11 w-full rounded-xl bg-slate-900 text-sm font-medium text-white transition hover:bg-slate-800">
+                <button id="standardPortalSubmit" type="submit" class="h-11 w-full rounded-xl bg-slate-900 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400">
                     Sign in
                 </button>
 
@@ -58,6 +58,61 @@
                     Only authorized users can access assigned correspondence and related document activity.
                 </p>
             </form>
+
+            <script>
+                (function () {
+                    const form = document.getElementById('standardPortalLoginForm');
+                    const submitButton = document.getElementById('standardPortalSubmit');
+                    let lockTimer = null;
+                    let lockSeconds = 0;
+
+                    function clearLockTimer() {
+                        if (lockTimer) {
+                            clearInterval(lockTimer);
+                            lockTimer = null;
+                        }
+                    }
+
+                    function setLockedState(seconds) {
+                        clearLockTimer();
+                        lockSeconds = Math.max(0, Number(seconds || 0));
+                        submitButton.disabled = true;
+                        submitButton.textContent = `Try Again (${String(lockSeconds).padStart(2, '0')})`;
+
+                        if (lockSeconds <= 0) {
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Sign in';
+                            return;
+                        }
+
+                        lockTimer = setInterval(() => {
+                            lockSeconds = Math.max(0, lockSeconds - 1);
+                            submitButton.textContent = `Try Again (${String(lockSeconds).padStart(2, '0')})`;
+
+                            if (lockSeconds <= 0) {
+                                clearLockTimer();
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Sign in';
+                            }
+                        }, 1000);
+                    }
+
+                    form.addEventListener('submit', function (event) {
+                        if (submitButton.disabled) {
+                            event.preventDefault();
+                            return;
+                        }
+                    });
+
+                    const errorMessage = document.querySelector('.border-rose-200.bg-rose-50.text-rose-600');
+                    if (errorMessage && errorMessage.textContent && errorMessage.textContent.toLowerCase().includes('temporarily blocked')) {
+                        const match = errorMessage.textContent.match(/(\d+)/);
+                        if (match) {
+                            setLockedState(parseInt(match[1], 10));
+                        }
+                    }
+                })();
+            </script>
 
             <div class="border-t border-slate-200 px-6 py-4 text-[11px] text-slate-500 sm:px-8">
                 <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">

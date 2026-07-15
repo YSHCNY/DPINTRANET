@@ -26,9 +26,9 @@ class AuthController extends Controller {
             $userAgent = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
             $wantsJson = $this->wantsJsonResponse();
 
-            if ($this->rateLimiter->isBlocked($username, $ipAddress)) {
-                $remainingSeconds = $this->rateLimiter->remainingLockSeconds($username, $ipAddress);
-                $this->rateLimiter->evaluateAttempt($username, $ipAddress, false, 'rate_limited', null, $userAgent);
+            if ($this->rateLimiter->isBlocked($username, $ipAddress, 'admin', null)) {
+                $remainingSeconds = $this->rateLimiter->remainingLockSeconds($username, $ipAddress, 'admin', null);
+                $this->rateLimiter->evaluateAttempt($username, $ipAddress, false, 'rate_limited', 'admin', null, $userAgent);
 
                 if ($wantsJson) {
                     $this->sendJsonResponse([
@@ -47,7 +47,7 @@ class AuthController extends Controller {
             $user = $this->userModel->findByUsername($username);
 
             if ($user && password_verify($password, $user['password'])) {
-                $this->rateLimiter->registerSuccess($username, $ipAddress, (int)($user['id'] ?? 0), $userAgent);
+                $this->rateLimiter->registerSuccess($username, $ipAddress, 'admin', (int)($user['id'] ?? 0), $userAgent);
                 $_SESSION['user'] = $user['username'];
                 $_SESSION['user_level'] = $user['userLevel'];
                 $_SESSION['user_id'] = $user['id'];
@@ -71,8 +71,8 @@ class AuthController extends Controller {
                 $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
             }
 
-            $this->rateLimiter->registerFailure($username, $ipAddress, 'invalid_credentials', (int)($user['id'] ?? 0), $userAgent);
-            $failureCount = $this->rateLimiter->getFailureCount($username, $ipAddress);
+            $this->rateLimiter->registerFailure($username, $ipAddress, 'invalid_credentials', 'admin', (int)($user['id'] ?? 0), $userAgent);
+            $failureCount = $this->rateLimiter->getFailureCount($username, $ipAddress, 'admin', (int)($user['id'] ?? 0));
             $remainingAttempts = max(0, 4 - $failureCount);
 
             if ($wantsJson) {

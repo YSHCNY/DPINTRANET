@@ -20,10 +20,10 @@ class LoginRateLimiter implements RateLimiterInterface
         $this->config = $config ?? new LoginRateLimitConfig();
     }
 
-    public function isBlocked(string $username, string $ipAddress): bool
+    public function isBlocked(string $username, string $ipAddress, ?string $actorType = null, ?int $actorId = null): bool
     {
         foreach ($this->config->getScopes() as $scope) {
-            $identifier = $this->config->getScopeIdentifier($scope, $username, $ipAddress);
+            $identifier = $this->config->getScopeIdentifier($scope, $this->buildScopeKey($username, $actorType), $ipAddress);
             $state = $this->repository->getState($scope, $identifier);
 
             if ($state === null) {
@@ -41,7 +41,7 @@ class LoginRateLimiter implements RateLimiterInterface
 
             if ($this->hasExpiredLock($state)) {
                 $this->repository->clearState($scope, $identifier);
-                $this->repository->writeAuditLog('login_rate_limit_lockout_expired', null, $ipAddress, [
+                $this->repository->writeAuditLog('login_rate_limit_lockout_expired', $actorType, $actorId, $ipAddress, [
                     'scope' => $scope,
                     'identifier' => $identifier,
                 ]);
@@ -51,22 +51,22 @@ class LoginRateLimiter implements RateLimiterInterface
         return false;
     }
 
-    public function registerFailure(string $username, string $ipAddress, ?string $reason = null, ?int $userId = null, ?string $userAgent = null): void
+    public function registerFailure(string $username, string $ipAddress, ?string $reason = null, ?string $actorType = null, ?int $actorId = null, ?string $userAgent = null): void
     {
-        $this->evaluateAttempt($username, $ipAddress, false, $reason ?? 'invalid_credentials', $userId, $userAgent);
+        $this->evaluateAttempt($username, $ipAddress, false, $reason ?? 'invalid_credentials', $actorType, $actorId, $userAgent);
     }
 
-    public function registerSuccess(string $username, string $ipAddress, ?int $userId = null, ?string $userAgent = null): void
+    public function registerSuccess(string $username, string $ipAddress, ?string $actorType = null, ?int $actorId = null, ?string $userAgent = null): void
     {
-        $this->evaluateAttempt($username, $ipAddress, true, null, $userId, $userAgent);
+        $this->evaluateAttempt($username, $ipAddress, true, null, $actorType, $actorId, $userAgent);
     }
 
-    public function remainingLockSeconds(string $username, string $ipAddress): int
+    public function remainingLockSeconds(string $username, string $ipAddress, ?string $actorType = null, ?int $actorId = null): int
     {
         $remainingSeconds = 0;
 
         foreach ($this->config->getScopes() as $scope) {
-            $identifier = $this->config->getScopeIdentifier($scope, $username, $ipAddress);
+            $identifier = $this->config->getScopeIdentifier($scope, $this->buildScopeKey($username, $actorType), $ipAddress);
             $state = $this->repository->getState($scope, $identifier);
 
             if ($state === null) {
@@ -91,20 +91,20 @@ class LoginRateLimiter implements RateLimiterInterface
         return $remainingSeconds;
     }
 
-    public function reset(string $username, string $ipAddress): void
+    public function reset(string $username, string $ipAddress, ?string $actorType = null, ?int $actorId = null): void
     {
         foreach ($this->config->getScopes() as $scope) {
-            $identifier = $this->config->getScopeIdentifier($scope, $username, $ipAddress);
+            $identifier = $this->config->getScopeIdentifier($scope, $this->buildScopeKey($username, $actorType), $ipAddress);
             $this->repository->clearState($scope, $identifier);
         }
     }
 
-    public function getFailureCount(string $username, string $ipAddress): int
+    public function getFailureCount(string $username, string $ipAddress, ?string $actorType = null, ?int $actorId = null): int
     {
         $maxFailureCount = 0;
 
         foreach ($this->config->getScopes() as $scope) {
-            $identifier = $this->config->getScopeIdentifier($scope, $username, $ipAddress);
+            $identifier = $this->config->getScopeIdentifier($scope, $this->buildScopeKey($username, $actorType), $ipAddress);
             $state = $this->repository->getState($scope, $identifier);
 
             if ($state === null) {
@@ -122,23 +122,22 @@ class LoginRateLimiter implements RateLimiterInterface
         return $maxFailureCount;
     }
 
-    public function evaluateAttempt(string $username, string $ipAddress, bool $success, ?string $reason = null, ?int $userId = null, ?string $userAgent = null): RateLimitResult
+    public function evaluateAttempt(string $username, string $ipAddress, bool $success, ?string $reason = null, ?string $actorType = null, ?int $actorId = null, ?string $userAgent = null): RateLimitResult
     {
         $reason = $reason ?? 'invalid_credentials';
 
         if ($success) {
             foreach ($this->config->getScopes() as $scope) {
-                $identifier = $this->config->getScopeIdentifier($scope, $username, $ipAddress);
-                $this->repository->clearState($scope, $identifier);
+            $identifier = $this->config->getScopeIdentifier($scope, $this->buildScopeKey($username, $actorType), $ipAddress);
             }
 
-            $this->repository->recordLoginAttempt($username, $ipAddress, true, null, $userId, $userAgent);
+            $this->repository->recordLoginAttempt($username, $ipAddress, true, null, $actorType, $actorId, $userAgent);
             return new RateLimitResult(false, 0, 0, '');
         }
 
         if ($reason === 'rate_limited') {
             foreach ($this->config->getScopes() as $scope) {
-                $identifier = $this->config->getScopeIdentifier($scope, $username, $ipAddress);
+                $identifier = $this->config->getScopeIdentifier($scope, $this->buildScopeKey($username, $actorType), $ipAddress);
                 $state = $this->repository->getState($scope, $identifier);
 
                 if ($state === null) {
@@ -146,7 +145,7 @@ class LoginRateLimiter implements RateLimiterInterface
                 }
 
                 if ($this->hasActiveLock($state)) {
-                    $this->repository->writeAuditLog('login_rate_limit_repeated_abuse', $userId, $ipAddress, [
+                    $this->repository->writeAuditLog('login_rate_limit_repeated_abuse', $actorType, $actorId, $ipAddress, [
                         'scope' => $scope,
                         'identifier' => $identifier,
                         'remaining_lock_seconds' => $this->getRemainingLockSeconds($state),
@@ -154,14 +153,14 @@ class LoginRateLimiter implements RateLimiterInterface
                 }
             }
 
-            $this->repository->recordLoginAttempt($username, $ipAddress, false, 'rate_limited', $userId, $userAgent);
-            return new RateLimitResult(true, $this->remainingLockSeconds($username, $ipAddress), $this->getFailureCount($username, $ipAddress), 'Login temporarily blocked.');
+            $this->repository->recordLoginAttempt($username, $ipAddress, false, 'rate_limited', $actorType, $actorId, $userAgent);
+            return new RateLimitResult(true, $this->remainingLockSeconds($username, $ipAddress, $actorType, $actorId), $this->getFailureCount($username, $ipAddress, $actorType, $actorId), 'Login temporarily blocked.');
         }
 
         $maxFailureCount = 0;
 
         foreach ($this->config->getScopes() as $scope) {
-            $identifier = $this->config->getScopeIdentifier($scope, $username, $ipAddress);
+            $identifier = $this->config->getScopeIdentifier($scope, $this->buildScopeKey($username, $actorType), $ipAddress);
             $state = $this->repository->getState($scope, $identifier);
             $now = new \DateTimeImmutable('now');
 
@@ -196,7 +195,7 @@ class LoginRateLimiter implements RateLimiterInterface
             $maxFailureCount = max($maxFailureCount, $failureCount);
 
             if ($lockDurationSeconds > 0) {
-                $this->repository->writeAuditLog('login_rate_limit_lockout_created', $userId, $ipAddress, [
+                $this->repository->writeAuditLog('login_rate_limit_lockout_created', $actorType, $actorId, $ipAddress, [
                     'scope' => $scope,
                     'identifier' => $identifier,
                     'failure_count' => $failureCount,
@@ -205,7 +204,7 @@ class LoginRateLimiter implements RateLimiterInterface
             }
         }
 
-        $this->repository->recordLoginAttempt($username, $ipAddress, false, 'invalid_credentials', $userId, $userAgent);
+        $this->repository->recordLoginAttempt($username, $ipAddress, false, 'invalid_credentials', $actorType, $actorId, $userAgent);
 
         return new RateLimitResult(false, 0, $maxFailureCount, '');
     }
@@ -250,5 +249,12 @@ class LoginRateLimiter implements RateLimiterInterface
         $resetThreshold = (new \DateTimeImmutable('now'))->modify('-' . $this->config->getResetWindowSeconds() . ' seconds');
 
         return $lastFailureAt < $resetThreshold;
+    }
+
+    private function buildScopeKey(string $username, ?string $actorType): string
+    {
+        $normalizedActor = $actorType ? strtolower($actorType) : 'system';
+
+        return $normalizedActor . ':' . $username;
     }
 }

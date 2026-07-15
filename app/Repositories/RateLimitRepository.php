@@ -68,15 +68,16 @@ class RateLimitRepository
         ]);
     }
 
-    public function recordLoginAttempt(string $username, string $ipAddress, bool $success, ?string $failureReason, ?int $userId, ?string $userAgent): void
+    public function recordLoginAttempt(string $username, string $ipAddress, bool $success, ?string $failureReason, ?string $actorType, ?int $actorId, ?string $userAgent): void
     {
         $statement = $this->connection->prepare(
-            'INSERT INTO login_attempts (user_id, username, ip_address, attempted_at, success, failure_reason, user_agent, created_at)
-             VALUES (:user_id, :username, :ip_address, NOW(), :success, :failure_reason, :user_agent, NOW())'
+            'INSERT INTO login_attempts (actor_type, actor_id, username, ip_address, attempted_at, success, failure_reason, user_agent, created_at)
+             VALUES (:actor_type, :actor_id, :username, :ip_address, NOW(), :success, :failure_reason, :user_agent, NOW())'
         );
 
         $statement->execute([
-            ':user_id' => $userId,
+            ':actor_type' => $actorType ?? 'system',
+            ':actor_id' => $actorId,
             ':username' => $username !== '' ? $username : null,
             ':ip_address' => $ipAddress !== '' ? $ipAddress : null,
             ':success' => $success ? 1 : 0,
@@ -85,15 +86,16 @@ class RateLimitRepository
         ]);
     }
 
-    public function writeAuditLog(string $action, ?int $userId, string $ipAddress, array $metadata = []): void
+    public function writeAuditLog(string $action, ?string $actorType, ?int $actorId, string $ipAddress, array $metadata = []): void
     {
         $statement = $this->connection->prepare(
-            'INSERT INTO audit_logs (user_id, action, entity_type, entity_id, ip_address, metadata, created_at)
-             VALUES (:user_id, :action, :entity_type, :entity_id, :ip_address, :metadata, NOW())'
+            'INSERT INTO audit_logs (actor_type, actor_id, action, entity_type, entity_id, ip_address, metadata, created_at)
+             VALUES (:actor_type, :actor_id, :action, :entity_type, :entity_id, :ip_address, :metadata, NOW())'
         );
 
         $statement->execute([
-            ':user_id' => $userId,
+            ':actor_type' => $actorType ?? 'system',
+            ':actor_id' => $actorId,
             ':action' => $action,
             ':entity_type' => 'login_rate_limit',
             ':entity_id' => null,

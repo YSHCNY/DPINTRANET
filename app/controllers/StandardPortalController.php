@@ -5,15 +5,20 @@ require_once '../app/models/UserModel.php';
 require_once '../app/models/correspondence.php';
 require_once '../app/Services/PasswordResetService.php';
 
+use App\Contracts\RateLimiterInterface;
+use App\Services\Security\StandardUserLoginRateLimiter;
+
 class StandardPortalController extends Controller {
     private $userModel;
     private $correspondenceModel;
     private $passwordResetService;
+    private RateLimiterInterface $rateLimiter;
 
-    public function __construct() {
+    public function __construct(?RateLimiterInterface $rateLimiter = null) {
         $this->userModel = new UserModel();
         $this->correspondenceModel = new CorrespondenceModel();
         $this->passwordResetService = new PasswordResetService($this->userModel);
+        $this->rateLimiter = $rateLimiter ?? new StandardUserLoginRateLimiter();
     }
 
     public function login() {
@@ -26,11 +31,21 @@ class StandardPortalController extends Controller {
         unset($_SESSION['portal_message'], $_SESSION['portal_msg_type']);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = trim($_POST['username'] ?? '');
-            $password = $_POST['password'] ?? '';
+            $username = trim((string)($_POST['username'] ?? ''));
+            $password = (string)($_POST['password'] ?? '');
+            $ipAddress = (string)($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+            $userAgent = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
             $user = $this->userModel->findPortalUserByUsername($username);
 
+            if ($this->rateLimiter->isBlocked($username, $ipAddress, 'standard', null)) {
+                $remainingSeconds = $this->rateLimiter->remainingLockSeconds($username, $ipAddress, 'standard', null);
+                $this->rateLimiter->evaluateAttempt($username, $ipAddress, false, 'rate_limited', 'standard', null, $userAgent);
+                $this->view('standard_portal/login', ['error' => 'Login temporarily blocked. Please try again in ' . $remainingSeconds . ' seconds.', 'flashMessage' => $flashMessage, 'flashType' => $flashType]);
+                return;
+            }
+
             if ($user && password_verify($password, $user['password'])) {
+                $this->rateLimiter->registerSuccess($username, $ipAddress, 'standard', (int)($user['id'] ?? 0), $userAgent);
                 $_SESSION['standard_user_id'] = $user['id'];
                 $_SESSION['standard_user_name'] = trim(($user['firstName'] ?? '') . ' ' . ($user['lastName'] ?? ''));
                 $_SESSION['standard_user_position'] = $user['position'] ?? '';
@@ -40,7 +55,14 @@ class StandardPortalController extends Controller {
                 $this->redirect('index.php?controller=StandardPortal&action=dashboard');
             }
 
-            $this->view('standard_portal/login', ['error' => 'Invalid portal credentials or portal access is disabled.', 'flashMessage' => $flashMessage, 'flashType' => $flashType]);
+            $this->rateLimiter->registerFailure($username, $ipAddress, 'invalid_credentials', 'standard', (int)($user['id'] ?? 0), $userAgent);
+            $failureCount = $this->rateLimiter->getFailureCount($username, $ipAddress, 'standard', (int)($user['id'] ?? 0));
+            $remainingAttempts = max(0, 4 - $failureCount);
+            $attemptMessage = $remainingAttempts > 0
+                ? ($remainingAttempts === 1 ? '1 login attempt remaining before a temporary lockout.' : $remainingAttempts . ' login attempts remaining before a temporary lockout.')
+                : 'No further login attempts are available until the temporary lockout expires.';
+
+            $this->view('standard_portal/login', ['error' => 'Invalid portal credentials or portal access is disabled. ' . $attemptMessage, 'flashMessage' => $flashMessage, 'flashType' => $flashType]);
             return;
         }
 
