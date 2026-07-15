@@ -4,22 +4,50 @@ require_once '../app/core/Controller.php';
 require_once '../app/models/User.php';
 require_once '../app/Services/PasswordResetService.php';
 
+use App\Contracts\RateLimiterInterface;
+use App\Services\Security\LoginRateLimiter;
+
 class AuthController extends Controller {
     private $userModel;
     private $passwordResetService;
+    private RateLimiterInterface $rateLimiter;
 
-    public function __construct() {
+    public function __construct(?RateLimiterInterface $rateLimiter = null) {
         $this->userModel = new User();
         $this->passwordResetService = new PasswordResetService($this->userModel);
+        $this->rateLimiter = $rateLimiter ?? new LoginRateLimiter();
     }
 
     public function login() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = $_POST['username'];
-            $password = $_POST['password'];
+            $username = trim((string)($_POST['username'] ?? ''));
+            $password = (string)($_POST['password'] ?? '');
+            $ipAddress = (string)($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+            $userAgent = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+            $wantsJson = $this->wantsJsonResponse();
+
+            if ($this->rateLimiter->isBlocked($username, $ipAddress)) {
+                $remainingSeconds = $this->rateLimiter->remainingLockSeconds($username, $ipAddress);
+                $this->rateLimiter->evaluateAttempt($username, $ipAddress, false, 'rate_limited', null, $userAgent);
+
+                if ($wantsJson) {
+                    $this->sendJsonResponse([
+                        'success' => false,
+                        'message' => 'Login temporarily blocked. Please try again in ' . $remainingSeconds . ' seconds.',
+                        'remainingAttempts' => 0,
+                        'isLocked' => true,
+                        'lockExpiresInSeconds' => max(0, $remainingSeconds),
+                    ]);
+                }
+
+                $this->view('auth/login', ['error' => 'Login temporarily blocked. Please try again in ' . $remainingSeconds . ' seconds.']);
+                return;
+            }
+
             $user = $this->userModel->findByUsername($username);
 
             if ($user && password_verify($password, $user['password'])) {
+                $this->rateLimiter->registerSuccess($username, $ipAddress, (int)($user['id'] ?? 0), $userAgent);
                 $_SESSION['user'] = $user['username'];
                 $_SESSION['user_level'] = $user['userLevel'];
                 $_SESSION['user_id'] = $user['id'];
@@ -29,7 +57,32 @@ class AuthController extends Controller {
                 $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
                 $_SESSION['id'] = $user['id'];
 
+                if ($wantsJson) {
+                    $this->sendJsonResponse([
+                        'success' => true,
+                        'message' => 'Authentication successful.',
+                        'remainingAttempts' => null,
+                        'isLocked' => false,
+                        'lockExpiresInSeconds' => 0,
+                        'redirectUrl' => 'index.php?controller=Auth&action=dashboard&wc=welcome',
+                    ]);
+                }
+
                 $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
+            }
+
+            $this->rateLimiter->registerFailure($username, $ipAddress, 'invalid_credentials', (int)($user['id'] ?? 0), $userAgent);
+            $failureCount = $this->rateLimiter->getFailureCount($username, $ipAddress);
+            $remainingAttempts = max(0, 4 - $failureCount);
+
+            if ($wantsJson) {
+                $this->sendJsonResponse([
+                    'success' => false,
+                    'message' => 'Invalid username or password.',
+                    'remainingAttempts' => $remainingAttempts,
+                    'isLocked' => false,
+                    'lockExpiresInSeconds' => 0,
+                ]);
             }
 
             $this->view('auth/login', ['error' => 'Invalid username or password']);
@@ -37,6 +90,24 @@ class AuthController extends Controller {
         }
 
         $this->view('auth/login');
+    }
+
+    private function wantsJsonResponse(): bool {
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            return true;
+        }
+
+        if (!empty($_SERVER['HTTP_ACCEPT']) && stripos((string)$_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function sendJsonResponse(array $payload): void {
+        header('Content-Type: application/json');
+        echo json_encode($payload);
+        exit;
     }
 
     public function forgotPassword() {

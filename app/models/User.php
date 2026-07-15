@@ -3,8 +3,13 @@ require_once '../app/core/Model.php';
 
 class User extends Model {
     public function findByUsername($username) {
-        $stmt = $this->db->prepare("SELECT * FROM UserTbl WHERE username = :username");
-        $stmt->execute(['username' => $username]);
+        $normalized = trim((string) $username);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $stmt = $this->db->prepare("SELECT * FROM UserTbl WHERE LOWER(username) = LOWER(:username)");
+        $stmt->execute(['username' => $normalized]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -14,7 +19,7 @@ class User extends Model {
             return null;
         }
 
-        $stmt = $this->db->prepare("SELECT * FROM UserTbl WHERE username = :identifier OR email = :identifier LIMIT 1");
+        $stmt = $this->db->prepare("SELECT * FROM UserTbl WHERE LOWER(username) = LOWER(:identifier) OR LOWER(email) = LOWER(:identifier) LIMIT 1");
         $stmt->execute(['identifier' => $identifier]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($user) {

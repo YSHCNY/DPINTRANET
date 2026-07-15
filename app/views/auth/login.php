@@ -92,16 +92,12 @@
           Sign in to continue to your secure workspace.
         </p>
 
-        <?php if (!empty($error)): ?>
-          <div class="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
-            <?= htmlspecialchars($error) ?>
-          </div>
-        <?php endif; ?>
+        <div id="loginAlert" class="mt-5 hidden rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600"></div>
 
-        <form method="POST" action="" class="mt-6 space-y-4">
+        <form id="loginForm" method="POST" action="" class="mt-6 space-y-4">
           <div class="space-y-2">
             <label class="block text-sm font-medium text-slate-600">Username</label>
-            <input type="text" name="username" required
+            <input type="text" name="username" id="username" required
               placeholder="Enter username"
               class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
             >
@@ -109,17 +105,161 @@
 
           <div class="space-y-2">
             <label class="block text-sm font-medium text-slate-600">Password</label>
-            <input type="password" name="password" required
+            <input type="password" name="password" id="password" required
               placeholder="Enter password"
               class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
             >
           </div>
 
-          <button type="submit"
-            class="h-11 w-full rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800">
+          <button id="loginSubmit" type="submit"
+            class="h-11 w-full rounded-xl bg-slate-900 px-4 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400">
             Login
           </button>
         </form>
+
+        <script>
+          (function () {
+            const form = document.getElementById('loginForm');
+            const alertBox = document.getElementById('loginAlert');
+            const submitButton = document.getElementById('loginSubmit');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            let countdownTimer = null;
+            let currentState = {
+              success: false,
+              message: '',
+              remainingAttempts: null,
+              isLocked: false,
+              lockExpiresInSeconds: 0,
+            };
+
+            function clearCountdown() {
+              if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+              }
+            }
+
+            function formatAttemptsMessage(remainingAttempts) {
+              if (remainingAttempts === null || remainingAttempts === undefined || remainingAttempts <= 0) {
+                return '';
+              }
+
+              const noun = remainingAttempts === 1 ? 'attempt' : 'attempts';
+              return `${remainingAttempts} login ${noun} remaining before a temporary lockout.`;
+            }
+
+            function formatCountdown(seconds) {
+              const safeSeconds = Math.max(0, Number(seconds || 0));
+              const minutes = Math.floor(safeSeconds / 60);
+              const remainderSeconds = safeSeconds % 60;
+              return `${String(minutes).padStart(2, '0')}:${String(remainderSeconds).padStart(2, '0')}`;
+            }
+
+            function render(state) {
+              currentState = { ...currentState, ...state };
+              const message = currentState.message || '';
+              const isLocked = Boolean(currentState.isLocked);
+              const remainingAttempts = currentState.remainingAttempts;
+              const lockSeconds = Math.max(0, Number(currentState.lockExpiresInSeconds || 0));
+
+              if (currentState.success) {
+                clearCountdown();
+                alertBox.classList.add('hidden');
+                alertBox.textContent = '';
+                submitButton.disabled = true;
+                submitButton.textContent = 'Signing in...';
+                return;
+              }
+
+              if (isLocked && lockSeconds > 0) {
+                clearCountdown();
+                alertBox.classList.remove('hidden');
+                alertBox.classList.remove('border-rose-200', 'bg-rose-50', 'text-rose-600');
+                alertBox.classList.add('border-amber-200', 'bg-amber-50', 'text-amber-700');
+                alertBox.textContent = `Login temporarily blocked. Please try again in ${lockSeconds} seconds.`;
+                submitButton.disabled = true;
+                submitButton.textContent = `Try Again in ${formatCountdown(lockSeconds)}`;
+                let remaining = lockSeconds;
+                countdownTimer = setInterval(() => {
+                  remaining = Math.max(0, remaining - 1);
+                  submitButton.textContent = `Try Again in ${formatCountdown(remaining)}`;
+                  alertBox.textContent = `Login temporarily blocked. Please try again in ${remaining} seconds.`;
+
+                  if (remaining <= 0) {
+                    clearCountdown();
+                    render({ success: false, message: '', remainingAttempts: null, isLocked: false, lockExpiresInSeconds: 0 });
+                  }
+                }, 1000);
+                return;
+              }
+
+              if (message && !isLocked) {
+                clearCountdown();
+                const attemptsMessage = formatAttemptsMessage(remainingAttempts);
+                const combinedMessage = attemptsMessage ? `${message}\n${attemptsMessage}` : message;
+                alertBox.classList.remove('hidden');
+                alertBox.classList.remove('border-amber-200', 'bg-amber-50', 'text-amber-700');
+                alertBox.classList.add('border-rose-200', 'bg-rose-50', 'text-rose-600');
+                alertBox.textContent = combinedMessage;
+                submitButton.disabled = false;
+                submitButton.textContent = 'Login';
+                return;
+              }
+
+              clearCountdown();
+              alertBox.classList.add('hidden');
+              alertBox.textContent = '';
+              submitButton.disabled = false;
+              submitButton.textContent = 'Login';
+            }
+
+            form.addEventListener('submit', function (event) {
+              event.preventDefault();
+              const payload = new FormData(form);
+              render({ success: true, message: '', remainingAttempts: null, isLocked: false, lockExpiresInSeconds: 0 });
+
+              fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                  'X-Requested-With': 'XMLHttpRequest',
+                  'Accept': 'application/json'
+                },
+                body: payload
+              })
+                .then((response) => response.json())
+                .then((data) => {
+                  if (data && data.success) {
+                    window.location.href = data.redirectUrl || window.location.href;
+                    return;
+                  }
+
+                  render({
+                    success: false,
+                    message: data && data.message ? data.message : '',
+                    remainingAttempts: data && data.remainingAttempts !== undefined ? data.remainingAttempts : null,
+                    isLocked: Boolean(data && data.isLocked),
+                    lockExpiresInSeconds: data && data.lockExpiresInSeconds !== undefined ? data.lockExpiresInSeconds : 0,
+                  });
+                })
+                .catch(() => {
+                  render({ success: false, message: 'Unable to sign in right now.', remainingAttempts: null, isLocked: false, lockExpiresInSeconds: 0 });
+                });
+            });
+
+            usernameInput.addEventListener('input', () => {
+              if (currentState.success) {
+                render({ success: false, message: '', remainingAttempts: null, isLocked: false, lockExpiresInSeconds: 0 });
+              }
+            });
+
+            passwordInput.addEventListener('input', () => {
+              if (currentState.success) {
+                render({ success: false, message: '', remainingAttempts: null, isLocked: false, lockExpiresInSeconds: 0 });
+              }
+            });
+          })();
+        </script>
 
         <div class="mt-4 text-sm text-slate-500">
           <a href="index.php?controller=Auth&action=forgotPassword" class="font-medium text-slate-600 transition hover:text-slate-900">Forgot password?</a>
