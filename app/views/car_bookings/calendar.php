@@ -18,73 +18,18 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 <div class="min-h-screen theme-palette">
     <div class="max-w-[1400px] mx-auto px-3 py-6 text-xs  sm:text-xs md:text-sm ">
     <div class="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div class="flex flex-col gap-4 p-4">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div class="min-w-0">
-            <p class="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-700">Fleet management</p>
-            <h1 class="mt-1 text-base font-semibold tracking-tight text-slate-900">Vehicle bookings calendar</h1>
-            <p class="mt-1 max-w-2xl text-sm text-slate-500">Schedule vehicles, manage drivers, and review booking history across your fleet.</p>
+      <div class="space-y-4 p-4">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div class="min-w-0 space-y-2">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-500">Fleet Management</p>
+            <h1 class="text-base font-semibold tracking-tight text-slate-900">Vehicle booking calendar</h1>
+            <p class="max-w-2xl text-sm text-slate-500">Schedule vehicles, assign drivers and monitor fleet availability.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
-              <span class="h-2 w-2 rounded-full bg-slate-900"></span>
-              Total fleet <?= count($vehicles ?? []) ?>
-            </span>
-            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
-              <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-              Available <?= max(0, $vehicleActiveCount) ?>
-            </span>
-            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
-              <span class="h-2 w-2 rounded-full bg-blue-500"></span>
-              Active <?= $driverCount ?>
-            </span>
-            <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700">
-              <span class="h-2 w-2 rounded-full bg-amber-500"></span>
-              Upcoming 0
-            </span>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-3 border-t border-slate-200 pt-4 lg:flex-row lg:items-end lg:justify-between">
-          <div class="flex flex-1 flex-col gap-3 xl:flex-row xl:items-end">
-            <div class="flex flex-wrap items-center gap-2">
-              <!-- <div id="external-events" class="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-600 sm:inline-flex">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <span>Drag to create booking</span>
-              </div> -->
-              <!-- <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
-                <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="calendarViewSelect">View</label>
-                <select id="calendarViewSelect" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
-                  <option value="dayGridMonth">Month</option>
-                  <option value="timeGridWeek">Week</option>
-                  <option value="timeGridDay">Day</option>
-                </select>
-              </div> -->
-              <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
-                <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="vehicleFilter">Vehicle</label>
-                <select id="vehicleFilter" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
-                  <option value="">All</option>
-                  <?php foreach (($vehicles ?? []) as $v): ?>
-                    <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
-              <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
-                <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="driverFilter">Driver</label>
-                <select id="driverFilter" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
-                  <option value="">All</option>
-                  <?php foreach (($drivers ?? []) as $d): ?>
-                    <option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['driver_name']) ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
+            <div id="fleetStatusBadge" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+              <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+              Live availability
             </div>
-
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2 lg:justify-end">
             <button type="button" id="refreshBtn" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M5 14a7 7 0 0011.9 2.1L20 20m0-8a7 7 0 00-11.9-2.1L4 4" />
@@ -97,59 +42,170 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
               </svg>
               <span>New Booking</span>
             </button>
-            
           </div>
         </div>
-      </div>
-      <div class="border-t border-slate-200 p-4 lg:p-6">
-        <div class="grid gap-4 xl:grid-cols-[1.75fr_0.75fr]">
-          <div class="overflow-hidden rounded-[16px] border border-slate-200/60 bg-white shadow-sm">
-            <div id="carBookingCalendar" class="min-h-[520px] p-3 sm:p-4"></div>
+
+        <div id="fleetSnapshotSection" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Total fleet</p>
+            <p id="totalFleetCount" class="mt-2 text-lg font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Available</p>
+            <p class="mt-2 text-lg font-semibold text-emerald-700"><?= max(0, $vehicleActiveCount) ?></p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Active drivers</p>
+            <p class="mt-2 text-lg font-semibold text-slate-900"><?= $driverCount ?></p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Upcoming</p>
+            <p class="mt-2 text-lg font-semibold text-slate-900">0</p>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Filters</p>
+              <h2 class="text-sm font-semibold text-slate-900">Refine fleet view</h2>
+            </div>
+          </div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="relative">
+              <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+                </svg>
+              </span>
+              <input id="fleetSearchInput" type="search" placeholder="Search vehicles" class="h-9 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-400" />
+            </div>
+            <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
+              <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="vehicleFilter">Vehicle</label>
+              <select id="vehicleFilter" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
+                <option value="">All</option>
+                <?php foreach (($vehicles ?? []) as $v): ?>
+                  <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
+              <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="driverFilter">Driver</label>
+              <select id="driverFilter" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
+                <option value="">All</option>
+                <?php foreach (($drivers ?? []) as $d): ?>
+                  <option value="<?= (int)$d['id'] ?>"><?= htmlspecialchars($d['driver_name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-500">
+              <span>Status</span>
+            </div>
+          </div>
+        </div>
+
+        <section class="rounded-xl border border-slate-200 bg-white p-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Availability</p>
+              <h2 class="text-base font-semibold text-slate-900">Vehicle availability dashboard</h2>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="inline-flex h-9 overflow-hidden rounded-full border border-slate-200 bg-white">
+                <button id="fleetTabVehiclesBtn" type="button" class="px-4 text-sm font-semibold text-slate-900 bg-slate-100">Vehicles (0)</button>
+                <button id="fleetTabDriversBtn" type="button" class="border-l border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:text-slate-900">Drivers (0)</button>
+              </div>
+              <div class="relative">
+                <button id="fleetAddNewBtn" type="button" aria-expanded="false" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
+                  Add New
+                  <span class="text-xs">▾</span>
+                </button>
+                <div id="fleetAddNewMenu" class="absolute right-0 z-10 mt-2 hidden w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <button id="openVehicleModalBtn" type="button" class="w-full rounded-none border-b border-slate-200 px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Vehicle</button>
+                  <button id="openDriversModalBtn" type="button" class="w-full rounded-none px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Driver</button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <aside class="rounded-[16px] border border-slate-200/60 bg-white p-4 shadow-sm">
-            <div class="space-y-3">
-    
-              <div id="fleetSnapshotSection" class="space-y-3">
-                <div class="flex items-center justify-between gap-2">
+          <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <span id="fleetGalleryMeta">0 Vehicles • Page 1 of 1</span>
+          </div>
+
+          <div id="vehicleCardsContainer" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+
+          <div id="fleetPaginationControls" class="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div id="fleetPaginationInfo" class="text-sm text-slate-600">Showing 0–0 of 0 results</div>
+            <div class="flex flex-wrap items-center gap-2">
+              <div id="fleetPageNumbers" class="hidden flex flex-wrap items-center gap-1"></div>
+              <button id="fleetPrevPageBtn" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Previous
+              </button>
+              <button id="fleetNextPageBtn" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
+                Next
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid gap-4 xl:grid-cols-[1.75fr_0.85fr]">
+          <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+            <div class="flex items-center justify-between gap-2 mb-4">
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Calendar</p>
+                <h2 class="text-base font-semibold text-slate-900">Fleet scheduling timeline</h2>
+              </div>
+            </div>
+            <div id="carBookingCalendar" class="min-h-[520px]"></div>
+          </div>
+
+          <aside class="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+            <div class="space-y-4">
+              <div id="scheduleFocusPanel" class="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+                <div class="flex items-start justify-between gap-4">
                   <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Workspace</p>
-                    <h2 class="mt-0.5 text-[15px] font-medium text-slate-900">Fleet snapshot</h2>
+                    <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Schedule focus</p>
+                    <h3 class="mt-1 text-base font-semibold text-slate-900">Schedule Focus</h3>
                   </div>
-                  <p id="fleetStatusBadge" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
-                    <span class="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                    Live
-                  </p>
+                  <div class="rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">Live</div>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                  <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Fleet</p>
-                    <p id="totalFleetCount" class="mt-1 text-lg font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
+
+                <div class="border-t border-slate-100 pt-4 space-y-4">
+                  <div>
+                    <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Today</p>
+                    <div id="scheduleFocusToday" class="mt-3 space-y-1 text-sm text-slate-700">
+                      <div class="flex items-center gap-2 text-slate-700">
+                        <span id="scheduleFocusTodayDot" class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span id="scheduleFocusTodayTitle" class="font-medium"></span>
+                      </div>
+                      <div id="scheduleFocusTodayMeta" class="text-sm text-slate-500"></div>
+                    </div>
                   </div>
-                  <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">On trip</p>
-                    <p id="onTripCount" class="mt-1 text-lg font-semibold text-emerald-700">0</p>
-                  </div>
-                  <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Ready</p>
-                    <p id="readyBookingCount" class="mt-1 text-lg font-semibold text-emerald-700">0</p>
-                  </div>
-                  <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-                    <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Drivers</p>
-                    <p id="driverAvailableCount" class="mt-1 text-lg font-semibold text-slate-900">0</p>
+
+                  <div>
+                    <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Upcoming</p>
+                    <div id="scheduleFocusUpcoming" class="mt-3 space-y-1 text-sm text-slate-700">
+                      <div class="flex items-center gap-2 text-slate-700">
+                        <span id="scheduleFocusUpcomingDot" class="inline-flex h-2 w-2 rounded-full bg-slate-400"></span>
+                        <span id="scheduleFocusUpcomingTitle" class="font-medium"></span>
+                      </div>
+                      <div id="scheduleFocusUpcomingMeta" class="text-sm text-slate-500"></div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div class="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+              <div id="bookingDetailsWrapper" class="hidden rounded-lg border border-slate-200 bg-slate-50/70 p-3">
                 <div class="flex items-start justify-between gap-2">
                   <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Selected booking</p>
-                    <h3 class="mt-0.5 text-sm font-medium text-slate-900">Workspace preview</h3>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Booking details</p>
+                    <h3 class="mt-0.5 text-sm font-medium text-slate-900">Selected booking</h3>
                   </div>
                   <div id="bookingPreviewStatus" class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-medium text-slate-600">No selection</div>
                 </div>
-                <div id="bookingPreviewEmpty" class="mt-3 rounded-lg border border-dashed border-slate-200 bg-white/80 p-3 text-sm text-slate-500">
+                <div id="bookingPreviewEmpty" class="mt-3 text-sm text-slate-500">
                   Select a booked slot on the calendar to inspect, edit, cancel, or remove it.
                 </div>
                 <form id="bookingPreviewForm" class="mt-3 hidden space-y-3">
@@ -235,62 +291,6 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
               </div>
             </div>
           </aside>
-        </div>
-        <div class="mt-8 rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div class="flex flex-col gap-4 p-4 sm:p-5">
-            <div class="flex flex-col gap-2">
-              <h2 class="text-base font-semibold text-slate-900">Fleet gallery</h2>
-              <p class="text-sm text-slate-500">Scan active assets and drivers, then open details only when you need them.</p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3">
-              <div class="inline-flex h-9 overflow-hidden rounded-full border border-slate-200 bg-white">
-                <button id="fleetTabVehiclesBtn" type="button" class="px-4 text-sm font-semibold text-slate-900 bg-slate-100">Vehicles (0)</button>
-                <button id="fleetTabDriversBtn" type="button" class="border-l border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:text-slate-900">Drivers (0)</button>
-              </div>
-
-              <div class="relative w-full max-w-[32rem]">
-                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
-                  </svg>
-                </span>
-                <input id="fleetSearchInput" type="search" placeholder="Search vehicles" class="h-9 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-400" />
-              </div>
-
-              <div class="ml-auto relative">
-                <button id="fleetAddNewBtn" type="button" aria-expanded="false" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
-                  Add New
-                  <span class="text-xs">▾</span>
-                </button>
-                <div id="fleetAddNewMenu" class="absolute right-0 z-10 mt-2 hidden w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                  <button id="openVehicleModalBtn" type="button" class="w-full rounded-none border-b border-slate-200 px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Vehicle</button>
-                  <button id="openDriversModalBtn" type="button" class="w-full rounded-none px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Driver</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3 text-xs text-slate-500">
-              <span id="fleetGalleryMeta">0 Vehicles • Page 1 of 1</span>
-            </div>
-
-            <div id="vehicleCardsContainer" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"></div>
-
-            <div id="fleetPaginationControls" class="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-              <div id="fleetPaginationInfo" class="text-sm text-slate-600">Showing 0–0 of 0 results</div>
-              <div class="flex flex-wrap items-center gap-2">
-                <div id="fleetPageNumbers" class="hidden flex flex-wrap items-center gap-1"></div>
-                <button id="fleetPrevPageBtn" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                  Previous
-                </button>
-                <button id="fleetNextPageBtn" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
-                  Next
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -1171,6 +1171,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
           <h2 id="vehicleDetailsModalTitle" class="text-base font-semibold text-slate-900">Vehicle Booking Timeline</h2>
           <p class="mt-1 text-sm text-slate-500">Recent booking activity and upcoming commitments for this vehicle.</p>
           <div id="vehicleDetailsMeta" class="mt-3 flex flex-wrap gap-2"></div>
+          <div id="vehicleDetailsActions" class="mt-4 flex flex-wrap gap-2"></div>
         </div>
         <button type="button" id="closeVehicleDetailsModalBtn" class="modal-close" aria-label="Close">
           <span class="text-lg">✕</span>
@@ -1378,7 +1379,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
     const endpoint = isDisable ? deleteUrl : updateUrl;
     fetch(endpoint, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(parseJsonResponse)
       .then(resp => {
         if (!resp || !resp.success) {
           alert(resp && resp.message ? resp.message : `Failed to ${errorLabel} ${isVehicle ? 'vehicle' : 'driver'}`);
@@ -1390,7 +1391,10 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         loadVehicleCards();
         showNotification(isDisable ? notifications[isVehicle ? 'vehicle' : 'driver'].disabled : notifications[isVehicle ? 'vehicle' : 'driver'].enabled, isDisable ? 'info' : 'success');
       })
-      .catch(() => alert(`Network error while trying to ${errorLabel} ${isVehicle ? 'vehicle' : 'driver'}`));
+      .catch(err => {
+        console.error(`Fleet action failed: ${err.message || err}`);
+        alert(err && err.message ? err.message : `Network error while trying to ${errorLabel} ${isVehicle ? 'vehicle' : 'driver'}`);
+      });
   }
 
   function openModal(modalEl) {
@@ -2350,15 +2354,17 @@ driverForm.addEventListener('submit', function (e) {
   function createVehicleCard(vehicle) {
     const card = document.createElement('div');
     const rawStatus = (vehicle.status || 'active').toString().toLowerCase();
-    const statusLabel = rawStatus === 'active' ? 'Active' : rawStatus === 'inactive' ? 'Inactive' : rawStatus.toUpperCase();
+    const statusLabel = rawStatus === 'active' ? 'Available' : 'Unavailable';
     const statusDot = rawStatus === 'active' ? 'bg-emerald-600' : 'bg-slate-400';
     const vehicleName = vehicle.vehicle_name || 'Vehicle';
     const plate = vehicle.plate_number || 'No plate';
-    const category = vehicle.category || vehicle.vehicle_type || vehicle.type || 'Vehicle';
-    const seats = vehicle.capacity ? `${vehicle.capacity} Seats` : null;
-    const fuel = vehicle.fuel_type || vehicle.fuel || null;
-    const metaParts = [category, seats, fuel].filter(Boolean).join(' • ');
+    const seats = vehicle.capacity ? `${vehicle.capacity} seats` : null;
+    const plateInfo = [plate, seats].filter(Boolean).join(' • ');
 
+    card.dataset.vehicleStatus = rawStatus;
+    card.dataset.vehicleName = vehicleName;
+    card.dataset.vehiclePlate = vehicle.plate_number || '';
+    card.dataset.vehicleCapacity = String(vehicle.capacity || 1);
     card.className = 'flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md';
     if (rawStatus !== 'active') {
       card.className += ' opacity-80 filter grayscale';
@@ -2368,25 +2374,32 @@ driverForm.addEventListener('submit', function (e) {
     const imgSrc = vehicle.image_url ? vehicle.image_url : (filename ? (baseUrl + 'uploads/vehicle/' + filename) : (baseUrl + 'app/assets/img/vehicle-placeholder.jpg'));
 
     card.innerHTML = `
-      <div class="relative overflow-hidden rounded-t-xl aspect-video bg-slate-100">
-        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(vehicleName)}" class="h-full w-full object-cover" />
-        <div class="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-slate-900 backdrop-blur">
-          <span class="inline-flex h-1.5 w-1.5 rounded-full ${statusDot}"></span>
-          ${escapeHtml(statusLabel)}
+      <div class="relative overflow-hidden rounded-t-xl bg-slate-100">
+        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(vehicleName)}" class="h-30 w-full object-cover" />
+        <div id="vehicle-status-badge-${vehicle.id}" class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2 py-1 text-[10px] font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 backdrop-blur">
+          <span id="vehicle-status-dot-${vehicle.id}" class="inline-flex h-1.5 w-1.5 rounded-full ${statusDot}"></span>
+          <span id="vehicle-status-text-${vehicle.id}" class="leading-none">${escapeHtml(statusLabel)}</span>
         </div>
       </div>
       <div class="flex flex-1 flex-col gap-3 p-4">
-        <div>
-          <h3 class="truncate text-base font-semibold text-slate-900">${escapeHtml(vehicleName)}</h3>
-          <p class="mt-1 truncate text-sm text-slate-500">${escapeHtml(plate)}</p>
+        <div class="space-y-1">
+          <h3 class="truncate text-[15px] font-semibold text-slate-900">${escapeHtml(vehicleName)}</h3>
+          <p class="truncate text-sm text-slate-500">${escapeHtml(plateInfo)}</p>
         </div>
-        <div class="text-xs text-slate-500">${escapeHtml(metaParts || '—')}</div>
-        <div class="mt-auto text-right">
-          <div class="grid gap-2">
-            <button type="button" class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 view-vehicle-btn" data-vehicle-id="${vehicle.id}">View Details</button>
-            <button type="button" class="h-9 w-full rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}">${rawStatus === 'active' ? 'Disable' : 'Enable'}</button>
+        <div class="space-y-2">
+          <div id="bookings-${vehicle.id}" class="min-h-[1.25rem] text-sm leading-5 text-slate-600">Loading availability…</div>
+          <div id="next-trip-${vehicle.id}" class="hidden border-t border-slate-100 pt-2">
+            <div class="space-y-1">
+              <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Next trip</div>
+              <div id="next-trip-title-${vehicle.id}" class="text-sm font-medium text-slate-900"></div>
+              <div id="next-trip-time-${vehicle.id}" class="text-xs leading-5 text-slate-500"></div>
+            </div>
           </div>
         </div>
+        <div class="mt-auto">
+          <button type="button" class="h-9 w-full rounded-lg border border-slate-900 bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 view-vehicle-btn" data-vehicle-id="${vehicle.id}">View Schedule</button>
+        </div>
+        <div id="loading-${vehicle.id}" class="text-xs text-slate-400" style="display:none;"></div>
       </div>
     `;
 
@@ -2686,9 +2699,61 @@ driverForm.addEventListener('submit', function (e) {
 
   // Initialize initial gallery state
   renderFleetGalleryCards();
+
+  function formatAvailabilityDateTime(dtStr) {
+    if (!dtStr) return '';
+    const value = String(dtStr).replace(' ', 'T');
+    const dateValue = new Date(value);
+    if (isNaN(dateValue.getTime())) return '';
+
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const tomorrowStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const dateStart = new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
+    const dayLabel = dateStart.getTime() === todayStart.getTime()
+      ? 'Today'
+      : dateStart.getTime() === tomorrowStart.getTime()
+        ? 'Tomorrow'
+        : dateValue.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const timeLabel = dateValue.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `${dayLabel} • ${timeLabel}`;
+  }
+
+  function formatBookingRange(startStr, endStr) {
+    if (!startStr) return '';
+    const start = new Date(String(startStr).replace(' ', 'T'));
+    if (isNaN(start.getTime())) return '';
+
+    const end = endStr ? new Date(String(endStr).replace(' ', 'T')) : null;
+    const sameDay = end && end.getFullYear() === start.getFullYear() && end.getMonth() === start.getMonth() && end.getDate() === start.getDate();
+
+    const startLabel = `${start.toLocaleDateString([], { month: 'short', day: 'numeric' })} • ${start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    if (sameDay && end) {
+      return `${startLabel} – ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    }
+
+    if (end && !isNaN(end.getTime())) {
+      return `${startLabel} – ${end.toLocaleDateString([], { month: 'short', day: 'numeric' })} • ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+    }
+
+    return startLabel;
+  }
+
+  function buildVehicleAvailabilitySummary(upcoming) {
+    const ongoing = upcoming.find(b => getBookingStatus(b.departure_expected, b.return_expected) === 'ongoing');
+    if (ongoing) {
+      const endAt = ongoing.return_expected || ongoing.end_at || '';
+      return `Returns ${formatAvailabilityDateTime(endAt)}`;
+    }
+
+    return 'Available Now';
+  }
+
   function loadVehicleUpcoming(vehicleId, card) {
     const loadingEl = card.querySelector(`#loading-${vehicleId}`);
     const bookingsEl = card.querySelector(`#bookings-${vehicleId}`);
+    const badgeEl = card.querySelector(`#vehicle-status-badge-${vehicleId}`);
+    const dotEl = card.querySelector(`#vehicle-status-dot-${vehicleId}`);
 
     fetch(vehicleHistoryUrl + '&vehicle_id=' + vehicleId + '&t=' + Date.now(), {
       method: 'GET',
@@ -2696,31 +2761,75 @@ driverForm.addEventListener('submit', function (e) {
     })
     .then(parseJsonResponse)
     .then(data => {
-      loadingEl.style.display = 'none';
+      if (loadingEl) loadingEl.style.display = 'none';
 
       const rows = (data && Array.isArray(data.bookings)) ? data.bookings : [];
-      // keep only upcoming (pending or ongoing)
       const upcoming = rows.filter(b => {
         const st = getBookingStatus(b.departure_expected, b.return_expected);
         return st === 'pending' || st === 'ongoing';
       });
 
-      if (!upcoming || upcoming.length === 0) {
-        bookingsEl.innerHTML = '<p class="text-xs text-slate-500 text-center py-2">No upcoming bookings</p>';
-        bookingsEl.style.display = 'block';
-        return;
+      const currentStatus = card.dataset.vehicleStatus;
+      const isUnavailable = currentStatus === 'inactive' || currentStatus === 'maintenance';
+      const ongoingBooking = upcoming.find(b => getBookingStatus(b.departure_expected, b.return_expected) === 'ongoing');
+      const pendingBookings = upcoming
+        .filter(b => getBookingStatus(b.departure_expected, b.return_expected) === 'pending')
+        .sort((a, b) => {
+          const aTime = new Date(a.departure_expected || a.start_at || 0).getTime();
+          const bTime = new Date(b.departure_expected || b.start_at || 0).getTime();
+          return aTime - bTime;
+        });
+
+      if (bookingsEl) {
+        if (isUnavailable) {
+          bookingsEl.textContent = '';
+          bookingsEl.classList.add('hidden');
+        } else {
+          bookingsEl.textContent = buildVehicleAvailabilitySummary(upcoming);
+          bookingsEl.classList.remove('hidden');
+        }
       }
 
-      bookingsEl.innerHTML = '';
-      upcoming.slice(0,3).forEach(booking => {
-        bookingsEl.appendChild(renderBookingShort(booking));
-      });
+      const nextTripEl = card.querySelector(`#next-trip-${vehicleId}`);
+      const nextTripTitleEl = card.querySelector(`#next-trip-title-${vehicleId}`);
+      const nextTripTimeEl = card.querySelector(`#next-trip-time-${vehicleId}`);
+      if (!isUnavailable && pendingBookings.length && nextTripEl && nextTripTitleEl && nextTripTimeEl) {
+        const next = pendingBookings[0];
+        const start = next.departure_expected || next.start_at || '';
+        const end = next.return_expected || next.end_at || '';
+        nextTripTitleEl.textContent = escapeHtml(next.purpose || next.title || next.trip_name || 'Next trip');
+        nextTripTimeEl.textContent = formatBookingRange(start, end);
+        nextTripEl.classList.remove('hidden');
+      } else if (nextTripEl) {
+        nextTripEl.classList.add('hidden');
+      }
 
-      bookingsEl.style.display = 'block';
+      if (badgeEl) {
+        const statusTextEl = card.querySelector(`#vehicle-status-text-${vehicleId}`);
+        const badgeText = isUnavailable
+          ? 'Unavailable'
+          : ongoingBooking
+            ? 'On Trip'
+            : 'Available';
+        if (statusTextEl) {
+          statusTextEl.textContent = badgeText;
+        }
+        if (dotEl) {
+          const dotColor = badgeText === 'Unavailable'
+            ? 'bg-slate-400'
+            : badgeText === 'On Trip'
+              ? 'bg-blue-600'
+              : 'bg-emerald-600';
+          dotEl.className = `inline-flex h-1.5 w-1.5 rounded-full ${dotColor}`;
+        }
+      }
     })
     .catch(err => {
       console.error('Error loading upcoming bookings:', err);
-      loadingEl.innerHTML = '<p class="text-xs text-rose-500 text-center py-1">Failed to load</p>';
+      if (loadingEl) {
+        loadingEl.style.display = 'block';
+        loadingEl.innerHTML = '<span class="text-xs text-rose-500">Failed to load availability</span>';
+      }
     });
   }
 
@@ -2943,6 +3052,35 @@ driverForm.addEventListener('submit', function (e) {
         `).join('');
       }
 
+      const detailsActionsEl = document.getElementById('vehicleDetailsActions');
+      if (detailsActionsEl) {
+        const cardName = card ? card.dataset.vehicleName : null;
+        const cardStatus = card ? card.dataset.vehicleStatus : 'active';
+        const action = cardStatus === 'active' ? 'disable' : 'enable';
+        const label = action === 'disable' ? 'Disable' : 'Enable';
+        const detailsBtn = document.createElement('button');
+        detailsBtn.type = 'button';
+        detailsBtn.className = 'h-9 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 transition hover:bg-slate-50';
+        detailsBtn.textContent = label;
+        detailsBtn.addEventListener('click', () => {
+          showFleetCardActionModal({
+            itemType: 'vehicles',
+            itemId: vehicleId,
+            itemName: cardName || 'Vehicle',
+            action: action,
+            itemData: {
+              id: vehicleId,
+              vehicle_name: cardName || 'Vehicle',
+              plate_number: card ? card.dataset.vehiclePlate : '',
+              capacity: parseInt(card ? card.dataset.vehicleCapacity : '', 10) || 1,
+              status: cardStatus
+            }
+          });
+        });
+        detailsActionsEl.innerHTML = '';
+        detailsActionsEl.appendChild(detailsBtn);
+      }
+
       renderTimelineSections(rows, { showAll: false, maxVisible: 4 });
     })
     .catch(err => {
@@ -2970,8 +3108,74 @@ driverForm.addEventListener('submit', function (e) {
     }
   }
 
+  function formatScheduleDateTime(date) {
+    if (!date || isNaN(date.getTime())) return '';
+    const dateLabel = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const timeLabel = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `${dateLabel} • ${timeLabel}`;
+  }
+
+  function getNearestScheduleFocusItems() {
+    if (!calendar) return { today: null, upcoming: null };
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const items = calendar.getEvents()
+      .map(ev => {
+        const start = ev.start ? new Date(ev.start) : null;
+        if (!start || isNaN(start.getTime())) return null;
+        const ext = ev.extendedProps || {};
+        const title = String(ev.title || ext.purpose || ext.title || ext.trip_name || 'Scheduled trip').trim();
+        const vehicleName = String(ext.vehicle_name || ext.vehicleName || '').trim();
+        const plate = String(ext.plate_number || ext.plateNumber || '').trim();
+        const vehicleLabel = vehicleName && plate ? `${vehicleName} (${plate})` : vehicleName || plate || 'Vehicle schedule';
+        return { title, vehicleLabel, start };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.start - b.start);
+
+    const todayItem = items.find(item => item.start >= todayStart && item.start <= todayEnd);
+    const upcomingItem = items.find(item => item.start > todayEnd);
+    return { today: todayItem || null, upcoming: upcomingItem || null };
+  }
+
+  function renderScheduleFocusPanel() {
+    if (!scheduleFocusPanel) return;
+    const todayTitleEl = document.getElementById('scheduleFocusTodayTitle');
+    const todayMetaEl = document.getElementById('scheduleFocusTodayMeta');
+    const todayDotEl = document.getElementById('scheduleFocusTodayDot');
+    const upcomingTitleEl = document.getElementById('scheduleFocusUpcomingTitle');
+    const upcomingMetaEl = document.getElementById('scheduleFocusUpcomingMeta');
+    const upcomingDotEl = document.getElementById('scheduleFocusUpcomingDot');
+
+    const { today, upcoming } = getNearestScheduleFocusItems();
+
+    if (today) {
+      todayTitleEl.textContent = `${today.title} — ${today.vehicleLabel}`;
+      todayMetaEl.textContent = formatScheduleDateTime(today.start);
+      todayDotEl.className = 'inline-flex h-2 w-2 rounded-full bg-emerald-500';
+    } else {
+      todayTitleEl.textContent = 'No scheduled trips today.';
+      todayMetaEl.textContent = '';
+      todayDotEl.className = 'inline-flex h-2 w-2 rounded-full bg-slate-200';
+    }
+
+    if (upcoming) {
+      upcomingTitleEl.textContent = `${upcoming.title} — ${upcoming.vehicleLabel}`;
+      upcomingMetaEl.textContent = formatScheduleDateTime(upcoming.start);
+      upcomingDotEl.className = 'inline-flex h-2 w-2 rounded-full bg-slate-500';
+    } else {
+      upcomingTitleEl.textContent = 'No upcoming bookings.';
+      upcomingMetaEl.textContent = '';
+      upcomingDotEl.className = 'inline-flex h-2 w-2 rounded-full bg-slate-200';
+    }
+  }
+
   function resetBookingPreviewPanel() {
     if (bookingPreviewForm) bookingPreviewForm.classList.add('hidden');
+    if (bookingDetailsWrapper) bookingDetailsWrapper.classList.add('hidden');
+    if (scheduleFocusPanel) scheduleFocusPanel.classList.remove('hidden');
     if (bookingPreviewEmptyEl) bookingPreviewEmptyEl.classList.remove('hidden');
     toggleFleetSnapshotVisibility(true);
     if (previewBookingIdEl) previewBookingIdEl.value = '';
@@ -2987,10 +3191,13 @@ driverForm.addEventListener('submit', function (e) {
     if (previewSpecialInstructionsEl) previewSpecialInstructionsEl.value = '';
     if (previewRemarksEl) previewRemarksEl.value = '';
     setBookingPreviewStatus('No selection', 'neutral');
+    renderScheduleFocusPanel();
   }
 
   function populateBookingPreview(booking) {
     if (!booking) return;
+    if (scheduleFocusPanel) scheduleFocusPanel.classList.add('hidden');
+    if (bookingDetailsWrapper) bookingDetailsWrapper.classList.remove('hidden');
     if (previewBookingIdEl) previewBookingIdEl.value = String(booking.id || '');
     if (previewPurposeEl) previewPurposeEl.value = booking.purpose || '';
     if (previewDestinationsEl) previewDestinationsEl.value = booking.destinations || '';
@@ -3195,7 +3402,6 @@ driverForm.addEventListener('submit', function (e) {
         case 'start_end_invalid': return 'Invalid times';
         case 'past': return 'Past date';
         case 'buffer': return 'Buffer time conflict';
-        case 'status': return 'Status conflict';
         case 'extension': return 'Extension conflict';
         case 'recurring': return 'Recurring booking conflict';
         case 'time': return 'Time conflict';
@@ -3315,14 +3521,8 @@ driverForm.addEventListener('submit', function (e) {
         continue;
       }
 
-      // pending/approved conflict: if existing booking is 'approved' and new booking is pending, it's a stronger conflict
-      if (evStatus && status && evStatus !== status) {
-        conflicts.push({ type: 'status', event: ev });
-        continue;
-      }
-
       // Note: do not treat generic time overlap as a conflict when vehicle and driver differ.
-      // Only vehicle/driver/combined/status/duplicate/recurring conflicts are reported.
+      // Only vehicle/driver/combined/duplicate/recurring conflicts are reported.
     }
     return conflicts;
   }
@@ -3382,6 +3582,10 @@ driverForm.addEventListener('submit', function (e) {
         }
       }
     ],
+
+    eventsSet: function () {
+      renderScheduleFocusPanel();
+    },
 
     dateClick: function (info) {
       setBookingDefaults(info.dateStr);
