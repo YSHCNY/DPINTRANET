@@ -2371,11 +2371,19 @@ driverForm.addEventListener('submit', function (e) {
     }
 
     const filename = vehicle.image_filename || vehicle.image || null;
-    const imgSrc = vehicle.image_url ? vehicle.image_url : (filename ? (baseUrl + 'uploads/vehicle/' + filename) : (baseUrl + 'app/assets/img/vehicle-placeholder.jpg'));
+    const imgSrc = vehicle.image_url ? vehicle.image_url : (filename ? (baseUrl + 'uploads/vehicle/' + filename) : null);
 
     card.innerHTML = `
-      <div class="relative overflow-hidden rounded-t-xl bg-slate-100">
-        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(vehicleName)}" class="h-30 w-full object-cover" />
+      <div class="relative overflow-hidden rounded-t-xl bg-slate-100 flex-shrink-0">
+        <div class="aspect-[16/9] w-full overflow-hidden rounded-t-xl bg-slate-100">
+          ${imgSrc ? `
+            <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(vehicleName)}" class="h-full w-full object-cover object-center" />
+          ` : `
+            <div class="flex h-full w-full items-center justify-center bg-slate-100 text-slate-400">
+              <span class="text-sm font-semibold">No image available</span>
+            </div>
+          `}
+        </div>
         <div id="vehicle-status-badge-${vehicle.id}" class="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2 py-1 text-[10px] font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 backdrop-blur">
           <span id="vehicle-status-dot-${vehicle.id}" class="inline-flex h-1.5 w-1.5 rounded-full ${statusDot}"></span>
           <span id="vehicle-status-text-${vehicle.id}" class="leading-none">${escapeHtml(statusLabel)}</span>
