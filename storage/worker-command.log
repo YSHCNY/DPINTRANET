@@ -28,3 +28,23 @@ Array
 (
 )
 
+2026-07-17T14:20:44+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-17T14:22:20+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+

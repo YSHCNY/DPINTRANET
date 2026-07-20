@@ -675,6 +675,63 @@ function saveDraftFromFinalize() {
     }
 }
 
+function confirmCorrespondenceAction(message, callback) {
+    if (!message) {
+        return true;
+    }
+
+    const modal = document.getElementById('correspondenceConfirmModal');
+    const messageEl = document.getElementById('correspondenceConfirmMessage');
+    const cancelBtn = document.getElementById('correspondenceConfirmCancel');
+    const acceptBtn = document.getElementById('correspondenceConfirmAccept');
+    const closeBtn = document.getElementById('correspondenceConfirmClose');
+
+    if (!modal || !messageEl || !cancelBtn || !acceptBtn || !closeBtn) {
+        if (typeof callback === 'function') {
+            callback();
+        }
+        return false;
+    }
+
+    messageEl.textContent = `Are you sure you want to ${message.toLowerCase()}?`;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    const cleanup = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        cancelBtn.removeEventListener('click', onCancel);
+        acceptBtn.removeEventListener('click', onConfirm);
+        closeBtn.removeEventListener('click', onCancel);
+    };
+
+    const onCancel = () => {
+        cleanup();
+    };
+
+    const onConfirm = () => {
+        cleanup();
+        if (typeof callback === 'function') {
+            callback();
+        } else {
+            const form = document.getElementById('circulationForm');
+            if (form) {
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            }
+        }
+    };
+
+    cancelBtn.addEventListener('click', onCancel);
+    closeBtn.addEventListener('click', onCancel);
+    acceptBtn.addEventListener('click', onConfirm);
+
+    return false;
+}
+
 function updateAttachmentFeedback() {
     const input = document.querySelector('input[name="attachments[]"]');
     const feedback = document.getElementById('attachment-feedback');

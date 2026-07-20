@@ -18,147 +18,93 @@ function sidebarActiveClass(bool $active): string
 ?>
 
 <nav id="sidebar"
-  class="fixed inset-y-0 left-0 z-30 flex h-screen w-80 -translate-x-full flex-col bg-white border-r border-slate-200 shadow-sm transition-all duration-300 ease-out md:translate-x-0 sidebar-transition">
+  class="fixed inset-y-0 left-0 z-40 flex h-screen w-full max-w-full flex-col overflow-hidden bg-white border-r border-slate-200 shadow-sm transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0 md:w-20 md:max-w-none hover:md:w-64 group peer">
 
-  <style>
-    /* Modern CRM 8-grid responsive sizing */
-    :root { 
-      --sidebar-expanded-width: 17.5rem;    /* 280px - compact expanded */
-      --sidebar-collapsed-width: 4.5rem;    /* 72px - compact collapsed */
-    }
-    
-    #sidebar.sidebar-transition {
-      width: var(--sidebar-expanded-width);
-    }
-    
-    #sidebar.sidebar-collapsed {
-      width: var(--sidebar-collapsed-width);
-    }
-
-    /* Smooth text transitions on collapse */
-    #sidebar.sidebar-collapsed .sidebar-expanded {
-      opacity: 0;
-      transform: translateX(-4px);
-      pointer-events: none;
-      transition: opacity 200ms ease, transform 200ms ease;
-    }
-    
-    #sidebar:not(.sidebar-collapsed) .sidebar-collapsed-only {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* Text utilities */
-    #sidebar .sidebar-truncate { 
-      white-space: nowrap; 
-      overflow: hidden; 
-      text-overflow: ellipsis;
-    }
-
-    /* Responsive breakpoints */
-    @media (max-width: 768px) {
-      #sidebar { width: 100%; --sidebar-expanded-width: 100%; }
-      #sidebar.sidebar-collapsed { width: 4.5rem; }
-      .sidebar-label-mobile { display: none; }
-      #sidebar.sidebar-collapsed .sidebar-label-mobile { display: inline; }
-    }
-
-    /* Hover effects */
-    #sidebar a:not(.active) span.sidebar-icon-bg {
-      transition: all 150ms ease;
-    }
-    /* #sidebar a:hover:not(.active) span.sidebar-icon-bg {
-      background-color: rgb(32, 92, 18);
-    } */
-  </style>
-
-  <!-- Header / Brand: compact 8px grid -->
-  <div class="border-b border-slate-200 px-3 py-2">
-    <div class="flex items-center gap-2 rounded-lg px-2 py-1.5">
-      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 flex-shrink-0">
-        <img src="<?= BASE_URL ?>uploads/logo/official.png" class="h-6 w-auto object-contain" alt="Brand">
-      </div>
-      <div class="min-w-0 sidebar-expanded">
-        <p class="sidebar-truncate text-xs font-bold text-slate-900 leading-tight">DPEARP</p>
-        <p class="sidebar-truncate text-[10px] text-slate-500">Portal</p>
-      </div>
+  <!-- Header / Brand: compact icon-only by default -->
+  <div class="flex h-14 items-center justify-center gap-2 border-b border-slate-200 px-3 transition-all duration-300 ease-in-out group-hover:justify-start">
+    <div class="flex h-8 w-8 items-center justify-center rounded-2xl bg-slate-100">
+      <img src="<?= BASE_URL ?>uploads/logo/official.png" class="h-6 w-auto object-contain" alt="Brand">
+    </div>
+    <div class="sidebar-header-text flex min-w-0 flex-1 flex-col overflow-hidden max-w-0 opacity-0 transition-all duration-300 ease-in-out group-hover:max-w-[11rem] group-hover:opacity-100">
+      <p class="truncate text-xs font-bold text-slate-900 leading-tight">DPEARP</p>
+      <p class="truncate text-xs text-slate-500">Portal</p>
     </div>
   </div>
 
   <!-- Main Content: scrollable -->
   <div class="flex-1 overflow-y-auto">
     <!-- Navigation Section -->
-    <div class="px-2 py-3">
-      <p class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 sidebar-expanded mb-2">Menu</p>
+    <div class="px-2 py-2">
+        <p class="px-2 text-xs font-bold uppercase tracking-wider text-slate-500 sidebar-section-label mb-2 max-h-0 overflow-hidden opacity-0 transition-all duration-300 ease-in-out group-hover:max-h-6 group-hover:opacity-100">Menu</p>
       
-      <ul class="space-y-1">
+        <ul class="space-y-1">
         <li>
-          <a href="index.php?controller=Auth&action=dashboard"
-             class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'Auth' && $currentAction == 'dashboard') ?>">
-            <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'Auth' && $currentAction == 'dashboard') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+            <a href="index.php?controller=Auth&action=dashboard"
+               class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'Auth' && $currentAction == 'dashboard') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'Auth' && $currentAction == 'dashboard') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
               <?= $dashboardIcon ?>
             </span>
-            <span class="min-w-0 sidebar-expanded leading-tight">
-              <span class="text-sm font-medium">Dashboard</span>
+            <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+              Dashboard
             </span>
           </a>
         </li>
 
         <li>
           <a href="index.php?controller=Files&action=files"
-             class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'Files' && $currentAction == 'files') ?>">
-            <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'Files' && $currentAction == 'files') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+             class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'Files' && $currentAction == 'files') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'Files' && $currentAction == 'files') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
               <?= $fileIcon ?>
             </span>
-            <span class="min-w-0 sidebar-expanded leading-tight">
-              <span class="text-sm font-medium">Library</span>
+            <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+              Library
             </span>
           </a>
         </li>
 
         <li>
           <a href="index.php?controller=correspondence&action=correspondence"
-             class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'correspondence' && $currentAction == 'correspondence') ?>">
-            <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'correspondence' && $currentAction == 'correspondence') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+             class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'correspondence' && $currentAction == 'correspondence') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'correspondence' && $currentAction == 'correspondence') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
               <?= $correspondenceIcon ?>
             </span>
-            <span class="min-w-0 sidebar-expanded leading-tight">
-              <span class="text-sm font-medium">Correspondence</span>
+            <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+              Correspondence
             </span>
           </a>
         </li>
 
         <li>
           <a href="index.php?controller=CarBookings&action=calendar"
-             class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'CarBookings' && $currentAction == 'calendar') ?>">
-            <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'CarBookings' && $currentAction == 'calendar') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+             class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'CarBookings' && $currentAction == 'calendar') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'CarBookings' && $currentAction == 'calendar') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
               <?= $vehicleIcons ?>
             </span>
-            <span class="min-w-0 sidebar-expanded leading-tight">
-              <span class="text-sm font-medium">Vehicle Schedule</span>
+            <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+              Vehicle Schedule
             </span>
           </a>
         </li>
 
         <li>
           <a href="index.php?controller=RoomBookings&action=calendar"
-             class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'RoomBookings' && $currentAction == 'calendar') ?>">
-            <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'RoomBookings' && $currentAction == 'calendar') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+             class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'RoomBookings' && $currentAction == 'calendar') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'RoomBookings' && $currentAction == 'calendar') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
               <?= $roomIcon ?>
             </span>
-            <span class="min-w-0 sidebar-expanded leading-tight">
-              <span class="text-sm font-medium">Room Schedule</span>
+            <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+              Room Schedule
             </span>
           </a>
         </li>
         <li>
           <a href="index.php?controller=StaffDirectory&action=index"
-             class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'StaffDirectory' && $currentAction == 'index') ?>">
-            <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StaffDirectory' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+             class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'StaffDirectory' && $currentAction == 'index') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StaffDirectory' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
               <?= $usersIcon ?>
             </span>
-            <span class="min-w-0 sidebar-expanded leading-tight">
-              <span class="text-sm font-medium">Staff Directory</span>
+            <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+              Staff Directory
             </span>
           </a>
         </li>
@@ -167,31 +113,31 @@ function sidebarActiveClass(bool $active): string
 
     <!-- Administration Section -->
     <?php if ($isSuperAdmin || $isAdmin): ?>
-      <div class="border-t border-slate-200 px-2 py-3">
-        <p class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 sidebar-expanded mb-2">Admin</p>
+      <div class="border-t border-slate-200 px-2 py-2">
+        <p class="px-2 text-xs font-bold uppercase tracking-wider text-slate-500 sidebar-section-label mb-2 max-h-0 overflow-hidden opacity-0 transition-all duration-300 ease-in-out group-hover:max-h-6 group-hover:opacity-100">Admin</p>
         
         <ul class="space-y-1">
           <?php if ($isSuperAdmin): ?>
             <li>
               <a href="index.php?controller=Auth&action=users"
-                 class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'Auth' && $currentAction == 'users') ?>">
-                <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'Auth' && $currentAction == 'users') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+                 class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'Auth' && $currentAction == 'users') ?>">
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'Auth' && $currentAction == 'users') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
                   <?= $usersIcon ?>
                 </span>
-                <span class="min-w-0 sidebar-expanded leading-tight">
-                  <span class="text-sm font-medium">Core Users</span>
+                <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+                  Core Users
                 </span>
               </a>
             </li>
 
             <li>
               <a href="index.php?controller=Syslogs&action=syslogs"
-                 class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'Syslogs' && $currentAction == 'syslogs') ?>">
-                <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'Syslogs' && $currentAction == 'syslogs') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+                 class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'Syslogs' && $currentAction == 'syslogs') ?>">
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'Syslogs' && $currentAction == 'syslogs') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
                   <?= $clipBoardIcon ?>
                 </span>
-                <span class="min-w-0 sidebar-expanded leading-tight">
-                  <span class="text-sm font-medium">System Logs</span>
+                <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+                  System Logs
                 </span>
               </a>
             </li>
@@ -199,23 +145,23 @@ function sidebarActiveClass(bool $active): string
 
           <li>
             <a href="index.php?controller=StandardUsers&action=index"
-               class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'StandardUsers' && $currentAction == 'index') ?>">
-              <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StandardUsers' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+              class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'StandardUsers' && $currentAction == 'index') ?>">
+              <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StandardUsers' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
                 <?= $usersIcon ?>
               </span>
-              <span class="min-w-0 sidebar-expanded leading-tight">
-                <span class="text-sm font-medium">Std Users</span>
+              <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+                Std Users
               </span>
             </a>
           </li>
           <!-- <li>
             <a href="index.php?controller=StaffDirectory&action=index"
-               class="group flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors <?= sidebarActiveClass($currentController == 'StaffDirectory' && $currentAction == 'index') ?>">
-              <span class="flex h-8 w-8 items-center justify-center rounded-md flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StaffDirectory' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+               class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'StaffDirectory' && $currentAction == 'index') ?>">
+              <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StaffDirectory' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
                 <?= $usersIcon ?>
               </span>
-              <span class="min-w-0 sidebar-expanded leading-tight">
-                <span class="text-sm font-medium">Staff Directory</span>
+              <span class="flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+                Staff Directory
               </span>
             </a>
           </li> -->

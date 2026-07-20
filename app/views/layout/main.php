@@ -39,29 +39,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
 
-    <!-- Global design tokens for uniform design kit -->
-    <style>
-      /* :root{
-        --text: #0f1724; /* primary text: softer deep slate */
-        --bg-page: #f7f8fb; /* page background: subtle off-white */
-        --card: #ffffff;
-        --surface-1: #f5f7f9; /* subtle surface */
-        --surface-2: #e9edf0;
-        --primary: #346656; /* muted green primary */
-        --secondary: #111827; /* deep accent / headings */
-        --accent: #4b7a58; /* accent (hover, highlights) */
-        --muted: #6b7280;
-        --success: #059669;
-        --danger: #dc2626;
-        --info: #2563eb;
-        --warning: #f59e0b;
-        --shadow-sm: 0 6px 18px rgba(15,23,42,0.05);
-        --shadow-md: 0 10px 30px rgba(15,23,42,0.06);
-        --radius-lg: 10px;
-      } */
  
-      
-    </style>
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
@@ -79,14 +57,14 @@
 </head>
 
 
-<body class=" bg-light">
-  <body class="theme-palette bg-light">
+<body class="theme-palette bg-light">
 <?php require __DIR__ . '/../partials/icons.php'; ?>
   <!-- Sidebar -->
   <?php require __DIR__ . '/../partials/sidebar.php'; ?>
+  <div id="sidebarBackdrop" class="fixed inset-0 z-40 bg-slate-900/50 opacity-0 pointer-events-none transition-opacity duration-300 md:hidden"></div>
 
   <!-- Page Wrapper -->
-  <div class="ml-0 md:ml-[17.5rem] min-h-screen flex flex-col transition-all">
+  <div class="min-h-screen flex flex-col transition-all md:ml-20 peer-hover:ml-64 md:peer-hover:ml-64">
 
     <!-- Header -->
     <?php require __DIR__ . '/../partials/header.php'; ?>

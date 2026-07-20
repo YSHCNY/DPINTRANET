@@ -19,7 +19,7 @@ function avatarUrl($avatar) {
 ?>
 
 <div class="space-y-8">
-    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-6">
+    <div class="grid grid-cols-1 gap-6">
         <div class="space-y-8">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -28,12 +28,18 @@ function avatarUrl($avatar) {
                         <h2 class="text-xl font-semibold text-gray-900 mt-0.5"><?= $isEdit ? 'Edit Standard User' : 'Create Standard User' ?></h2>
                     </div>
 
-                    <?php if ($isEdit): ?>
-                        <a href="index.php?controller=StandardUsers&action=index"
-                           class="inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-                            Cancel Edit
-                        </a>
-                    <?php endif; ?>
+                    <div class="flex items-center gap-2">
+                        <?php if ($isEdit): ?>
+                            <a href="index.php?controller=StandardUsers&action=index"
+                               class="inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                                Cancel Edit
+                            </a>
+                        <?php endif; ?>
+
+                        <button id="toggleBulkImportBtn" type="button" class="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                            Bulk Import
+                        </button>
+                    </div>
                 </div>
 
                 <form action="<?= $formAction ?>" method="POST" enctype="multipart/form-data" class="p-5">
@@ -160,14 +166,8 @@ function avatarUrl($avatar) {
             </div>
         </div>
 
-        <form action="index.php?controller=StandardUsers&action=import" method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-200">
-                <div>
-                    <p class="text-xs font-semibold uppercase text-blue-600">Bulk Import</p>
-                    <h2 class="text-xl font-semibold text-gray-900 mt-0.5">Bulk Import Standard Users</h2>
-                    <p class="mt-2 text-sm text-slate-500">Import multiple portal users using the standard template. Role, Status, and Portal Access are automatically assigned during import.</p>
-                </div>
-            </div>
+        <form action="index.php?controller=StandardUsers&action=import" method="POST" enctype="multipart/form-data" class="hidden bg-white  overflow-hidden">
+           
             <div class="p-5 space-y-5">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <a href="<?= BASE_URL ?>uploads/stafftemplate/std_user_template.xlsx" download class="inline-flex items-center justify-center h-10 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
@@ -244,7 +244,7 @@ function avatarUrl($avatar) {
     </form>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white mt-3 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
                 <p class="text-xs font-semibold uppercase text-blue-600">Directory</p>
@@ -608,4 +608,73 @@ if (bulkDropzone && bulkFileInput) {
         updateBulkImportFilename(file);
     });
 }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('toggleBulkImportBtn');
+    if (!toggleBtn) return;
+
+    const createForm = document.querySelector('form[action*="StandardUsers&action=store"], form[action*="StandardUsers&action=update"]');
+    const bulkForm = document.querySelector('form[action*="StandardUsers&action=import"]');
+    if (!createForm || !bulkForm) return;
+
+    const createParent = createForm.parentNode;
+    const createNext = createForm.nextSibling;
+    const bulkParent = bulkForm.parentNode;
+    const bulkNext = bulkForm.nextSibling;
+
+    let bulkActive = false;
+
+    // Cache header elements for the create card so we can swap text when toggling
+    const createHeaderSmall = createParent.querySelector('p.text-xs.font-semibold') || createParent.querySelector('p');
+    const createHeaderH2 = createParent.querySelector('h2');
+    const originalSmallText = createHeaderSmall ? createHeaderSmall.textContent.trim() : '';
+    const originalH2Text = createHeaderH2 ? createHeaderH2.textContent.trim() : '';
+    let insertedSubtitle = null;
+
+    toggleBtn.addEventListener('click', function () {
+        if (!bulkActive) {
+            // Show bulk form (it was hidden) and replace create form with bulk import form
+            bulkForm.classList.remove('hidden');
+            createParent.replaceChild(bulkForm, createForm);
+
+            // Update header text to Bulk Import variant
+            if (createHeaderSmall) createHeaderSmall.textContent = 'Bulk Import';
+            if (createHeaderH2) createHeaderH2.textContent = 'Bulk Import Standard Users';
+
+            // Insert subtitle/description under the h2 if not present
+            if (!insertedSubtitle) {
+                insertedSubtitle = document.createElement('p');
+                insertedSubtitle.className = 'mt-2 text-sm text-slate-500';
+                insertedSubtitle.textContent = 'Import multiple portal users using the standard template. Role, Status, and Portal Access are automatically assigned during import.';
+                if (createHeaderH2 && createHeaderH2.parentNode) {
+                    createHeaderH2.parentNode.appendChild(insertedSubtitle);
+                }
+            }
+
+            toggleBtn.textContent = 'Back to form';
+            bulkActive = true;
+        } else {
+            // Restore create form and move bulk form back to its original place, then hide it
+            createParent.replaceChild(createForm, bulkForm);
+            if (bulkNext) bulkParent.insertBefore(bulkForm, bulkNext);
+            else bulkParent.appendChild(bulkForm);
+            bulkForm.classList.add('hidden');
+
+            // Restore original header text
+            if (createHeaderSmall) createHeaderSmall.textContent = originalSmallText;
+            if (createHeaderH2) createHeaderH2.textContent = originalH2Text;
+
+            // Remove inserted subtitle if we created one
+            if (insertedSubtitle && insertedSubtitle.parentNode) {
+                insertedSubtitle.parentNode.removeChild(insertedSubtitle);
+            }
+            insertedSubtitle = null;
+
+            toggleBtn.textContent = 'Bulk Import';
+            bulkActive = false;
+        }
+    });
+});
 </script>

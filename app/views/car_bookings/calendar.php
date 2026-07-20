@@ -158,7 +158,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
                 <h2 class="text-base font-semibold text-slate-900">Fleet scheduling timeline</h2>
               </div>
             </div>
-            <div id="carBookingCalendar" class="min-h-[520px]"></div>
+            <div id="carBookingCalendar" class=""></div>
           </div>
 
           <aside class="rounded-xl border border-slate-200 bg-white shadow-sm p-4">

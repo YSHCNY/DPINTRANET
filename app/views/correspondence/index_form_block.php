@@ -284,20 +284,38 @@
 
             <div id="formActions" class="flex flex-col-reverse sm:flex-row md:flex-col gap-2 pt-1">
                     <?php if (!empty($draftDocument)): ?>
-                    <button type="button" onclick="saveDraftFromFinalize()"
+                    <button type="button" onclick="return confirmCorrespondenceAction('Save draft', saveDraftFromFinalize)"
                         class="h-8 md:h-9 px-2 md:px-3 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Save Draft</button>
                     <button type="button" onclick="window.location.href='index.php?controller=correspondence&action=correspondence'"
                         class="h-8 md:h-9 px-2 md:px-3 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
-                    <button type="submit"
-                        class="h-8 md:h-9 px-3 md:px-4 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-sm transition hover:bg-blue-700"><?= $isFinalizeMode ? 'Finalize' : (in_array($currentUserLevel, [2,6], true) ? 'Draft & Notify' : 'Circulate') ?></button>
+                    <?php $submitActionLabel = $isFinalizeMode ? 'Finalize' : (in_array($currentUserLevel, [2,6], true) ? 'Draft & Notify' : 'Circulate'); ?>
+                    <button type="submit" onclick="return confirmCorrespondenceAction('<?= htmlspecialchars($submitActionLabel, ENT_QUOTES, 'UTF-8') ?>')"
+                        class="h-8 md:h-9 px-3 md:px-4 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-sm transition hover:bg-blue-700"><?= $submitActionLabel ?></button>
                 <?php else: ?>
                     <button type="button" onclick="resetForm()"
                         class="h-8 md:h-9 px-2 md:px-3 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Reset</button>
-                    <button type="submit"
+                    <button type="submit" onclick="return confirmCorrespondenceAction('<?= htmlspecialchars(in_array($currentUserLevel, [2,6], true) ? 'Draft & Notify' : 'Circulate', ENT_QUOTES, 'UTF-8') ?>')"
                         class="h-8 md:h-9 px-3 md:px-4 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-sm transition hover:bg-blue-700"><?php echo in_array($currentUserLevel, [2,6], true) ? 'Draft & Notify' : 'Circulate'; ?></button>
                 <?php endif; ?>
             </div>
         </aside>
     </div>
 </form>
+
+<div id="correspondenceConfirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 px-4 py-8">
+    <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="text-sm font-semibold text-slate-900">Confirm action</p>
+                <p id="correspondenceConfirmMessage" class="mt-2 text-sm text-slate-600">Are you sure you want to proceed?</p>
+            </div>
+            <button type="button" id="correspondenceConfirmClose" class="text-slate-500 hover:text-slate-800">×</button>
+        </div>
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button type="button" id="correspondenceConfirmCancel" class="h-10 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
+            <button type="button" id="correspondenceConfirmAccept" class="h-10 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700">Confirm</button>
+        </div>
+    </div>
+</div>
+
 <div id="editSnapshotContainer"></div>

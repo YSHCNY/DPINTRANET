@@ -16,68 +16,27 @@ if (!empty($rooms) && is_array($rooms)) {
 ?>
 <!-- HEADER -->
 <div class="min-h-screen theme-palette">
-    <div class="max-w-[1400px] mx-auto px-3 py-6 text-xs  sm:text-xs md:text-sm ">
-    <div class="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-      <div class="grid grid-cols-8 gap-4 items-start">
-        <div class="col-span-8 md:col-span-5">
-          <p class="text-[10px] font-semibold uppercase tracking-[0.25em] text-emerald-700">ROOM SCHEDULING</p>
-          <h1 class="mt-1 text-base font-semibold text-slate-900">Meeting rooms calendar</h1>
+    <div class="mx-auto max-w-[1400px] px-3 py-4 text-xs sm:text-xs md:text-sm lg:px-4 lg:py-5 xl:px-5">
+    <div class="">
+
+    <div class = 'mb-4 rounded-xl border border-slate-200 bg-white shadow-sm p-3 lg:mb-5 lg:p-4 xl:p-5'>
+      <div class="grid grid-cols-8 gap-3 items-start lg:gap-4">
+        <div class="col-span-8 md:col-span-8">
+          <p class="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">ROOM SCHEDULING</p>
+          <h1 class="mt-1 text-sm font-semibold text-slate-900 lg:text-base">Meeting rooms calendar</h1>
           <p class="mt-1 text-sm text-slate-600">Reserve rooms, check capacity, and prevent booking conflicts with real-time availability and capacity checks.</p>
-        </div>
-        <div class="col-span-8 md:col-span-3 flex items-center justify-end gap-3">
-          <div class="inline-flex items-center gap-3">
-            <div class="flex items-center gap-2 text-xs text-slate-700">
-              <span class="inline-block h-2 w-2 rounded-full bg-slate-400"></span>
-              <span class="font-semibold">Total Rooms</span>
-              <span id="roomSummaryTotal" class="ml-2 text-sm font-semibold text-slate-900"><?= $roomCount ?></span>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-slate-700">
-              <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-              <span class="font-semibold">Available</span>
-              <span id="roomSummaryAvailable" class="ml-2 text-sm font-semibold text-emerald-700">0</span>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-slate-700">
-              <span class="inline-block h-2 w-2 rounded-full bg-sky-500"></span>
-              <span class="font-semibold">Active Bookings</span>
-              <span id="roomSummaryOccupied" class="ml-2 text-sm font-semibold text-violet-700">0</span>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-slate-700">
-              <span class="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
-              <span class="font-semibold">Upcoming</span>
-              <span id="roomSummaryBookings" class="ml-2 text-sm font-semibold text-slate-900">0</span>
-            </div>
-          </div>
         </div>
       </div>
 
-      <div class="border-t border-slate-200 mt-4 pt-4">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
-              <label class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mr-2">View:</label>
-              <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
-                <option value="dayGridMonth">Month</option>
-                <option value="timeGridWeek">Week</option>
-                <option value="timeGridDay">Day</option>
-              </select>
-            </div>
-            <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-              <label class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mr-2">Room:</label>
-              <select id="roomFilter" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
-                <option value="">All</option>
-                <?php foreach (($rooms ?? []) as $room): ?>
-                  <option value="<?= (int)$room['id'] ?>"><?= htmlspecialchars($room['room_name'] . ' (' . $room['room_code'] . ')') ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-          </div>
-
+      <div class="mt-3 border-t border-slate-200 pt-3 lg:mt-4 lg:pt-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:gap-4">
+     
           <div class="flex items-center gap-2">
-            <button type="button" id="openRoomBookingModalBtn" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+            <button type="button" id="openRoomBookingModalBtn" class="bg-slate-800 inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-50 shadow-sm transition hover:bg-slate-900">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               <span>New booking</span>
             </button>
-            <button type="button" id="openRoomCreateModalBtn" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+            <button type="button" id="openRoomCreateModalBtn" class="inline-flex h-9 bg-slate-800  items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-50 shadow-sm transition hover:bg-slate-900">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
               <span>New room</span>
             </button>
@@ -85,57 +44,159 @@ if (!empty($rooms) && is_array($rooms)) {
         </div>
       </div>
 
-      <div class="mt-6">
-        <div class="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
-          <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div id="roomBookingCalendar" class="min-h-[520px] p-4 sm:p-5"></div>
+      <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-3 lg:p-4">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Availability summary</p>
+            <h2 class="mt-1 text-sm font-semibold text-slate-900">See open rooms first</h2>
+            <p class="mt-1 text-sm text-slate-600">Review room availability, planned occupancy, and open the schedule for the room that fits your need.</p>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-4">
+            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Rooms</p>
+              <p id="roomSummaryTotal" class="mt-1 text-base font-semibold text-slate-900">0</p>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Available</p>
+              <p id="roomSummaryAvailable" class="mt-1 text-base font-semibold text-emerald-700">0</p>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">In use</p>
+              <p id="roomSummaryOccupied" class="mt-1 text-base font-semibold text-slate-900">0</p>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
+              <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Upcoming</p>
+              <p id="roomSummaryBookings" class="mt-1 text-base font-semibold text-slate-900">0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+</div>
+
+
+
+<!-- section 2 -->
+<div class = 'mb-4 rounded-xl border border-slate-200 bg-white shadow-sm  lg:mb-5 lg:p-4 xl:p-5'>
+      <div class=" space-y-3 ">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-sm font-semibold text-slate-900 lg:text-base">Meeting rooms</h2>
+            <p class="text-sm text-slate-600">Choose a room to confirm availability and open the full schedule.</p>
+          </div>
+        </div>
+        <div id="roomCardsContainer" class="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4"></div>
+      </div>
+
+         </div>
+
+
+      <div class="mt-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm lg:p-4">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Schedule reference</p>
+            <h2 class="mt-1 text-sm font-semibold text-slate-900">Calendar</h2>
+          </div>
+               <div class="flex items-center gap-2 lg:gap-3">
+            <!-- <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
+              <select id="calendarViewSelect" class="bg-transparent text-sm text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                <option value="dayGridMonth">Month</option>
+                <option value="timeGridWeek">Week</option>
+                <option value="timeGridDay">Day</option>
+              </select>
+            </div> -->
+        
           </div>
 
-          <aside class="rounded-xl border border-slate-200 bg-slate-50/80 p-5 shadow-sm">
-            <div id="roomResourceSummary" class="space-y-4 h-full flex flex-col">
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Workspace</p>
-                <div class="flex items-center justify-between gap-3 mt-1">
-                  <h2 class="text-sm font-semibold text-slate-900">Rooms snapshot</h2>
-                  <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                    Live availability
-                  </span>
+        </div>
+
+
+        
+        <div class="grid mt-4 gap-4 xl:grid-cols-[1.7fr_0.8fr]">
+          <div id="roomBookingCalendar" class=""></div>
+
+          <aside class="rounded-xl border border-slate-200 bg-slate-50/60 p-3 shadow-sm lg:p-4 xl:p-5">
+            
+            <div id="roomResourceSummary" class="flex h-full flex-col space-y-3 lg:space-y-4">
+                  <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+              <div class="flex items-center gap-3">
+                <select id="roomFilter" class="bg-transparent text-sm border rounded-lg text-slate-900 font-semibold focus:outline-none cursor-pointer">
+                <option value="">All</option>
+                <?php foreach (($rooms ?? []) as $room): ?>
+                  <option value="<?= (int)$room['id'] ?>"><?= htmlspecialchars($room['room_name'] . ' (' . $room['room_code'] . ')') ?></option>
+                <?php endforeach; ?>
+                </select>
+                <div id="roomFilterAvailability" class="text-xs font-semibold text-slate-700"></div>
+              </div>
+            </div>
+              <div id="scheduleFocusPanel" class="rounded-xl bg-white p-4 shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span id="scheduleFocusNowDot" class="inline-flex h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
+                    <div>
+                      <p id="scheduleFocusTodayTitle" class="text-base font-semibold text-slate-900">Live status</p>
+                      <p id="scheduleFocusTodayMeta" class="mt-1 text-sm text-slate-500">Ongoing and upcoming bookings</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-4 space-y-4">
+                  <div>
+                    <div class="flex items-center justify-between gap-3">
+                      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Ongoing</p>
+                      <span id="scheduleFocusOngoingCount" class="text-xs text-slate-500"></span>
+                    </div>
+                    <div id="scheduleFocusOngoingList" class="mt-3 space-y-2"></div>
+                  </div>
+
+                  <div>
+                    <div class="flex items-center justify-between gap-3">
+                      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Upcoming</p>
+                      <span id="scheduleFocusUpcomingCount" class="text-xs text-slate-500"></span>
+                    </div>
+                    <div id="scheduleFocusUpcomingList" class="mt-3 space-y-2"></div>
+                  </div>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-lg border border-slate-200 bg-white p-3">
-                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Total Rooms</p>
-                  <p id="snapshotTotalRooms" class="mt-2 text-2xl font-semibold text-slate-900">0</p>
-                </div>
-                <div class="rounded-lg border border-slate-200 bg-white p-3">
-                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Available</p>
-                  <p id="snapshotAvailableRooms" class="mt-2 text-2xl font-semibold text-emerald-600">0</p>
-                </div>
-                <div class="rounded-lg border border-slate-200 bg-white p-3">
-                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">In Use</p>
-                  <p id="snapshotInUseRooms" class="mt-2 text-2xl font-semibold text-rose-600">0</p>
-                </div>
-                <div class="rounded-lg border border-slate-200 bg-white p-3">
-                  <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Upcoming</p>
-                  <p id="snapshotUpcomingRooms" class="mt-2 text-2xl font-semibold text-blue-600">0</p>
-                </div>
-              </div>
+            
 
-              <div class="pt-4 border-t border-slate-200 mt-auto">
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Selected booking</p>
-                <div class="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
-                  <p class="text-sm font-semibold text-slate-900">Workspace preview</p>
-                  <p class="mt-2 text-sm text-slate-500">No selection</p>
-                  <p class="mt-2 text-xs text-slate-500">Select a booked slot on the calendar to inspect, edit, cancel, or remove it.</p>
+              <!-- <div class="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Room overview</p>
+                  <span class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-medium text-slate-600">Live</span>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div class="rounded-lg border border-slate-200 bg-white p-2.5">
+                    <p class="text-[10px] uppercase tracking-[0.16em] text-slate-500">Total</p>
+                    <p id="snapshotTotalRooms" class="mt-1 text-base font-semibold text-slate-900">0</p>
+                  </div>
+                  <div class="rounded-lg border border-slate-200 bg-white p-2.5">
+                    <p class="text-[10px] uppercase tracking-[0.16em] text-slate-500">Available</p>
+                    <p id="snapshotAvailableRooms" class="mt-1 text-base font-semibold text-emerald-600">0</p>
+                  </div>
+                  <div class="rounded-lg border border-slate-200 bg-white p-2.5">
+                    <p class="text-[10px] uppercase tracking-[0.16em] text-slate-500">In use</p>
+                    <p id="snapshotInUseRooms" class="mt-1 text-base font-semibold text-rose-600">0</p>
+                  </div>
+                  <div class="rounded-lg border border-slate-200 bg-white p-2.5">
+                    <p class="text-[10px] uppercase tracking-[0.16em] text-slate-500">Upcoming</p>
+                    <p id="snapshotUpcomingRooms" class="mt-1 text-base font-semibold text-blue-600">0</p>
+                  </div>
+                </div>
+              </div> -->
+
+              <div class="mt-auto rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+                <div class="min-h-[96px] flex flex-col items-center justify-center text-center">
+                  <div>
+                    <h3 class="text-sm font-semibold text-slate-900">No booking selected</h3>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div id="roomResourceDetailPanel" class="hidden flex flex-col h-full">
-              <div class="space-y-4 flex-1 overflow-y-auto">
-                <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
+            <div id="roomResourceDetailPanel" class="hidden flex h-full flex-col">
+              <div class="flex-1 space-y-3 overflow-y-auto lg:space-y-4">
+                <div class="flex items-start justify-between gap-3 border-b border-slate-200 pb-3 lg:pb-4">
                   <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Booking editor</p>
                     <h2 id="roomResourceDetailTitle" class="mt-1 text-base font-semibold text-slate-900">Booking</h2>
@@ -144,85 +205,78 @@ if (!empty($rooms) && is_array($rooms)) {
                   <div id="roomResourceDetailStatusWrap"></div>
                 </div>
 
-                <form id="roomEditorForm" class="space-y-4">
+                <form id="roomEditorForm" class="space-y-3 lg:space-y-4">
                   <input type="hidden" name="id" id="roomEditorId" value="">
 
                   <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">Booking Details</p>
-                    <div class="space-y-3">
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 lg:mb-3">Booking Details</p>
+                    <div class="space-y-2 lg:space-y-3">
                       <div>
-                        <label class="text-sm font-semibold text-slate-700 block mb-2">Room <span class="text-red-500">*</span></label>
-                        <select name="room_id" id="roomEditorRoomId" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required>
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Room <span class="text-red-500">*</span></label>
+                        <select name="room_id" id="roomEditorRoomId" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required>
                           <option value="">-- Select a room --</option>
                         </select>
                       </div>
                       <div>
-                        <label class="text-sm font-semibold text-slate-700 block mb-2">Booking Date <span class="text-red-500">*</span></label>
-                        <input type="date" name="date_trip" id="roomEditorDateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Booking Date <span class="text-red-500">*</span></label>
+                        <input type="date" name="date_trip" id="roomEditorDateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
                       </div>
-                      <div class="grid grid-cols-2 gap-3">
+                      <div class="grid grid-cols-2 gap-2 lg:gap-3">
                         <div>
-                          <label class="text-sm font-semibold text-slate-700 block mb-2">Start Time <span class="text-red-500">*</span></label>
-                          <input type="datetime-local" name="departure_expected" id="roomEditorDepartureExpected" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                          <label class="mb-2 block text-sm font-semibold text-slate-700">Start Time <span class="text-red-500">*</span></label>
+                          <input type="datetime-local" name="departure_expected" id="roomEditorDepartureExpected" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
                         </div>
                         <div>
-                          <label class="text-sm font-semibold text-slate-700 block mb-2">End Time <span class="text-red-500">*</span></label>
-                          <input type="datetime-local" name="return_expected" id="roomEditorReturnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                          <label class="mb-2 block text-sm font-semibold text-slate-700">End Time <span class="text-red-500">*</span></label>
+                          <input type="datetime-local" name="return_expected" id="roomEditorReturnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">Reservation Information</p>
-                    <div class="space-y-3">
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 lg:mb-3">Reservation Information</p>
+                    <div class="space-y-2 lg:space-y-3">
                       <div>
-                        <label class="text-sm font-semibold text-slate-700 block mb-2">Purpose <span class="text-red-500">*</span></label>
-                        <input type="text" name="purpose" id="roomEditorPurpose" placeholder="Meeting, workshop, training" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Purpose <span class="text-red-500">*</span></label>
+                        <input type="text" name="purpose" id="roomEditorPurpose" placeholder="Meeting, workshop, training" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
                       </div>
                       <div>
-                        <label class="text-sm font-semibold text-slate-700 block mb-2">Attendees <span class="text-red-500">*</span></label>
-                        <input type="number" name="attendees" id="roomEditorAttendees" min="1" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Attendees <span class="text-red-500">*</span></label>
+                        <input type="number" name="attendees" id="roomEditorAttendees" min="1" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
                       </div>
                       <div>
-                        <label class="text-sm font-semibold text-slate-700 block mb-2">Requested Date <span class="text-red-500">*</span></label>
-                        <input type="date" name="date_requested" id="roomEditorDateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Requested Date <span class="text-red-500">*</span></label>
+                        <input type="date" name="date_requested" id="roomEditorDateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-3">Additional Information</p>
-                    <div class="space-y-3">
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 lg:mb-3">Additional Information</p>
+                    <div class="space-y-2 lg:space-y-3">
                       <div>
-                        <label class="text-sm font-semibold text-slate-700 block mb-2">Special Instructions</label>
-                        <textarea name="special_instructions" id="roomEditorSpecialInstructions" rows="2" placeholder="Any equipment, AV needs, or setup requests" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition resize-none"></textarea>
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Special Instructions</label>
+                        <textarea name="special_instructions" id="roomEditorSpecialInstructions" rows="2" placeholder="Any equipment, AV needs, or setup requests" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none resize-none"></textarea>
                       </div>
                       <div>
-                        <label class="text-sm font-semibold text-slate-700 block mb-2">Remarks</label>
-                        <textarea name="remarks" id="roomEditorRemarks" rows="2" placeholder="Additional notes" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition resize-none"></textarea>
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">Remarks</label>
+                        <textarea name="remarks" id="roomEditorRemarks" rows="2" placeholder="Additional notes" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none resize-none"></textarea>
                       </div>
                     </div>
                   </div>
                 </form>
               </div>
 
-              <div class="flex flex-col gap-2 pt-4 border-t border-slate-200 mt-auto">
-                <button type="button" id="roomEditorSaveBtn" class="inline-flex h-9 items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 w-full">Save Changes</button>
-                <button type="button" id="roomEditorDeleteBtn" class="inline-flex h-9 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-4 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 w-full">Cancel Booking</button>
-                <button type="button" id="roomEditorCloseBtn" class="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 w-full">Close Preview</button>
+              <div class="mt-auto flex flex-col gap-2 border-t border-slate-200 pt-3 lg:pt-4">
+                <button type="button" id="roomEditorSaveBtn" class="inline-flex h-9 w-full items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 lg:px-4">Save Changes</button>
+                <button type="button" id="roomEditorDeleteBtn" class="inline-flex h-9 w-full items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 lg:px-4">Cancel Booking</button>
+                <button type="button" id="roomEditorCloseBtn" class="inline-flex h-9 w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 lg:px-4">Close Preview</button>
               </div>
             </div>
           </aside>
         </div>
 
-        <div class="mt-6 space-y-4">
-          <div class="space-y-1">
-            <h2 class="text-base font-semibold text-slate-900">Meeting rooms</h2>
-            <p class="text-sm text-slate-600">Real-time room status and upcoming reservations</p>
-          </div>
-          <div id="roomCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -230,50 +284,50 @@ if (!empty($rooms) && is_array($rooms)) {
 
 <div id="roomBookingModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="roomBookingModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="roomBookingModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-4xl modal-panel">
-    <div class="modal-header card-header">
+  <div class="relative mx-auto my-4 w-[95vw] max-w-4xl modal-panel lg:my-6">
+    <div class="modal-header card-header !px-4 !py-3 lg:!px-5 lg:!py-4">
       <div>
         <h2 id="roomBookingModalTitle" class="text-lg font-semibold text-slate-900">Room Booking Schedule</h2>
         <p class="text-sm text-slate-500 mt-1">Create or edit a room booking schedule with capacity and conflict checks.</p>
       </div>
       <button type="button" id="closeRoomBookingModalBtn" class="modal-close" aria-label="Close"><span class="text-lg">✕</span></button>
     </div>
-    <form id="roomBookingForm" class="modal-body" method="POST" action="">
+    <form id="roomBookingForm" class="modal-body !px-4 !py-3 lg:!px-5 lg:!py-4" method="POST" action="">
       <input type="hidden" name="id" id="roomBookingId" value="">
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-4">
         <div>
-          <label class="text-sm font-semibold text-slate-700 block mb-2">Booking Date <span class="text-red-500">*</span></label>
-          <input type="date" name="date_trip" id="roomDateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <label class="mb-2 block text-sm font-semibold text-slate-700">Booking Date <span class="text-red-500">*</span></label>
+          <input type="date" name="date_trip" id="roomDateTrip" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
           <p class="text-xs text-slate-500 mt-1">Choose the booking date.</p>
         </div>
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Requested Date <span class="text-red-500">*</span></label>
-          <input type="date" name="date_requested" id="roomDateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <input type="date" name="date_requested" id="roomDateRequested" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
           <p class="text-xs text-slate-500 mt-1">When was this room requested?</p>
         </div>
         <div class="sm:col-span-2">
           <label class="text-sm font-semibold text-slate-700 block mb-2">Booking Purpose <span class="text-red-500">*</span></label>
-          <input type="text" name="purpose" id="roomPurpose" placeholder="Meeting, workshop, training" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <input type="text" name="purpose" id="roomPurpose" placeholder="Meeting, workshop, training" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
         </div>
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Attendees <span class="text-red-500">*</span></label>
-          <input type="number" name="attendees" id="roomAttendees" min="1" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <input type="number" name="attendees" id="roomAttendees" min="1" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
           <p class="text-xs text-slate-500 mt-1">Number of people expected in the room.</p>
         </div>
         <div></div>
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Start Date & Time <span class="text-red-500">*</span></label>
-          <input type="datetime-local" name="departure_expected" id="roomDepartureExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <input type="datetime-local" name="departure_expected" id="roomDepartureExpected" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
           <p class="text-xs text-slate-500 mt-1">Select when the booking begins.</p>
         </div>
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">End Date & Time <span class="text-red-500">*</span></label>
-          <input type="datetime-local" name="return_expected" id="roomReturnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <input type="datetime-local" name="return_expected" id="roomReturnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
           <p class="text-xs text-slate-500 mt-1">Select when the booking ends.</p>
         </div>
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Room <span class="text-red-500">*</span></label>
-          <select name="room_id" id="roomId" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required>
+          <select name="room_id" id="roomId" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required>
             <option value="">-- Select a room --</option>
             <?php foreach (($rooms ?? []) as $room): ?>
               <option value="<?= (int)$room['id'] ?>"><?= htmlspecialchars($room['room_name'] . ' (' . $room['room_code'] . ') / ' . $room['capacity'] . ' pax') ?></option>
@@ -282,14 +336,14 @@ if (!empty($rooms) && is_array($rooms)) {
         </div>
         <div class="sm:col-span-2">
           <label class="text-sm font-semibold text-slate-700 block mb-2">Special Instructions</label>
-          <textarea name="special_instructions" id="roomSpecialInstructions" rows="3" placeholder="Any equipment, AV needs, or setup requests" class="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition"></textarea>
+          <textarea name="special_instructions" id="roomSpecialInstructions" rows="3" placeholder="Any equipment, AV needs, or setup requests" class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none"></textarea>
         </div>
         <div class="sm:col-span-2">
           <label class="text-sm font-semibold text-slate-700 block mb-2">Remarks</label>
-          <textarea name="remarks" id="roomRemarks" rows="3" placeholder="Additional notes" class="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition"></textarea>
+          <textarea name="remarks" id="roomRemarks" rows="3" placeholder="Additional notes" class="w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none"></textarea>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer !px-4 !py-3 lg:!px-5 lg:!py-4">
         <button type="button" id="cancelRoomBookingModalBtn" class="btn-ghost">Cancel</button>
         <button type="button" id="deleteRoomBookingBtn" class="btn-danger hidden">Delete</button>
         <button type="submit" id="saveRoomBookingBtn" class="btn-primary">Save Schedule</button>
@@ -300,38 +354,38 @@ if (!empty($rooms) && is_array($rooms)) {
 
 <div id="roomCreateModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="roomCreateModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="roomCreateModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-2xl modal-panel">
-    <div class="modal-header card-header">
+  <div class="relative mx-auto my-4 w-[95vw] max-w-2xl modal-panel lg:my-6">
+    <div class="modal-header card-header !px-4 !py-3 lg:!px-5 lg:!py-4">
       <div>
         <h2 id="roomCreateModalTitle" class="text-lg font-semibold text-slate-900">Add Room Resource</h2>
         <p class="text-sm text-slate-500 mt-1">Create a room that can be reserved in the booking schedule.</p>
       </div>
       <button type="button" id="closeRoomCreateModalBtn" class="modal-close" aria-label="Close"><span class="text-lg">✕</span></button>
     </div>
-    <form id="roomCreateForm" class="modal-body" method="POST" action="">
+    <form id="roomCreateForm" class="modal-body !px-4 !py-3 lg:!px-5 lg:!py-4" method="POST" action="">
       <input type="hidden" name="id" id="roomEditId" value="">
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-4">
         <div>
-          <label class="text-sm font-semibold text-slate-700 block mb-2">Room Name <span class="text-red-500">*</span></label>
-          <input type="text" name="room_name" id="roomName" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <label class="mb-2 block text-sm font-semibold text-slate-700">Room Name <span class="text-red-500">*</span></label>
+          <input type="text" name="room_name" id="roomName" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
         </div>
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Room Code <span class="text-red-500">*</span></label>
-          <input type="text" name="room_code" id="roomCode" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <input type="text" name="room_code" id="roomCode" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
         </div>
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Capacity <span class="text-red-500">*</span></label>
-          <input type="number" name="capacity" id="roomCapacity" min="1" value="1" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
+          <input type="number" name="capacity" id="roomCapacity" min="1" value="1" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none" required />
         </div>
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Status</label>
-          <select name="status" id="roomStatus" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition">
+          <select name="status" id="roomStatus" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition focus:outline-none">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer !px-4 !py-3 lg:!px-5 lg:!py-4">
         <button type="button" class="btn-ghost" id="cancelRoomCreateModalBtn">Cancel</button>
         <button type="submit" class="btn-primary" id="roomCreateSubmitBtn">Create Room</button>
       </div>
@@ -341,8 +395,8 @@ if (!empty($rooms) && is_array($rooms)) {
 
 <div id="roomHistoryModal" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true" aria-labelledby="roomHistoryModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="roomHistoryModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-    <div class="border-b border-slate-200 px-5 py-4">
+  <div class="relative mx-auto my-4 w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl lg:my-6">
+    <div class="border-b border-slate-200 px-4 py-3 lg:px-5 lg:py-4">
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0 flex-1">
           <h2 id="roomHistoryModalTitle" class="text-base font-semibold text-slate-900">Room schedule</h2>
@@ -362,7 +416,7 @@ if (!empty($rooms) && is_array($rooms)) {
         </div>
       </div>
     </div>
-    <div class="max-h-[calc(85vh-80px)] overflow-y-auto px-5 py-4">
+    <div class="max-h-[calc(85vh-80px)] overflow-y-auto px-4 py-3 lg:px-5 lg:py-4">
       <div id="roomHistoryModalContent" class="space-y-4"></div>
     </div>
   </div>
@@ -370,8 +424,8 @@ if (!empty($rooms) && is_array($rooms)) {
 
 <div id="roomBookingDetailModal" class="fixed inset-0 z-[70] hidden" role="dialog" aria-modal="true" aria-labelledby="roomBookingDetailModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="roomBookingDetailModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-2xl rounded-[24px] border border-slate-200 bg-white shadow-2xl">
-    <div class="border-b border-slate-200 px-5 py-4">
+  <div class="relative mx-auto my-4 w-[95vw] max-w-2xl rounded-[24px] border border-slate-200 bg-white shadow-2xl lg:my-6">
+    <div class="border-b border-slate-200 px-4 py-3 lg:px-5 lg:py-4">
       <div class="flex items-start justify-between gap-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500" id="roomBookingDetailModalSubtitle">Booking details</p>
@@ -381,9 +435,9 @@ if (!empty($rooms) && is_array($rooms)) {
       </div>
       <div class="mt-3" id="roomBookingDetailStatusWrap"></div>
     </div>
-    <div class="px-5 py-4">
+    <div class="px-4 py-3 lg:px-5 lg:py-4">
       <div id="roomBookingDetailContent" class="space-y-4"></div>
-      <div class="mt-5 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
+      <div class="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3 lg:mt-5 lg:pt-4">
         <button type="button" id="closeRoomBookingDetailActionBtn" class="btn-ghost">Close</button>
         <button type="button" id="editRoomBookingDetailBtn" class="btn-primary">Edit</button>
         <button type="button" id="deleteRoomBookingDetailBtn" class="btn-danger">Delete</button>
@@ -472,18 +526,28 @@ if (!empty($rooms) && is_array($rooms)) {
   }
 
   .fc .fc-daygrid-day-frame {
-    min-height: 80px;
-    padding: 0.5rem;
+    min-height: 72px;
+    padding: 0.35rem;
   }
 
   .fc .fc-daygrid-day-top {
-    padding: 0.5rem 0.5rem 0;
+    padding: 0.35rem 0.35rem 0;
   }
 
   .fc .fc-daygrid-day-number {
     color: #64748b;
     font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
+    padding: 0.15rem 0.35rem;
+  }
+
+  .fc .fc-daygrid-day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .fc .fc-daygrid-day-events .fc-event-harness {
+    margin-bottom: 0;
   }
 
   .fc .fc-day-today {
@@ -496,19 +560,19 @@ if (!empty($rooms) && is_array($rooms)) {
   }
 
   .fc .fc-event {
+    height: auto;
     border: none;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
-    font-size: 0.75rem;
-    padding: 0.35rem 0.5rem;
-    border-radius: 0.5rem;
-    margin-bottom: 0.25rem;
-    opacity: 0.95;
-    transition: all 0.2s ease;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    font-size: 0.72rem;
+    border-radius: 0.45rem;
+    margin-bottom: 0.15rem;
+    transition: all 0.16s ease;
+    padding: 0.2rem 0.35rem;
   }
 
   .fc .fc-event:hover {
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
-    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+    transform: translateY(0);
   }
 
   .fc .fc-event-main-frame {
@@ -533,11 +597,35 @@ if (!empty($rooms) && is_array($rooms)) {
     text-decoration: underline;
   }
 
+  /* Responsive event content within month cells */
+  .rc-event-wrap { min-width:0; }
+  .rc-event { display:flex; align-items:center; gap:0.5rem; min-width:0; }
+  .rc-dot { flex: 0 0 auto; }
+  .rc-start { flex: 0 0 auto; white-space:nowrap; }
+  .rc-purpose { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rc-end { flex: 0 0 auto; white-space: nowrap; color:var(--muted); }
+
+  /* Breakpoints: progressively hide lower-priority fields on narrow screens */
+  @media (max-width: 700px) {
+    .rc-end { display: none; }
+  }
+  @media (max-width: 520px) {
+    .rc-purpose { display: none; }
+  }
+  @media (max-width: 360px) {
+    .rc-start { display: none; }
+  }
+
   /* Toolbar title styling */
   .fc .fc-toolbar-title {
     font-size: 1.5rem;
     font-weight: 600;
     color: #0f172a;
+  }
+
+  .fc .fc-popover,
+  .fc-popover{
+    background-color: #ffffff !important;
   }
 
   /* Modal styling */
@@ -637,6 +725,13 @@ if (!empty($rooms) && is_array($rooms)) {
   const roomBookingDetailStatusWrap = document.getElementById('roomBookingDetailStatusWrap');
   const roomBookingDetailModalTitle = document.getElementById('roomBookingDetailModalTitle');
   const roomBookingDetailModalSubtitle = document.getElementById('roomBookingDetailModalSubtitle');
+  const scheduleFocusTodayTitle = document.getElementById('scheduleFocusTodayTitle');
+  const scheduleFocusTodayMeta = document.getElementById('scheduleFocusTodayMeta');
+  const scheduleFocusOngoingCount = document.getElementById('scheduleFocusOngoingCount');
+  const scheduleFocusUpcomingCount = document.getElementById('scheduleFocusUpcomingCount');
+  const scheduleFocusOngoingList = document.getElementById('scheduleFocusOngoingList');
+  const scheduleFocusUpcomingList = document.getElementById('scheduleFocusUpcomingList');
+  const scheduleFocusNowDot = document.getElementById('scheduleFocusNowDot');
 
   const roomData = <?= json_encode($rooms ?? []) ?>;
 
@@ -757,13 +852,17 @@ if (!empty($rooms) && is_array($rooms)) {
 
   function updateRoomSummary() {
     const rooms = getVisibleRooms();
-    const activeRooms = rooms.filter(room => String(room.status || '').toLowerCase() === 'active').length;
+    const selectedRoomId = roomFilter && roomFilter.value ? String(roomFilter.value) : '';
+    const scopedRooms = selectedRoomId
+      ? rooms.filter(room => String(room.id) === selectedRoomId)
+      : rooms;
+    const activeRooms = scopedRooms.filter(room => String(room.status || '').toLowerCase() === 'active').length;
     const now = new Date();
 
     let occupiedNow = 0;
     let upcomingBookings = 0;
 
-    rooms.forEach(room => {
+    scopedRooms.forEach(room => {
       if (String(room.status || '').toLowerCase() !== 'active') {
         return;
       }
@@ -781,23 +880,23 @@ if (!empty($rooms) && is_array($rooms)) {
       if (hasCurrentBooking) {
         occupiedNow += 1;
       }
-    });
 
-    Array.from(roomHistoryCache.values()).flat().forEach(booking => {
-      const status = getRoomBookingStatus(booking.departure_expected, booking.return_expected);
-      if (status.key === 'upcoming') {
-        upcomingBookings += 1;
-      }
+      roomBookings.forEach(booking => {
+        const status = getRoomBookingStatus(booking.departure_expected, booking.return_expected);
+        if (status.key === 'upcoming') {
+          upcomingBookings += 1;
+        }
+      });
     });
 
     const availableNow = Math.max(0, activeRooms - occupiedNow);
 
-    if (roomSummaryTotal) roomSummaryTotal.textContent = rooms.length;
+    if (roomSummaryTotal) roomSummaryTotal.textContent = scopedRooms.length;
     if (roomSummaryAvailable) roomSummaryAvailable.textContent = availableNow;
     if (roomSummaryOccupied) roomSummaryOccupied.textContent = occupiedNow;
     if (roomSummaryBookings) roomSummaryBookings.textContent = upcomingBookings;
 
-    if (snapshotTotalRooms) snapshotTotalRooms.textContent = rooms.length;
+    if (snapshotTotalRooms) snapshotTotalRooms.textContent = scopedRooms.length;
     if (snapshotAvailableRooms) snapshotAvailableRooms.textContent = availableNow;
     if (snapshotInUseRooms) snapshotInUseRooms.textContent = occupiedNow;
     if (snapshotUpcomingRooms) snapshotUpcomingRooms.textContent = upcomingBookings;
@@ -815,6 +914,9 @@ if (!empty($rooms) && is_array($rooms)) {
           ? 'Partially occupied'
           : 'Open for booking';
     }
+
+    updateScheduleFocusPanel();
+    updateRoomFilterAvailability();
   }
 
   function refreshRoomList() {
@@ -1052,9 +1154,37 @@ function formatBookingDateTime(value) {
       .catch(err => showNotification(err.message || 'Network error deleting booking', 'error'));
   }
 
+  function getCalendarEventColorFromStatus(event) {
+    if (event && event.backgroundColor) {
+      return {
+        backgroundColor: String(event.backgroundColor),
+        borderColor: event.borderColor ? String(event.borderColor) : String(event.backgroundColor),
+        textColor: event.textColor ? String(event.textColor) : '#ffffff'
+      };
+    }
+
+    const status = event && event.extendedProps && event.extendedProps.status ? String(event.extendedProps.status).toLowerCase() : null;
+    if (status === 'ongoing') {
+      return { backgroundColor: '#2563eb', borderColor: '#1d4ed8', textColor: '#ffffff' };
+    }
+    if (status === 'pending') {
+      return { backgroundColor: '#f59e0b', borderColor: '#d97706', textColor: '#ffffff' };
+    }
+    if (status === 'finished') {
+      return { backgroundColor: '#10b981', borderColor: '#059669', textColor: '#ffffff' };
+    }
+    if (event && event.extendedProps && (String(event.extendedProps.status || '').toLowerCase() === 'cancelled' || event.extendedProps.cancelled === true || event.extendedProps.canceled === true)) {
+      return { backgroundColor: '#94a3b8', borderColor: '#64748b', textColor: '#ffffff' };
+    }
+
+    return { backgroundColor: '#94a3b8', borderColor: '#64748b', textColor: '#ffffff' };
+  }
+
   const calendar = new FullCalendar.Calendar(roomBookingCalendar, {
     initialView: 'dayGridMonth',
     themeSystem: 'standard',
+    // Limit the number of events shown per day to keep the calendar compact.
+    dayMaxEvents: 2,
     selectable: true,
     selectMirror: true,
     editable: true,
@@ -1063,6 +1193,15 @@ function formatBookingDateTime(value) {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    moreLinkClick(arg) {
+      try {
+        if (arg.jsEvent) {
+          arg.jsEvent.preventDefault();
+          arg.jsEvent.stopPropagation();
+          arg.jsEvent.stopImmediatePropagation();
+        }
+      } catch (e) {}
     },
     events(fetchInfo, successCallback, failureCallback) {
       let params = {start: fetchInfo.startStr, end: fetchInfo.endStr};
@@ -1166,6 +1305,44 @@ function formatBookingDateTime(value) {
         info.revert();
       });
     }
+    ,
+    eventDidMount(arg) {
+      const color = getCalendarEventColorFromStatus(arg.event);
+      if (arg.el) {
+    
+      arg.el.style.backgroundColor = `#f1f5f9`;
+        arg.el.style.borderLeft = `4px solid ${color.borderColor}`;
+   
+        arg.el.style.color = `#3e3e3e`;
+        arg.el.style.borderRadius = '12px';
+        arg.el.style.boxShadow = 'none';
+        arg.el.style.opacity = '1';
+      }
+    },
+    eventContent(arg) {
+      // Preserve all event behavior; only change visual contents for quick identification.
+      try {
+        const ev = arg.event;
+        const start = ev.start ? new Date(ev.start) : null;
+        const end = ev.end ? new Date(ev.end) : (start ? new Date(start.getTime() + 60 * 60 * 1000) : null);
+        const startTime = start ? start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+        const timeRange = (start && end) ? `${startTime} – ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : '';
+        const purpose = escapeHtml((ev.extendedProps && (ev.extendedProps.purpose || ev.extendedProps.title)) || ev.title || 'Quick Meeting');
+
+        const html = `
+          <div class="rc-event-wrap" style="padding:2px 6px; min-width:0;">
+            <div class="rc-event" style="display:flex; align-items:center; gap:0.35rem; min-width:0;">
+              <span class="rc-start text-[12px] font-medium">${startTime}</span>
+              <span class="rc-purpose text-[11px] font-semibold">${purpose}</span>
+            </div>
+          </div>
+        `;
+
+        return { html };
+      } catch (e) {
+        return { html: arg.event.title || '' };
+      }
+    }
   });
 
   calendar.render();
@@ -1178,6 +1355,9 @@ function formatBookingDateTime(value) {
 
   if (roomFilter) {
     roomFilter.addEventListener('change', () => {
+      updateRoomSummary();
+      updateScheduleFocusPanel();
+      updateRoomFilterAvailability();
       calendar.refetchEvents();
     });
   }
@@ -1186,16 +1366,174 @@ function formatBookingDateTime(value) {
     const now = new Date();
     const start = new Date(String(departureExpected).replace(' ', 'T'));
     const end = new Date(String(returnExpected).replace(' ', 'T'));
+    const STARTING_SOON_MINUTES = 15; // time window to mark "starting soon"
     if (isNaN(start) || isNaN(end)) {
       return { key: 'pending', label: 'Pending', badgeClass: 'bg-slate-100 text-slate-700', dotClass: 'bg-slate-400' };
     }
+
+    // Ongoing (green)
+    if (now >= start && now <= end) {
+      return { key: 'ongoing', label: 'Ongoing', badgeClass: 'bg-emerald-50 text-emerald-700', dotClass: 'bg-emerald-500' };
+    }
+
+    // Upcoming (could be starting soon)
     if (now < start) {
-      return { key: 'upcoming', label: 'Upcoming', badgeClass: 'bg-amber-50 text-amber-700', dotClass: 'bg-amber-500' };
+      const diffMins = Math.round((start - now) / (60 * 1000));
+      if (diffMins <= STARTING_SOON_MINUTES) {
+        // Starting soon -> orange
+        return { key: 'upcoming', label: 'Starting soon', badgeClass: 'bg-amber-50 text-amber-700', dotClass: 'bg-amber-500', soon: true };
+      }
+      // Regular upcoming -> blue
+      return { key: 'upcoming', label: 'Upcoming', badgeClass: 'bg-sky-50 text-sky-700', dotClass: 'bg-sky-500' };
     }
-    if (now > end) {
-      return { key: 'finished', label: 'Finished meeting', badgeClass: 'bg-emerald-50 text-emerald-700', dotClass: 'bg-emerald-500' };
+
+    // Finished/completed (gray)
+    return { key: 'finished', label: 'Finished meeting', badgeClass: 'bg-slate-50 text-slate-700', dotClass: 'bg-slate-400' };
+  }
+
+  function getBookingRelativeTimeLabel(targetDate, type) {
+    const now = new Date();
+    const diffMinutes = Math.round((targetDate.getTime() - now.getTime()) / 60000);
+    if (diffMinutes <= 0) {
+      return type === 'start' ? 'Starts now' : 'Ends now';
     }
-    return { key: 'ongoing', label: 'Ongoing', badgeClass: 'bg-sky-50 text-sky-700', dotClass: 'bg-sky-500' };
+    if (diffMinutes < 60) {
+      return `${type === 'start' ? 'Starts' : 'Ends'} in ${diffMinutes} min`;
+    }
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+    return `${type === 'start' ? 'Starts' : 'Ends'} in ${hours}h${minutes ? ` ${minutes}m` : ''}`;
+  }
+
+  function formatBookingTimeRange(start, end) {
+    if (isNaN(start.getTime())) return 'TBD';
+    const startLabel = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (isNaN(end.getTime())) return startLabel;
+    const endLabel = end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    return `${startLabel} – ${endLabel}`;
+  }
+
+  function buildScheduleBookingItem(booking, room, status) {
+    const start = new Date(String(booking.departure_expected).replace(' ', 'T'));
+    const end = new Date(String(booking.return_expected).replace(' ', 'T'));
+    const title = escapeHtml(booking.purpose || booking.title || 'Booking');
+    const roomName = escapeHtml(room.room_name || room.room_code || `Room ${booking.room_id || ''}`);
+    const timeRange = formatBookingTimeRange(start, end);
+    const relativeLabel = status.key === 'ongoing' ? getBookingRelativeTimeLabel(end, 'end') : getBookingRelativeTimeLabel(start, 'start');
+
+    return `
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-slate-900 truncate">${title}</p>
+            <p class="mt-1 text-xs text-slate-500 truncate">${roomName}</p>
+            <p class="mt-2 text-xs text-slate-500">${timeRange}</p>
+          </div>
+          <div class="shrink-0 text-right">
+            <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+              <span class="inline-flex h-2 w-2 rounded-full ${status.dotClass}"></span>
+              ${escapeHtml(status.label)}
+            </div>
+            <p class="mt-2 text-xs text-slate-500">${relativeLabel}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function getScheduleFocusBookings() {
+    const selectedRoomId = roomFilter && roomFilter.value ? String(roomFilter.value) : '';
+    if (selectedRoomId) {
+      const roomBookings = roomHistoryCache.get(selectedRoomId) || roomHistoryCache.get(Number(selectedRoomId)) || [];
+      return Array.isArray(roomBookings) ? roomBookings : [];
+    }
+
+    return Array.from(roomHistoryCache.values()).flat().filter(Boolean);
+  }
+
+  function updateScheduleFocusPanel() {
+    const selectedRoomId = roomFilter && roomFilter.value ? String(roomFilter.value) : '';
+    const selectedRoom = selectedRoomId ? getRoomMeta(selectedRoomId) : null;
+    const bookings = getScheduleFocusBookings();
+
+    const ongoingList = [];
+    const upcomingList = [];
+    if (selectedRoomId) {
+      const roomBookings = Array.isArray(bookings) ? bookings : [];
+      const ongoing = roomBookings.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'ongoing');
+      const upcoming = roomBookings.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'upcoming');
+      if (ongoing.length) {
+        const earliestEnd = ongoing.sort((a, b) => new Date(String(a.return_expected).replace(' ', 'T')) - new Date(String(b.return_expected).replace(' ', 'T')))[0];
+        ongoingList.push({ roomId: selectedRoomId, booking: earliestEnd, status: getRoomBookingStatus(earliestEnd.departure_expected, earliestEnd.return_expected) });
+      }
+      if (upcoming.length) {
+        const nextStart = upcoming.sort((a, b) => new Date(String(a.departure_expected).replace(' ', 'T')) - new Date(String(b.departure_expected).replace(' ', 'T')))[0];
+        upcomingList.push({ roomId: selectedRoomId, booking: nextStart, status: getRoomBookingStatus(nextStart.departure_expected, nextStart.return_expected) });
+      }
+    } else {
+      Array.from(roomHistoryCache.entries()).forEach(([roomId, bookingsForRoom]) => {
+        const list = Array.isArray(bookingsForRoom) ? bookingsForRoom : [];
+        const ongoingForRoom = list.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'ongoing');
+        if (ongoingForRoom.length) {
+          const earliestEnd = ongoingForRoom.sort((a, b) => new Date(String(a.return_expected).replace(' ', 'T')) - new Date(String(b.return_expected).replace(' ', 'T')))[0];
+          ongoingList.push({ roomId, booking: earliestEnd, status: getRoomBookingStatus(earliestEnd.departure_expected, earliestEnd.return_expected) });
+        }
+        const upcomingForRoom = list.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'upcoming');
+        if (upcomingForRoom.length) {
+          const nextStart = upcomingForRoom.sort((a, b) => new Date(String(a.departure_expected).replace(' ', 'T')) - new Date(String(b.departure_expected).replace(' ', 'T')))[0];
+          upcomingList.push({ roomId, booking: nextStart, status: getRoomBookingStatus(nextStart.departure_expected, nextStart.return_expected) });
+        }
+      });
+    }
+
+    ongoingList.sort((a, b) => new Date(String(a.booking.return_expected).replace(' ', 'T')) - new Date(String(b.booking.return_expected).replace(' ', 'T')));
+    upcomingList.sort((a, b) => new Date(String(a.booking.departure_expected).replace(' ', 'T')) - new Date(String(b.booking.departure_expected).replace(' ', 'T')));
+
+    if (scheduleFocusTodayTitle) {
+      scheduleFocusTodayTitle.textContent = selectedRoom ? `Live status • ${escapeHtml(selectedRoom.room_name || selectedRoom.room_code || String(selectedRoom.id))}` : 'Live status';
+    }
+
+    if (scheduleFocusTodayMeta) {
+      if (selectedRoom) {
+        const statusText = String(selectedRoom.status || 'active').replace(/^(.)/, s => s.toUpperCase());
+        scheduleFocusTodayMeta.textContent = ongoingList.length ? `${ongoingList.length} ongoing booking` : `${statusText} • ${upcomingList.length} upcoming`; 
+      } else {
+        scheduleFocusTodayMeta.textContent = `${ongoingList.length} ongoing • ${upcomingList.length} upcoming`;
+      }
+    }
+
+    if (scheduleFocusNowDot) {
+      if (selectedRoom && String(selectedRoom.status || '').toLowerCase() !== 'active') {
+        scheduleFocusNowDot.className = 'inline-flex h-2 w-2 rounded-full bg-slate-400';
+      } else if (ongoingList.length) {
+        scheduleFocusNowDot.className = 'inline-flex h-2 w-2 rounded-full bg-emerald-500';
+      } else {
+        scheduleFocusNowDot.className = 'inline-flex h-2 w-2 rounded-full bg-slate-400';
+      }
+    }
+
+    if (scheduleFocusOngoingCount) {
+      scheduleFocusOngoingCount.textContent = `${ongoingList.length}`;
+    }
+    if (scheduleFocusUpcomingCount) {
+      scheduleFocusUpcomingCount.textContent = `${upcomingList.length}`;
+    }
+
+    if (scheduleFocusOngoingList) {
+      if (ongoingList.length) {
+        scheduleFocusOngoingList.innerHTML = ongoingList.map(item => buildScheduleBookingItem(item.booking, getRoomMeta(item.roomId) || {}, item.status)).join('');
+      } else {
+        scheduleFocusOngoingList.innerHTML = '<p class="text-sm text-slate-500">No ongoing bookings.</p>';
+      }
+    }
+
+    if (scheduleFocusUpcomingList) {
+      if (upcomingList.length) {
+        scheduleFocusUpcomingList.innerHTML = upcomingList.map(item => buildScheduleBookingItem(item.booking, getRoomMeta(item.roomId) || {}, item.status)).join('');
+      } else {
+        scheduleFocusUpcomingList.innerHTML = '<p class="text-sm text-slate-500">No upcoming bookings.</p>';
+      }
+    }
   }
 
   function renderRoomPreview(roomId, bookings) {
@@ -1205,7 +1543,7 @@ function formatBookingDateTime(value) {
     const upcoming = bookings.filter(b => getRoomBookingStatus(b.departure_expected, b.return_expected).key === 'upcoming');
     previewEl.innerHTML = '';
     if (upcoming.length === 0) {
-      previewEl.innerHTML = '<div class="text-sm text-slate-500">No upcoming bookings</div>';
+      previewEl.innerHTML = '<div class="text-xs text-slate-500">No upcoming bookings.</div>';
       return;
     }
 
@@ -1213,15 +1551,24 @@ function formatBookingDateTime(value) {
     if (!nextBooking) return;
 
     const start = new Date(String(nextBooking.departure_expected).replace(' ', 'T'));
-    const end = new Date(String(nextBooking.return_expected).replace(' ', 'T'));
-    const timeRange = `${start.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})} – ${end.toLocaleString([], {hour:'2-digit', minute:'2-digit'})}`;
-    
+    if (isNaN(start.getTime())) {
+      previewEl.innerHTML = '<div class="text-xs text-slate-500">No upcoming bookings.</div>';
+      return;
+    }
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const target = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const diffDays = Math.round((target - today) / (24 * 60 * 60 * 1000));
+    const timeLabel = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+    let dayLabel;
+    if (diffDays === 0) dayLabel = 'Today';
+    else if (diffDays === 1) dayLabel = 'Tomorrow';
+    else dayLabel = start.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
     previewEl.innerHTML = `
-      <div>
-        <p class="text-sm font-semibold text-slate-900 truncate">${escapeHtml(nextBooking.purpose || 'Meeting')}</p>
-        <p class="mt-1 text-xs text-slate-500">${escapeHtml(timeRange)}</p>
-        <p class="mt-1 text-xs text-slate-500">${escapeHtml(nextBooking.attendees || 0)} attendee${nextBooking.attendees === 1 ? '' : 's'}</p>
-      </div>
+      <p class="text-sm text-slate-700 truncate">Next • ${dayLabel} ${timeLabel}</p>
     `;
   }
 
@@ -1364,6 +1711,7 @@ function formatBookingDateTime(value) {
         const bookings = data.bookings || [];
         roomHistoryCache.set(activeRoomSelection.id, bookings);
         renderRoomHistoryModal(activeRoomSelection, bookings);
+        updateScheduleFocusPanel();
       })
       .catch(err => {
         showNotification(err.message || 'Failed to load room history', 'error');
@@ -1390,6 +1738,7 @@ function formatBookingDateTime(value) {
         roomHistoryCache.set(room.id, bookings);
         renderRoomHistoryModal(room, bookings);
         updateRoomSummary();
+        updateScheduleFocusPanel();
       })
       .catch(err => {
         showNotification(err.message || 'Failed to load room history', 'error');
@@ -1420,58 +1769,127 @@ function formatBookingDateTime(value) {
 
     const isActive = String(room.status || '').toLowerCase() === 'active';
     if (!isActive) {
-      statusBadgeEl.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span><span class="text-slate-600">Unavailable</span>';
-      availabilityDetailEl.textContent = 'Inactive room';
+      statusBadgeEl.innerHTML = '<span class="h-2 w-2 rounded-full bg-slate-400 inline-block mr-2" aria-hidden="true"></span><span class="text-xs font-semibold text-slate-700">Unavailable</span>';
+      availabilityDetailEl.textContent = 'Unavailable';
       return;
     }
 
     const state = getRoomAvailabilityState(bookings);
     const isOccupied = state.isOccupied;
-    
+
     if (isOccupied) {
-      statusBadgeEl.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span><span class="text-slate-900">Occupied</span>';
-      const nextAvail = state.nextAvailability ? `Available ${escapeHtml(formatBookingDateTime(state.nextAvailability))}` : 'Next availability TBD';
-      availabilityDetailEl.textContent = nextAvail;
+      statusBadgeEl.innerHTML = '<span class="h-2 w-2 rounded-full bg-rose-500 inline-block mr-2" aria-hidden="true"></span><span class="text-xs font-semibold text-slate-700">In Use</span>';
+      if (state.nextAvailability) {
+        const next = new Date(state.nextAvailability);
+        if (!isNaN(next.getTime())) {
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const target = new Date(next.getFullYear(), next.getMonth(), next.getDate());
+          const diffDays = Math.round((target - today) / (24 * 60 * 60 * 1000));
+          const timeLabel = next.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          if (diffDays === 0) {
+            availabilityDetailEl.textContent = `Available Today • ${timeLabel}`;
+          } else if (diffDays === 1) {
+            availabilityDetailEl.textContent = `Available Tomorrow • ${timeLabel}`;
+          } else {
+            const dateLabel = next.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+            availabilityDetailEl.textContent = `Available ${dateLabel} • ${timeLabel}`;
+          }
+        } else {
+          availabilityDetailEl.textContent = 'Unavailable';
+        }
+      } else {
+        availabilityDetailEl.textContent = 'Unavailable';
+      }
     } else {
-      statusBadgeEl.innerHTML = '<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span><span class="text-slate-900">Available</span>';
-      availabilityDetailEl.textContent = 'Available today';
+      statusBadgeEl.innerHTML = '<span class="h-2 w-2 rounded-full bg-emerald-500 inline-block mr-2" aria-hidden="true"></span><span class="text-xs font-semibold text-slate-700">Available</span>';
+      availabilityDetailEl.textContent = 'Available Now';
     }
+  }
+
+  function updateRoomFilterAvailability() {
+    const el = document.getElementById('roomFilterAvailability');
+    if (!el || !roomFilter) return;
+    const selected = roomFilter.value;
+    if (!selected) { el.textContent = ''; return; }
+    const roomMeta = getRoomMeta(selected);
+    if (!roomMeta) { el.textContent = ''; return; }
+
+    const isActive = String(roomMeta.status || '').toLowerCase() === 'active';
+    if (!isActive) {
+      el.innerHTML = '<span class="h-2 w-2 rounded-full bg-slate-400 inline-block mr-2" aria-hidden="true"></span>Maintenance';
+      return;
+    }
+
+    const bookings = roomHistoryCache.get(selected) || roomHistoryCache.get(Number(selected)) || [];
+    if (!Array.isArray(bookings) || bookings.length === 0) {
+      // If no cached bookings yet, leave empty to avoid misinformation
+      el.textContent = '';
+      return;
+    }
+
+    const state = getRoomAvailabilityState(bookings);
+    if (state.isOccupied) {
+      if (state.nextAvailability) {
+        const next = new Date(state.nextAvailability);
+        if (!isNaN(next.getTime())) {
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const target = new Date(next.getFullYear(), next.getMonth(), next.getDate());
+          const diffDays = Math.round((target - today) / (24 * 60 * 60 * 1000));
+          const timeLabel = next.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          if (diffDays === 0) {
+            el.innerHTML = `<span class="h-2 w-2 rounded-full bg-rose-500 inline-block mr-2" aria-hidden="true"></span>Available Today • ${timeLabel}`;
+          } else if (diffDays === 1) {
+            el.innerHTML = `<span class="h-2 w-2 rounded-full bg-rose-500 inline-block mr-2" aria-hidden="true"></span>Available Tomorrow • ${timeLabel}`;
+          } else {
+            const dateLabel = next.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+            el.innerHTML = `<span class="h-2 w-2 rounded-full bg-rose-500 inline-block mr-2" aria-hidden="true"></span>Available ${dateLabel} • ${timeLabel}`;
+          }
+          return;
+        }
+      }
+      el.textContent = '';
+      return;
+    }
+
+    // Available now
+    el.innerHTML = '<span class="h-2 w-2 rounded-full bg-emerald-500 inline-block mr-2" aria-hidden="true"></span>Available Now';
   }
 
   function buildRoomCard(room, bookings = []) {
     const card = document.createElement('div');
     const isActive = String(room.status || '').toLowerCase() === 'active';
-    const cardClasses = 'min-h-[280px] rounded-xl border border-slate-200 bg-white p-4 shadow-sm cursor-pointer hover:shadow-lg transition flex flex-col gap-3 ' + (isActive ? '' : 'opacity-60');
+    const cardClasses = 'w-full max-w-[320px] h-[128px] rounded-xl border border-slate-200 bg-white p-3 shadow-sm cursor-pointer hover:shadow-md transition flex flex-col justify-between gap-1.5 overflow-hidden ' + (isActive ? '' : 'opacity-60');
     card.className = cardClasses;
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.dataset.roomId = String(room.id);
 
     card.innerHTML = `
-      <div class="flex flex-col gap-3 flex-1">
-        <div>
-          <h3 class="text-base font-semibold text-slate-900">${escapeHtml(room.room_name)}</h3>
-          <p class="mt-1 text-sm text-slate-500">${escapeHtml(room.room_code)} • ${escapeHtml(room.capacity)} pax</p>
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-semibold text-slate-900 truncate">${escapeHtml(room.room_name)}</h3>
+          <p class="mt-1 text-xs text-slate-500 truncate">${escapeHtml(room.room_code)} • ${escapeHtml(room.capacity)} pax</p>
         </div>
-
-        <div class="flex items-center gap-2 text-sm">
-          <span id="room-card-status-${room.id}" class="inline-flex items-center gap-1.5 text-slate-900">
-            <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
-            <span>Checking...</span>
+        <div class="flex-shrink-0 ml-2">
+          <span id="room-card-status-${room.id}" class="inline-flex items-center gap-1 text-sm font-semibold text-slate-700">
+            <span class="h-2 w-2 rounded-full bg-slate-400"></span>
           </span>
-        </div>
-        <p id="room-card-availability-${room.id}" class="text-xs text-slate-500">Loading availability…</p>
-
-        <div class="border-t border-slate-200 pt-3 mt-auto">
-          <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 mb-2">Next booking</p>
-          <div id="room-card-preview-${room.id}" class="text-sm text-slate-500">Loading...</div>
         </div>
       </div>
 
-      <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-800 w-full">
-        View Schedule
-        <span>→</span>
-      </button>
+      <div>
+        <p id="room-card-availability-${room.id}" class="text-sm font-medium text-slate-700 truncate">Loading availability…</p>
+        
+      </div>
+
+      <div class="flex items-center justify-between gap-2">
+        <div id="room-card-preview-${room.id}" class="text-xs text-slate-500 truncate">Loading...</div>
+        <button type="button" class="inline-flex items-center justify-center gap-1 rounded-md bg-slate-900 px-2 py-1 text-xs font-semibold text-white transition hover:bg-slate-800">
+          View
+        </button>
+      </div>
     `;
     renderRoomCardAvailability(room, bookings);
     const button = card.querySelector('button');
@@ -1550,6 +1968,7 @@ function formatBookingDateTime(value) {
           renderRoomCardAvailability(room, bookings);
           renderRoomPreview(room.id, bookings);
           updateRoomSummary();
+          updateScheduleFocusPanel();
         })
         .catch(() => {
           const previewEl = document.getElementById(`room-card-preview-${room.id}`);

@@ -112,15 +112,15 @@
 <div class="min-h-screen theme-palette">
   
 
-<div class="max-w-[1400px] mx-auto px-3 py-6 text-xs  sm:text-xs md:text-sm flex-col gap-4">
-  <section class="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.22)] sm:p-5">
-    <div class="grid gap-4 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
+<div class="max-w-[1280px] mx-auto px-3 py-4 md:px-4 lg:px-5 text-xs sm:text-xs md:text-sm flex-col gap-3">
+  <section class="mt-2 rounded-[22px] border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.22)] sm:p-3">
+    <div class="grid gap-3 xl:grid-cols-[1.08fr_0.92fr] xl:items-start">
       <div class="space-y-3">
         <div class="space-y-1.5">
           <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-700">Dashboard</p>
           <div class="space-y-1">
-            <h1 class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Welcome back, <?= htmlspecialchars($firstName) ?>.</h1>
-            <p class="max-w-2xl text-sm leading-5 text-slate-600">A calm overview of the work that needs attention, the modules in motion, and the next best action.</p>
+            <h1 class="text-xl font-semibold tracking-tight text-slate-900">Welcome back, <?= htmlspecialchars($firstName) ?>.</h1>
+            <p class="max-w-xl text-sm leading-5 text-slate-600">A calm overview of the work that needs attention, the modules in motion, and the next best action.</p>
           </div>
         </div>
 
@@ -137,7 +137,7 @@
           </div>
         </div>
 
-        <div id="focusTodayCard" class="rounded-[16px] border border-slate-200/80 bg-slate-50/90 p-3 transition-all duration-300 sm:p-3.5">
+        <div id="focusTodayCard" class="rounded-[16px] border border-slate-200/80 bg-slate-50/90 p-3 transition-all duration-300">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
@@ -153,7 +153,7 @@
         </div>
       </div>
 
-      <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
         <div class="rounded-[16px] border border-slate-200 bg-slate-50/80 p-3">
           <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700">Response rate</p>
           <p class="mt-1.5 text-xl font-semibold text-slate-900"><?= $responseRate ?>%</p>
@@ -173,7 +173,7 @@
     </div>
   </section>
 
-  <section class="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)] sm:p-5">
+  <section class="mt-2 rounded-[22px] border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)] sm:p-3">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
         <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Operational summary</p>
@@ -182,7 +182,7 @@
       <a href="index.php?controller=correspondence&action=correspondence" class="text-sm font-semibold text-emerald-700 transition hover:text-emerald-900">Open correspondence</a>
     </div>
 
-    <div class="mt-3 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <article class="rounded-[16px] border border-slate-200/70 bg-slate-50/80 p-3">
         <div class="flex items-center justify-between gap-3">
           <p class="text-sm font-semibold text-slate-900">Correspondence</p>
@@ -225,56 +225,56 @@
     </div>
   </section>
 
-  <section class="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm sm:p-4">
+  <section class="rounded-2xl border border-slate-200/60 bg-white p-3 shadow-sm sm:p-3">
     <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <div class="space-y-1">
         <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Schedule overview</p>
         <h2 class="text-[15px] font-medium text-slate-900">Bookings calendar</h2>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <div class="inline-flex items-center gap-2 rounded-full border border-slate-200/60 bg-slate-50 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+        <div class="inline-flex items-center gap-2 rounded-full border border-slate-200/60 bg-slate-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
           <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
           <span>Vehicle</span>
           <span class="inline-flex h-2 w-2 rounded-full bg-violet-500"></span>
           <span>Room</span>
         </div>
         <div class="inline-flex rounded-xl border border-slate-200/60 bg-slate-50 p-2">
-          <button type="button" data-calendar-filter="all" class="h-8 rounded-xl border border-transparent bg-slate-900 px-4 text-[11px] font-medium text-white transition hover:bg-slate-800">All</button>
-          <button type="button" data-calendar-filter="car" class="h-8 rounded-xl border border-transparent bg-slate-50 px-4 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100">Vehicle</button>
-          <button type="button" data-calendar-filter="room" class="h-8 rounded-xl border border-transparent bg-slate-50 px-4 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100">Room</button>
+          <button type="button" data-calendar-filter="all" class="h-9 rounded-xl border border-transparent bg-slate-900 px-3 text-[11px] font-medium text-white transition hover:bg-slate-800">All</button>
+          <button type="button" data-calendar-filter="car" class="h-9 rounded-xl border border-transparent bg-slate-50 px-3 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100">Vehicle</button>
+          <button type="button" data-calendar-filter="room" class="h-9 rounded-xl border border-transparent bg-slate-50 px-3 text-[11px] font-medium text-slate-700 transition hover:bg-slate-100">Room</button>
         </div>
       </div>
     </div>
 
-    <div class="mt-4 grid gap-4 grid-cols-1 xl:grid-cols-[1.3fr_0.7fr]">
+    <div class="mt-3 grid gap-3 grid-cols-1 xl:grid-cols-[1.3fr_0.7fr]">
       <div class="dashboard-calendar-shell rounded-xl border border-slate-200/60 bg-white p-2 shadow-sm relative" id="dashboardCalendar">
-        <div id="calendarEmptyState" class="absolute inset-0 m-4 flex items-center justify-center rounded-lg border-dashed border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-500 hidden">No scheduled bookings for the selected range.</div>
+        <div id="calendarEmptyState" class="absolute inset-0 m-3 flex items-center justify-center rounded-lg border-dashed border-slate-200 bg-slate-50/80 p-3 text-sm text-slate-500 hidden">No scheduled bookings for the selected range.</div>
       </div>
 
-      <aside class="rounded-xl border border-slate-200/60 bg-slate-50/80 p-4 shadow-sm xl:max-w-[420px]">
-        <div class="flex items-start justify-between gap-4">
+      <aside class="rounded-xl border border-slate-200/60 bg-slate-50/80 p-3 shadow-sm xl:max-w-[420px]">
+        <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Today and next</p>
             <h3 class="mt-1 text-[15px] font-medium text-slate-900">Schedule focus</h3>
           </div>
-          <span class="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Live</span>
+          <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Live</span>
         </div>
 
-        <div class="mt-4 text-[12px] text-slate-700">
-          <div class="space-y-4">
+        <div class="mt-3 text-[12px] text-slate-700">
+          <div class="space-y-3">
             <div class="flex items-center justify-between gap-2">
               <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Today</p>
-              <span id="todayBookingsCount" class="rounded-full bg-slate-100 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">0</span>
+              <span id="todayBookingsCount" class="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">0</span>
             </div>
-            <div id="todayBookingsList" class="space-y-4"></div>
+            <div id="todayBookingsList" class="space-y-3"></div>
           </div>
 
-          <div class="mt-4 border-t border-slate-200/60 pt-4 space-y-4">
+          <div class="mt-3 border-t border-slate-200/60 pt-3 space-y-3">
             <div class="flex items-center justify-between gap-2">
               <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Upcoming</p>
-              <span class="rounded-full bg-slate-100 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">Next</span>
+              <span class="rounded-full bg-slate-100 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">Next</span>
             </div>
-            <div id="upcomingReservationsList" class="space-y-4"></div>
+            <div id="upcomingReservationsList" class="space-y-3"></div>
           </div>
 
          
@@ -282,39 +282,39 @@
       </aside>
     </div>
 
-    <div class="mt-4 grid gap-4 rounded-xl border border-slate-200/60 bg-slate-50/80 p-4 sm:grid-cols-4">
-      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-white/80 px-4 py-4">
+    <div class="mt-3 grid gap-3 rounded-xl border border-slate-200/60 bg-slate-50/80 p-3 sm:grid-cols-4">
+      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-white/80 px-3 py-3">
         <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Bookings</span>
         <span id="summaryTotalBookings" class="text-[13px] font-medium text-slate-900"><?= $totalBookings ?></span>
       </div>
-      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-white/80 px-4 py-4">
+      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-white/80 px-3 py-3">
         <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Vehicles</span>
         <span id="summaryActiveVehicles" class="text-[13px] font-medium text-slate-900"><?= $activeVehicles ?></span>
       </div>
-      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-white/80 px-4 py-4">
+      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-white/80 px-3 py-3">
         <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Rooms</span>
         <span id="summaryActiveRooms" class="text-[13px] font-medium text-slate-900"><?= $activeRooms ?></span>
       </div>
-      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-white/80 px-4 py-4">
+      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200/60 bg-white/80 px-3 py-3">
         <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Conflicts</span>
         <span id="summaryConflicts" class="text-[13px] font-medium text-slate-900">0</span>
       </div>
     </div>
 
-    <div class="mt-4 text-xs text-slate-400">Only scheduled room and vehicle bookings are included.</div>
+    <div class="mt-3 text-xs text-slate-400">Only scheduled room and vehicle bookings are included.</div>
   </section>
 
-    <div id="dashboardEventModal" class="fixed inset-0 z-50 hidden items-center justify-center px-4 py-6">
+    <div id="dashboardEventModal" class="fixed inset-0 z-50 hidden items-center justify-center px-3 py-5">
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-      <div class="relative w-full max-w-2xl overflow-hidden rounded-[24px] bg-white p-5 shadow-2xl">
-        <div class="flex items-start justify-between gap-4">
+      <div class="relative w-full max-w-2xl overflow-hidden rounded-[24px] bg-white p-3 shadow-2xl">
+        <div class="flex items-start justify-between gap-3">
           <div>
             <p id="dashboardEventSource" class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Booking type</p>
             <h3 id="dashboardEventTitle" class="mt-2 text-xl font-semibold text-slate-900">Event details</h3>
           </div>
           <button type="button" id="dashboardEventCloseBtn" class="text-slate-500 transition hover:text-slate-900">✕</button>
         </div>
-        <div class="mt-5 grid gap-4 sm:grid-cols-2">
+        <div class="mt-5 grid gap-3 sm:grid-cols-2">
           <div class="space-y-3 rounded-2xl bg-slate-50 p-3">
             <div>
               <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Status</p>
@@ -345,8 +345,8 @@
           </div>
         </div>
         <div class="mt-5 flex flex-wrap items-center gap-3">
-          <a id="dashboardEventViewLink" href="#" target="_blank" class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Open booking page</a>
-          <button type="button" id="dashboardEventDismissBtn" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Close</button>
+          <a id="dashboardEventViewLink" href="#" target="_blank" class="rounded-full bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Open booking page</a>
+          <button type="button" id="dashboardEventDismissBtn" class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Close</button>
         </div>
       </div>
     </div>
@@ -825,9 +825,9 @@
     })();
   </script>
 
-  <div class="grid gap-4 lg:grid-cols-2">
+  <div class="grid gap-3 lg:grid-cols-2">
     <!-- Recent Correspondence Section -->
-    <section class="rounded-[22px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/40 p-5 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)]">
+    <section class="rounded-[22px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/40 p-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)]">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="space-y-1">
           <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Circulation pipeline</p>
@@ -840,9 +840,9 @@
           </span>
         </div>
       </div>
-      <div class="mt-4 space-y-2.5">
+      <div class="mt-3 space-y-3">
         <?php if (empty($recentDocuments)): ?>
-          <div class="rounded-[16px] border border-dashed border-slate-200/80 bg-slate-50/60 px-4 py-8 text-center">
+          <div class="rounded-[16px] border border-dashed border-slate-200/80 bg-slate-50/60 px-3 py-4 text-center">
             <svg class="mx-auto h-12 w-12 text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -858,7 +858,7 @@
               $recipientSummary = $pendingCount > 0 || $receivedCount > 0 ? $pendingCount . ' Pending • ' . $receivedCount . ' Received' : 'No activity yet';
               $statusBgClass = (strpos($docStatusClass, 'emerald') !== false) ? 'bg-emerald-50/80' : (strpos($docStatusClass, 'amber') !== false ? 'bg-amber-50/80' : 'bg-slate-50/80');
             ?>
-            <a href="index.php?controller=correspondence&action=show&id=<?= (int)$doc['id'] ?>" class="group flex items-start gap-3 rounded-[14px] border border-slate-200/60 bg-white px-3.5 py-3 transition duration-200 hover:border-slate-300 hover:shadow-[0_8px_16px_-2px_rgba(15,23,42,0.08)]">
+            <a href="index.php?controller=correspondence&action=show&id=<?= (int)$doc['id'] ?>" class="group flex items-start gap-3 rounded-[14px] border border-slate-200/60 bg-white px-3 py-3 transition duration-200 hover:border-slate-300 hover:shadow-[0_8px_16px_-2px_rgba(15,23,42,0.08)]">
               <div class="shrink-0 pt-0.5">
                 <svg class="h-5 w-5 text-slate-600 group-hover:text-emerald-700 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -878,7 +878,7 @@
           <?php endforeach; ?>
         <?php endif; ?>
       </div>
-      <a href="index.php?controller=correspondence&action=correspondence" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 transition hover:text-emerald-900">
+      <a href="index.php?controller=correspondence&action=correspondence" class="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 transition hover:text-emerald-900">
         <span>View all documents</span>
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -887,7 +887,7 @@
     </section>
 
     <!-- Latest Files Section -->
-    <section class="rounded-[22px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/40 p-5 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)]">
+    <section class="rounded-[22px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/40 p-3 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.16)]">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="space-y-1">
           <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Repository activity</p>
@@ -900,9 +900,9 @@
           </span>
         </div>
       </div>
-      <div class="mt-4 space-y-2.5">
+      <div class="mt-3 space-y-3">
         <?php if (empty($latestFiles)): ?>
-          <div class="rounded-[16px] border border-dashed border-slate-200/80 bg-slate-50/60 px-4 py-8 text-center">
+          <div class="rounded-[16px] border border-dashed border-slate-200/80 bg-slate-50/60 px-3 py-4 text-center">
             <svg class="mx-auto h-12 w-12 text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 19H9a6 6 0 016-6v0a6 6 0 016 6v0z" />
             </svg>
@@ -931,7 +931,7 @@
               $config = $fileTypeConfig[$extension] ?? ['icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'color' => 'text-slate-600', 'bg' => 'bg-slate-100'];
               $statusBg = in_array($specialState, ['processing', 'failed', 'review'], true) ? 'border border-amber-100 bg-amber-50 text-amber-700' : '';
             ?>
-            <a href="index.php?controller=Files&action=files" class="group flex items-start gap-3 rounded-[14px] border border-slate-200/60 bg-white px-3.5 py-3 transition duration-200 hover:border-slate-300 hover:shadow-[0_8px_16px_-2px_rgba(15,23,42,0.08)]">
+            <a href="index.php?controller=Files&action=files" class="group flex items-start gap-3 rounded-[14px] border border-slate-200/60 bg-white px-3 py-3 transition duration-200 hover:border-slate-300 hover:shadow-[0_8px_16px_-2px_rgba(15,23,42,0.08)]">
               <div class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl <?= $config['bg'] ?>">
                 <svg class="h-5 w-5 <?= $config['color'] ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="<?= $config['icon'] ?>" />
@@ -956,8 +956,7 @@
           <?php endforeach; ?>
         <?php endif; ?>
       </div>
-      <a href="index.php?controller=Files&action=files" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition hover:text-sky-900">
-        <span>View repository</span>
+      <a href="index.php?controller=Files&action=files" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition hover:text-sky-900">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>

@@ -73,7 +73,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
 }
 ?>
 
-<nav class="sticky top-0 z-40 flex items-center justify-between bg-emerald-700 px-3 py-2 backdrop-blur-sm border-b border-emerald-600">
+<nav class="sticky top-0 z-40 flex items-center justify-between bg-emerald-700 px-3 py-2 border-b border-emerald-600">
   <style>
     /* 8-grid responsive header */
     .header-title { max-width: calc(100vw - 100px); }
@@ -182,12 +182,45 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
   </div>
 </nav>
 
+<style>
+  #sidebar.sidebar-open .sidebar-header-text,
+  #sidebar:hover .sidebar-header-text {
+    max-width: 11rem !important;
+    opacity: 1 !important;
+  }
+  #sidebar.sidebar-open .sidebar-section-label,
+  #sidebar:hover .sidebar-section-label {
+    max-height: 1.5rem !important;
+    opacity: 1 !important;
+  }
+  #sidebar.sidebar-open .sidebar-item-label,
+  #sidebar:hover .sidebar-item-label {
+    max-width: 16rem !important;
+    opacity: 1 !important;
+    transform: translateX(0) !important;
+  }
+</style>
+
 <script>
   const sidebar = document.getElementById('sidebar');
   const btn = document.getElementById('sidebarToggle');
-  if (btn) {
-    btn.addEventListener('click', () => {
+  const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+  if (btn && sidebar && sidebarBackdrop) {
+    const toggleSidebar = () => {
       sidebar.classList.toggle('-translate-x-full');
+      sidebar.classList.toggle('sidebar-open');
+      const isOpen = !sidebar.classList.contains('-translate-x-full');
+      sidebarBackdrop.classList.toggle('opacity-0', !isOpen);
+      sidebarBackdrop.classList.toggle('pointer-events-none', !isOpen);
+      sidebarBackdrop.classList.toggle('opacity-100', isOpen);
+    };
+
+    btn.addEventListener('click', () => {
+      toggleSidebar();
+    });
+
+    sidebarBackdrop.addEventListener('click', () => {
+      toggleSidebar();
     });
   }
 
