@@ -15,28 +15,32 @@ if (!empty($vehicles) && is_array($vehicles)) {
 $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 ?>
 
-<div class="min-h-screen theme-palette">
-    <div class="max-w-[1400px] mx-auto px-3 py-6 text-xs  sm:text-xs md:text-sm ">
-    <div class="mb-6 rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div class="space-y-4 p-4">
-        <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div class="min-w-0 space-y-2">
+<div class="min-h-screen theme-palette fleet-module">
+    <div class="mx-auto max-w-[1380px] px-2 py-2 text-xs sm:text-xs md:text-sm lg:px-3 lg:py-3 xl:px-4 xl:py-4">
+    
+    <div class="">
+
+      
+      <div class="space-y-2 lg:space-y-3">
+        <div class="mb-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:mb-3 lg:p-3">
+        <div class="flex flex-col gap-2 xl:flex-row xl:items-start xl:justify-between">
+          <div class="min-w-0 space-y-1 lg:space-y-1.5">
             <p class="text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-500">Fleet Management</p>
             <h1 class="text-base font-semibold tracking-tight text-slate-900">Vehicle booking calendar</h1>
-            <p class="max-w-2xl text-sm text-slate-500">Schedule vehicles, assign drivers and monitor fleet availability.</p>
+            <p class="max-w-2xl text-xs text-slate-500 lg:text-sm">Schedule vehicles, assign drivers and monitor fleet availability.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <div id="fleetStatusBadge" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+            <div id="fleetStatusBadge" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-emerald-50 px-2 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 lg:px-2.5 lg:py-1.5">
               <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
               Live availability
             </div>
-            <button type="button" id="refreshBtn" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+            <button type="button" id="refreshBtn" class="inline-flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 lg:h-9">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M5 14a7 7 0 0011.9 2.1L20 20m0-8a7 7 0 00-11.9-2.1L4 4" />
               </svg>
               <span>Refresh</span>
             </button>
-            <button type="button" id="newBookingBtn" class="inline-flex h-9 items-center gap-2 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+            <button type="button" id="newBookingBtn" class="inline-flex h-8 items-center gap-2 rounded-lg bg-slate-900 px-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 lg:h-9">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
@@ -45,42 +49,48 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
           </div>
         </div>
 
-        <div id="fleetSnapshotSection" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Total fleet</p>
-            <p id="totalFleetCount" class="mt-2 text-lg font-semibold text-slate-900"><?= count($vehicles ?? []) ?></p>
+        <div id="fleetSnapshotSection" class="grid gap-1.5 lg:gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:p-3">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Available Now</p>
+            <p id="totalFleetCount" class="mt-1.5 text-base font-semibold text-emerald-700 lg:text-lg">0</p>
           </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Available</p>
-            <p class="mt-2 text-lg font-semibold text-emerald-700"><?= max(0, $vehicleActiveCount) ?></p>
+          <div class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:p-3">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Booked Today</p>
+            <p id="onTripCount" class="mt-1.5 text-base font-semibold text-slate-900 lg:text-lg">0</p>
           </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Active drivers</p>
-            <p class="mt-2 text-lg font-semibold text-slate-900"><?= $driverCount ?></p>
+          <div class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:p-3">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Returning Soon</p>
+            <p id="readyBookingCount" class="mt-1.5 text-base font-semibold text-slate-900 lg:text-lg">0</p>
           </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Upcoming</p>
-            <p class="mt-2 text-lg font-semibold text-slate-900">0</p>
+          <div class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:p-3">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Under Maintenance</p>
+            <p id="driverAvailableCount" class="mt-1.5 text-base font-semibold text-slate-900 lg:text-lg">0</p>
           </div>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-4">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+</div>
+
+
+
+
+
+        <div class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:p-3">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Filters</p>
               <h2 class="text-sm font-semibold text-slate-900">Refine fleet view</h2>
             </div>
           </div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="mt-2 grid gap-1.5 lg:mt-3 lg:gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <div class="relative">
               <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
                 </svg>
               </span>
-              <input id="fleetSearchInput" type="search" placeholder="Search vehicles" class="h-9 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-400" />
+              <input id="fleetSearchInput" type="search" placeholder="Search vehicles" class="h-8 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-400" />
             </div>
-            <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
+            <div class="flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5">
               <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="vehicleFilter">Vehicle</label>
               <select id="vehicleFilter" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
                 <option value="">All</option>
@@ -89,7 +99,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
                 <?php endforeach; ?>
               </select>
             </div>
-            <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3">
+            <div class="flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5">
               <label class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500" for="driverFilter">Driver</label>
               <select id="driverFilter" class="bg-transparent text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer">
                 <option value="">All</option>
@@ -98,14 +108,14 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
                 <?php endforeach; ?>
               </select>
             </div>
-            <div class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-500">
+            <div class="flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-semibold text-slate-500">
               <span>Status</span>
             </div>
           </div>
         </div>
 
-        <section class="rounded-xl border border-slate-200 bg-white p-4">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm lg:p-4">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Availability</p>
               <h2 class="text-base font-semibold text-slate-900">Vehicle availability dashboard</h2>
@@ -128,21 +138,21 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
             </div>
           </div>
 
-          <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <div class="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-slate-500 lg:mt-3">
             <span id="fleetGalleryMeta">0 Vehicles • Page 1 of 1</span>
           </div>
 
-          <div id="vehicleCardsContainer" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+          <div id="vehicleCardsContainer" class="mt-2 grid gap-1.5 lg:mt-3 lg:gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
 
-          <div id="fleetPaginationControls" class="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div id="fleetPaginationControls" class="mt-2 flex flex-col gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm sm:flex-row sm:items-center sm:justify-between lg:mt-3 lg:gap-2 lg:px-3 lg:py-2.5">
             <div id="fleetPaginationInfo" class="text-sm text-slate-600">Showing 0–0 of 0 results</div>
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
               <div id="fleetPageNumbers" class="hidden flex flex-wrap items-center gap-1"></div>
-              <button id="fleetPrevPageBtn" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
+              <button id="fleetPrevPageBtn" type="button" class="inline-flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 Previous
               </button>
-              <button id="fleetNextPageBtn" type="button" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
+              <button id="fleetNextPageBtn" type="button" class="inline-flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-40">
                 Next
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
               </button>
@@ -150,9 +160,9 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
           </div>
         </section>
 
-        <div class="grid gap-4 xl:grid-cols-[1.75fr_0.85fr]">
-          <div class="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-            <div class="flex items-center justify-between gap-2 mb-4">
+        <div class="grid gap-2 calendar-split-panel">
+          <div class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:p-3">
+            <div class="mb-2 flex items-center justify-between gap-2 lg:mb-3">
               <div>
                 <p class="text-[10px] uppercase tracking-[0.2em] text-slate-500">Calendar</p>
                 <h2 class="text-base font-semibold text-slate-900">Fleet scheduling timeline</h2>
@@ -161,21 +171,21 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
             <div id="carBookingCalendar" class=""></div>
           </div>
 
-          <aside class="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-            <div class="space-y-4">
-              <div id="scheduleFocusPanel" class="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-                <div class="flex items-start justify-between gap-4">
+          <aside class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm lg:p-3">
+            <div class="space-y-2 lg:space-y-3">
+              <div id="scheduleFocusPanel" class="rounded-xl  bg-white shadow-sm lg:p-3">
+                <div class="flex items-start justify-between gap-2 lg:gap-3">
                   <div>
                     <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Schedule focus</p>
                     <h3 class="mt-1 text-base font-semibold text-slate-900">Schedule Focus</h3>
                   </div>
-                  <div class="rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">Live</div>
+                  <div class="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">Live</div>
                 </div>
 
-                <div class="border-t border-slate-100 pt-4 space-y-4">
+                <div class="space-y-2 border-t border-slate-100 pt-2.5 lg:space-y-3 lg:pt-3">
                   <div>
                     <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Today</p>
-                    <div id="scheduleFocusToday" class="mt-3 space-y-1 text-sm text-slate-700">
+                    <div id="scheduleFocusToday" class="mt-2.5 space-y-1 text-sm text-slate-700">
                       <div class="flex items-center gap-2 text-slate-700">
                         <span id="scheduleFocusTodayDot" class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                         <span id="scheduleFocusTodayTitle" class="font-medium"></span>
@@ -186,7 +196,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
                   <div>
                     <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500">Upcoming</p>
-                    <div id="scheduleFocusUpcoming" class="mt-3 space-y-1 text-sm text-slate-700">
+                    <div id="scheduleFocusUpcoming" class="mt-2.5 space-y-1 text-sm text-slate-700">
                       <div class="flex items-center gap-2 text-slate-700">
                         <span id="scheduleFocusUpcomingDot" class="inline-flex h-2 w-2 rounded-full bg-slate-400"></span>
                         <span id="scheduleFocusUpcomingTitle" class="font-medium"></span>
@@ -197,18 +207,18 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
                 </div>
               </div>
 
-              <div id="bookingDetailsWrapper" class="hidden rounded-lg border border-slate-200 bg-slate-50/70 p-3">
+              <div id="bookingDetailsWrapper" class="hidden rounded-lg  p-2 lg:p-3">
                 <div class="flex items-start justify-between gap-2">
                   <div>
                     <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Booking details</p>
                     <h3 class="mt-0.5 text-sm font-medium text-slate-900">Selected booking</h3>
                   </div>
-                  <div id="bookingPreviewStatus" class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-medium text-slate-600">No selection</div>
+                  <div id="bookingPreviewStatus" class="rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] font-medium text-slate-600">No selection</div>
                 </div>
-                <div id="bookingPreviewEmpty" class="mt-3 text-sm text-slate-500">
+                <div id="bookingPreviewEmpty" class="mt-2.5 text-sm text-slate-500">
                   Select a booked slot on the calendar to inspect, edit, cancel, or remove it.
                 </div>
-                <form id="bookingPreviewForm" class="mt-3 hidden space-y-3">
+                <form id="bookingPreviewForm" class="mt-3 hidden space-y-2 lg:space-y-3">
                   <input type="hidden" name="id" id="previewBookingId" value="">
                   <div class="grid gap-3 md:grid-cols-2">
                     <div class="md:col-span-2">
@@ -357,11 +367,11 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
   <div class="relative mx-auto my-6 w-[95vw] max-w-4xl modal-panel">
     <!-- Modal Header -->
-    <div class="modal-header card-header">
+    <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
       <div>
         <h2 class="text-lg font-semibold text-slate-900" id="bookingModalTitle">Create New Booking</h2>
 
-        <p class="text-sm text-slate-500 mt-1">Fill in the details below to schedule a vehicle.</p>
+        <p class="mt-1 text-sm text-slate-500">Fill in the details below to schedule a vehicle.</p>
       </div>
       <button type="button" id="closeBookingModalBtn" class="modal-close" aria-label="Close">
         <span class="text-lg">✕</span>
@@ -369,10 +379,10 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     </div>
 
     <!-- Modal Content -->
-    <form id="bookingForm" class="modal-body" method="POST" action="">
+    <form id="bookingForm" class="modal-body p-4 lg:p-5" method="POST" action="">
       <input type="hidden" name="id" id="bookingId" value="">
 
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-4">
         <!-- Date of Trip -->
         <div>
           <label class="text-sm font-semibold text-slate-700 block mb-2">Date of Trip <span class="text-red-500">*</span></label>
@@ -458,7 +468,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       </div>
 
       <!-- Modal Footer -->
-      <div class="modal-footer">
+      <div class="modal-footer px-4 py-3 lg:px-5 lg:py-4">
         <button type="button" id="cancelBookingModalBtn" class="btn-ghost">Cancel</button>
         <button type="button" id="deleteBookingBtn" class="btn-danger hidden">Delete</button>
         <button type="submit" id="saveBookingBtn" class="btn-primary">
@@ -476,21 +486,21 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   <div id="vehicleModal" class="fixed inset-0 z-50 hidden bg-white" role="dialog" aria-modal="true" aria-labelledby="vehicleModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="vehicleModalBackdrop"></div>
   <div class="relative mx-auto my-6 w-[95vw] max-w-4xl modal-panel">
-    <div class="modal-header card-header">
+    <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
       <div>
         <h2 id="vehicleModalTitle" class="text-lg font-semibold text-slate-900">Manage Vehicles</h2>
-        <p class="text-sm text-slate-500 mt-1">Add new vehicles or modify existing ones</p>
+        <p class="mt-1 text-sm text-slate-500">Add new vehicles or modify existing ones</p>
       </div>
       <button type="button" id="closeVehicleModalBtn" class="modal-close" aria-label="Close">
         <span class="text-lg">✕</span>
       </button>
     </div>
 
-    <div class="modal-body">
+    <div class="modal-body p-4 lg:p-5">
       <!-- Add Vehicle Form -->
-      <div class="vehicle-form-card rounded-lg border border-surface-2 p-4 bg-white mb-4">
-        <form id="vehicleForm" class="space-y-4">
-          <div class="flex items-center justify-between">
+      <div class="vehicle-form-card mb-3 rounded-lg border border-surface-2 bg-white p-3 lg:mb-4 lg:p-4">
+        <form id="vehicleForm" class="space-y-3 lg:space-y-4">
+          <div class="flex items-center justify-between gap-2">
             <h3 class="text-base font-semibold text-slate-900">Add / Edit Vehicle</h3>
             <p class="text-xs text-slate-500">Keep fields concise — plate number and capacity are required.</p>
           </div>
@@ -498,17 +508,17 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 items-end">
           <div class="sm:col-span-2">
-            <label class="text-xs font-semibold text-slate-700 block mb-2">Plate Number <span class="text-red-500">*</span></label>
+            <label class="mb-2 block text-xs font-semibold text-slate-700">Plate Number <span class="text-red-500">*</span></label>
             <input type="text" name="plate_number" id="plateNumber" placeholder="e.g., ABC-1234" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
           </div>
 
           <div>
-            <label class="text-xs font-semibold text-slate-700 block mb-2">Capacity <span class="text-red-500">*</span></label>
+            <label class="mb-2 block text-xs font-semibold text-slate-700">Capacity <span class="text-red-500">*</span></label>
             <input type="number" name="capacity" id="capacity" min="1" placeholder="Seats" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
           </div>
 
           <div class="sm:col-span-2">
-            <label class="text-xs font-semibold text-slate-700 block mb-2">Vehicle Name <span class="text-red-500">*</span></label>
+            <label class="mb-2 block text-xs font-semibold text-slate-700">Vehicle Name <span class="text-red-500">*</span></label>
             <input type="text" name="vehicle_name" id="vehicleName" placeholder="e.g., Toyota Hiace Van" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
           </div>
 
@@ -612,7 +622,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
       <!-- Vehicles Table -->
       <div class="rounded-lg border border-slate-200 overflow-hidden vehicles-table">
-        <div class="px-5 py-3 flex items-center justify-between gap-3 card-header">
+        <div class="flex items-center justify-between gap-3 px-3 py-2 card-header lg:px-4 lg:py-3">
           <div>
             <h3 class="text-sm font-semibold text-slate-900">Vehicles</h3>
             <p class="text-xs text-slate-500">Manage fleet — edit details or toggle availability.</p>
@@ -627,16 +637,16 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
           <table class="w-full text-left text-sm">
             <thead class="sticky top-0 bg-surface-1 border-b border-slate-200">
               <tr>
-                <th class="px-5 py-3 font-semibold text-slate-700">Vehicle</th>
-                <th class="px-5 py-3 font-semibold text-slate-700">Plate</th>
-                <th class="px-5 py-3 font-semibold text-slate-700">Capacity</th>
-                <th class="px-5 py-3 font-semibold text-slate-700">Status</th>
-                <th class="px-5 py-3 font-semibold text-slate-700 text-right">Actions</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Vehicle</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Plate</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Capacity</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Status</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 text-right lg:px-4 lg:py-3">Actions</th>
               </tr>
             </thead>
             <tbody id="vehiclesTableBody">
               <tr>
-                <td colspan="5" class="px-5 py-6 text-center text-slate-500">Loading vehicles...</td>
+                <td colspan="5" class="px-3 py-4 text-center text-slate-500 lg:px-4">Loading vehicles...</td>
               </tr>
             </tbody>
           </table>
@@ -652,27 +662,27 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   <div id="driversModal" class="fixed inset-0 z-50 hidden bg-white" role="dialog" aria-modal="true" aria-labelledby="driversModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="driversModalBackdrop"></div>
   <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
-    <div class="modal-header card-header">
+    <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
       <div>
         <h2 id="driversModalTitle" class="text-lg font-semibold text-slate-900">Manage Drivers</h2>
-        <p class="text-sm text-slate-500 mt-1">Add new drivers or modify existing ones</p>
+        <p class="mt-1 text-sm text-slate-500">Add new drivers or modify existing ones</p>
       </div>
         <button type="button" id="closeDriversModalBtn" class="modal-close" aria-label="Close">
           <span class="text-lg">✕</span>
         </button>
     </div>
 
-    <div class="modal-body">
+    <div class="modal-body p-4 lg:p-5">
       <!-- Add Driver Form -->
-      <div class="driver-form-card rounded-lg border border-surface-2 p-4 bg-white mb-4">
-        <form id="driverForm" class="space-y-4">
-          <div class="flex items-center justify-between">
+      <div class="driver-form-card mb-3 rounded-lg border border-surface-2 bg-white p-3 lg:mb-4 lg:p-4">
+        <form id="driverForm" class="space-y-3 lg:space-y-4">
+          <div class="flex items-center justify-between gap-2">
             <h3 class="text-base font-semibold text-slate-900">Add / Edit Driver</h3>
             <p class="text-xs text-slate-500">Provide the driver's full name and status.</p>
           </div>
           <input type="hidden" name="id" id="driverModalId">
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 items-end">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 items-end lg:gap-4">
             <div class="sm:col-span-2">
               <label class="text-xs font-semibold text-slate-700 block mb-2">Driver Name <span class="text-red-500">*</span></label>
               <input type="text" name="driver_name" id="driverNameInput" placeholder="e.g., John Doe" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
@@ -696,7 +706,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
       <!-- Drivers Table -->
       <div class="rounded-lg border border-slate-200 overflow-hidden drivers-table">
-        <div class="px-5 py-3 flex items-center justify-between gap-3 card-header">
+        <div class="flex items-center justify-between gap-3 px-3 py-2 card-header lg:px-4 lg:py-3">
           <div>
             <h3 class="text-sm font-semibold text-slate-900">Drivers</h3>
             <p class="text-xs text-slate-500">Manage driver records and availability.</p>
@@ -711,14 +721,14 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
           <table class="w-full text-left text-sm">
             <thead class="sticky top-0 bg-surface-1 border-b border-slate-200">
               <tr>
-                <th class="px-5 py-3 font-semibold text-slate-700">Name</th>
-                <th class="px-5 py-3 font-semibold text-slate-700">Status</th>
-                <th class="px-5 py-3 font-semibold text-slate-700 text-right">Actions</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Name</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Status</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 text-right lg:px-4 lg:py-3">Actions</th>
               </tr>
             </thead>
             <tbody id="driversTableBody">
               <tr>
-                <td colspan="3" class="px-5 py-6 text-center text-slate-500">Loading drivers...</td>
+                <td colspan="3" class="px-3 py-4 text-center text-slate-500 lg:px-4">Loading drivers...</td>
               </tr>
             </tbody>
           </table>
@@ -1159,6 +1169,109 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     background: transparent;
     border-bottom: 1px solid rgba(15, 23, 42, 0.06);
   }
+
+  /* Fleet module compact spacing overrides */
+  .fleet-module .rounded-xl,
+  .fleet-module .rounded-lg,
+  .fleet-module .card-header,
+  .fleet-module .modal-body,
+  .fleet-module .modal-footer,
+  .fleet-module .modal-header {
+    padding: 0.75rem !important;
+  }
+
+  .fleet-module [class*="p-4"] { padding: 0.75rem !important; }
+  .fleet-module [class*="p-3"] { padding: 0.5rem !important; }
+  .fleet-module [class*="p-2"] { padding: 0.375rem !important; }
+  .fleet-module [class*="px-5"],
+  .fleet-module [class*="py-5"] { padding: 0.75rem !important; }
+  .fleet-module [class*="px-4"],
+  .fleet-module [class*="py-4"] { padding: 0.65rem !important; }
+  .fleet-module [class*="px-3"],
+  .fleet-module [class*="py-3"] { padding: 0.5rem !important; }
+
+  .fleet-module [class*="gap-4"] { gap: 0.75rem !important; }
+  .fleet-module [class*="gap-3"] { gap: 0.5rem !important; }
+  .fleet-module [class*="gap-2"] { gap: 0.375rem !important; }
+  .fleet-module [class*="gap-1"] { gap: 0.25rem !important; }
+  .fleet-module [class*="space-y-4"] > * + * { margin-top: 0.75rem !important; }
+  .fleet-module [class*="space-y-3"] > * + * { margin-top: 0.5rem !important; }
+  .fleet-module [class*="space-y-2"] > * + * { margin-top: 0.375rem !important; }
+
+  .fleet-module [class*="mt-4"] { margin-top: 0.75rem !important; }
+  .fleet-module [class*="mb-4"] { margin-bottom: 0.75rem !important; }
+  .fleet-module [class*="mt-3"] { margin-top: 0.5rem !important; }
+  .fleet-module [class*="mb-3"] { margin-bottom: 0.5rem !important; }
+  .fleet-module [class*="mt-2"] { margin-top: 0.375rem !important; }
+  .fleet-module [class*="mb-2"] { margin-bottom: 0.375rem !important; }
+
+  .fleet-module [class*="h-9"] { height: 2rem !important; }
+  .fleet-module [class*="h-10"] { height: 2.25rem !important; }
+
+  .fleet-module [class*="px-4"] { padding-left: 0.65rem !important; padding-right: 0.65rem !important; }
+  .fleet-module [class*="text-sm"] { font-size: 0.875rem; }
+
+  .fleet-module #vehicleCardsContainer {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  }
+
+  .fleet-module .calendar-split-panel {
+    grid-template-columns: minmax(240px, 2.2fr) minmax(160px, 1fr);
+    align-items: start;
+  }
+
+  .fleet-module .calendar-split-panel > * {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .fleet-module .calendar-split-panel > div,
+  .fleet-module .calendar-split-panel > aside {
+    max-width: 100%;
+  }
+
+  .fleet-module #fleetPaginationControls {
+    padding: 0.75rem !important;
+  }
+
+  .fleet-module #fleetGalleryMeta,
+  .fleet-module #fleetPaginationInfo {
+    font-size: 0.85rem !important;
+  }
+
+  @media (max-width: 920px) {
+    .fleet-module .calendar-split-panel {
+      grid-template-columns: minmax(240px, 1.7fr) minmax(200px, 0.9fr);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .fleet-module .calendar-split-panel {
+      grid-template-columns: minmax(220px, 1.6fr) minmax(180px, 1fr);
+    }
+  }
+
+  @media (max-width: 1280px) {
+    .fleet-module .xl\:grid-cols-4 {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+
+    .fleet-module .xl\:grid-cols-3 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .fleet-module .xl\:grid-cols-4,
+    .fleet-module .lg\:grid-cols-3,
+    .fleet-module .sm\:grid-cols-2 {
+      grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    }
+
+    .fleet-module .flex-wrap {
+      gap: 0.5rem !important;
+    }
+  }
 </style>
 
 
@@ -1166,19 +1279,19 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   <div id="vehicleDetailsModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="vehicleDetailsModalTitle">
     <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="vehicleDetailsModalBackdrop"></div>
     <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
-      <div class="modal-header card-header">
+      <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
         <div>
           <h2 id="vehicleDetailsModalTitle" class="text-base font-semibold text-slate-900">Vehicle Booking Timeline</h2>
           <p class="mt-1 text-sm text-slate-500">Recent booking activity and upcoming commitments for this vehicle.</p>
-          <div id="vehicleDetailsMeta" class="mt-3 flex flex-wrap gap-2"></div>
-          <div id="vehicleDetailsActions" class="mt-4 flex flex-wrap gap-2"></div>
+          <div id="vehicleDetailsMeta" class="mt-2 flex flex-wrap gap-2"></div>
+          <div id="vehicleDetailsActions" class="mt-3 flex flex-wrap gap-2"></div>
         </div>
         <button type="button" id="closeVehicleDetailsModalBtn" class="modal-close" aria-label="Close">
           <span class="text-lg">✕</span>
         </button>
       </div>
 
-      <div class="modal-body" id="vehicleDetailsContent">
+      <div class="modal-body p-4 lg:p-5" id="vehicleDetailsContent">
         <div class="text-sm text-slate-500">Loading booking timeline...</div>
       </div>
     </div>
@@ -1188,18 +1301,18 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     <div id="fleetCardActionModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="fleetCardActionModalTitle">
       <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="fleetCardActionBackdrop"></div>
       <div class="relative mx-auto my-6 w-[95vw] max-w-md modal-panel">
-        <div class="modal-header card-header">
+        <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
           <div>
             <h2 id="fleetCardActionModalTitle" class="text-lg font-semibold text-slate-900">Confirm action</h2>
-            <p id="fleetCardActionModalSubtitle" class="text-sm text-slate-500 mt-1">Confirm the action before it is applied.</p>
+            <p id="fleetCardActionModalSubtitle" class="mt-1 text-sm text-slate-500">Confirm the action before it is applied.</p>
           </div>
           <button type="button" id="fleetCardActionCloseBtn" class="modal-close" aria-label="Close">
             <span class="text-lg">✕</span>
           </button>
         </div>
-        <div class="modal-body p-5">
+        <div class="modal-body p-4 lg:p-5">
           <p id="fleetCardActionMessage" class="text-sm text-slate-600"></p>
-          <div class="mt-6 flex items-center justify-end gap-3">
+          <div class="mt-4 flex items-center justify-end gap-2 lg:gap-3">
             <button type="button" id="fleetCardActionCancelBtn" class="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
             <button type="button" id="fleetCardActionConfirmBtn" class="inline-flex h-9 items-center justify-center rounded-lg bg-rose-600 px-4 text-sm font-semibold text-white transition hover:bg-rose-500">Confirm</button>
           </div>
@@ -2308,12 +2421,22 @@ driverForm.addEventListener('submit', function (e) {
 
     const onTrip = activeVehicles.filter(v => ongoingVehicleIds.has(String(v.id))).length;
     const readyBooking = Math.max(0, activeVehicles.length - onTrip);
-    const availableDrivers = Math.max(0, activeDrivers.length - ongoingDriverIds.size);
+    const bookedToday = (events || []).length;
+    const now = new Date();
+    const returningSoon = ongoingEvents.filter(ev => {
+      const end = new Date(String(ev.end).replace(' ', 'T'));
+      const minutesUntilEnd = (end.getTime() - now.getTime()) / 60000;
+      return minutesUntilEnd > 0 && minutesUntilEnd <= 60;
+    }).length;
+    const underMaintenance = vehicles.filter(v => {
+      const status = String(v.status || '').toLowerCase();
+      return status === 'inactive' || status === 'maintenance';
+    }).length;
 
-    if (totalFleetCountEl) totalFleetCountEl.textContent = String(vehicles.length);
-    if (onTripCountEl) onTripCountEl.textContent = String(onTrip);
-    if (readyBookingCountEl) readyBookingCountEl.textContent = String(readyBooking);
-    if (driverAvailableCountEl) driverAvailableCountEl.textContent = String(availableDrivers);
+    if (totalFleetCountEl) totalFleetCountEl.textContent = String(readyBooking);
+    if (onTripCountEl) onTripCountEl.textContent = String(bookedToday);
+    if (readyBookingCountEl) readyBookingCountEl.textContent = String(returningSoon);
+    if (driverAvailableCountEl) driverAvailableCountEl.textContent = String(underMaintenance);
 
     if (fleetStatusBadgeEl) {
       if (readyBooking === 0) {
@@ -2359,7 +2482,7 @@ driverForm.addEventListener('submit', function (e) {
     const vehicleName = vehicle.vehicle_name || 'Vehicle';
     const plate = vehicle.plate_number || 'No plate';
     const seats = vehicle.capacity ? `${vehicle.capacity} seats` : null;
-    const plateInfo = [plate, seats].filter(Boolean).join(' • ');
+    const metadataText = [plate, seats].filter(Boolean).join(' • ');
 
     card.dataset.vehicleStatus = rawStatus;
     card.dataset.vehicleName = vehicleName;
@@ -2375,7 +2498,7 @@ driverForm.addEventListener('submit', function (e) {
 
     card.innerHTML = `
       <div class="relative overflow-hidden rounded-t-xl bg-slate-100 flex-shrink-0">
-        <div class="aspect-[16/9] w-full overflow-hidden rounded-t-xl bg-slate-100">
+        <div class="aspect-[5/3] w-full overflow-hidden rounded-t-xl bg-slate-100">
           ${imgSrc ? `
             <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(vehicleName)}" class="h-full w-full object-cover object-center" />
           ` : `
@@ -2389,18 +2512,18 @@ driverForm.addEventListener('submit', function (e) {
           <span id="vehicle-status-text-${vehicle.id}" class="leading-none">${escapeHtml(statusLabel)}</span>
         </div>
       </div>
-      <div class="flex flex-1 flex-col gap-3 p-4">
-        <div class="space-y-1">
-          <h3 class="truncate text-[15px] font-semibold text-slate-900">${escapeHtml(vehicleName)}</h3>
-          <p class="truncate text-sm text-slate-500">${escapeHtml(plateInfo)}</p>
-        </div>
+      <div class="flex flex-1 flex-col gap-3 p-3 lg:p-4">
         <div class="space-y-2">
-          <div id="bookings-${vehicle.id}" class="min-h-[1.25rem] text-sm leading-5 text-slate-600">Loading availability…</div>
-          <div id="next-trip-${vehicle.id}" class="hidden border-t border-slate-100 pt-2">
-            <div class="space-y-1">
-              <div class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Next trip</div>
-              <div id="next-trip-title-${vehicle.id}" class="text-sm font-medium text-slate-900"></div>
-              <div id="next-trip-time-${vehicle.id}" class="text-xs leading-5 text-slate-500"></div>
+          <div class="space-y-1">
+            <h3 class="truncate text-base font-semibold text-slate-900">${escapeHtml(vehicleName)}</h3>
+            <p class="truncate text-sm text-slate-500">${escapeHtml(metadataText)}</p>
+          </div>
+          <div id="bookings-${vehicle.id}" class="min-h-[1.5rem] text-base font-semibold text-slate-900">Loading availability…</div>
+          <div id="next-trip-${vehicle.id}" class="hidden pt-3 border-t border-slate-100">
+            <div class="space-y-1 pt-2 text-sm text-slate-600">
+              <div class="truncate font-semibold text-slate-900">Next trip</div>
+              <div id="next-trip-title-${vehicle.id}" class="truncate text-sm font-medium text-slate-900"></div>
+              <div id="next-trip-time-${vehicle.id}" class="truncate text-xs leading-5 text-slate-500"></div>
             </div>
           </div>
         </div>
@@ -2455,10 +2578,7 @@ driverForm.addEventListener('submit', function (e) {
         ` : `
           <div class="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-base font-semibold text-slate-700">${escapeHtml(driverName.charAt(0).toUpperCase())}</div>
         `}
-        <div class="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-slate-900 backdrop-blur">
-          <span class="inline-flex h-1.5 w-1.5 rounded-full ${statusDot}"></span>
-          ${escapeHtml(statusLabel)}
-        </div>
+      
       </div>
       <div class="flex flex-1 flex-col gap-3 p-4">
         <div>
@@ -2727,6 +2847,28 @@ driverForm.addEventListener('submit', function (e) {
     return `${dayLabel} • ${timeLabel}`;
   }
 
+  function formatAvailabilityTime(dtStr, forceDate = false) {
+    if (!dtStr) return '';
+    const value = String(dtStr).replace(' ', 'T');
+    const dateValue = new Date(value);
+    if (isNaN(dateValue.getTime())) return '';
+
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dateStart = new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
+    const timeLabel = dateValue.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+    if (dateStart.getTime() === todayStart.getTime()) {
+      return `Today • ${timeLabel}`;
+    }
+
+    if (forceDate) {
+      return `${dateValue.toLocaleDateString([], { month: 'short', day: 'numeric' })} • ${timeLabel}`;
+    }
+
+    return timeLabel;
+  }
+
   function formatBookingRange(startStr, endStr) {
     if (!startStr) return '';
     const start = new Date(String(startStr).replace(' ', 'T'));
@@ -2747,14 +2889,52 @@ driverForm.addEventListener('submit', function (e) {
     return startLabel;
   }
 
-  function buildVehicleAvailabilitySummary(upcoming) {
+  function buildVehicleAvailabilitySummary(upcoming, currentStatus = '') {
+    if (currentStatus === 'maintenance') {
+      return 'Maintenance';
+    }
+    if (currentStatus === 'inactive') {
+      return 'Disabled';
+    }
+
     const ongoing = upcoming.find(b => getBookingStatus(b.departure_expected, b.return_expected) === 'ongoing');
     if (ongoing) {
       const endAt = ongoing.return_expected || ongoing.end_at || '';
-      return `Returns ${formatAvailabilityDateTime(endAt)}`;
+      if (!endAt) {
+        return 'On Trip';
+      }
+      const endDate = new Date(String(endAt).replace(' ', 'T'));
+      const today = new Date();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endDayStart = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const returnTime = endDayStart.getTime() === todayStart.getTime()
+        ? formatAvailabilityTime(endAt, false)
+        : formatAvailabilityTime(endAt, true);
+      return returnTime ? `On Trip • Returns ${returnTime}` : 'On Trip';
     }
 
-    return 'Available Now';
+    const pendingBookings = upcoming
+      .filter(b => getBookingStatus(b.departure_expected, b.return_expected) === 'pending')
+      .sort((a, b) => {
+        const aTime = new Date(a.departure_expected || a.start_at || 0).getTime();
+        const bTime = new Date(b.departure_expected || b.start_at || 0).getTime();
+        return aTime - bTime;
+      });
+
+    if (!pendingBookings.length) {
+      return 'Available Now';
+    }
+
+    const nextStart = pendingBookings[0].departure_expected || pendingBookings[0].start_at || '';
+    const nextStartDate = new Date(String(nextStart).replace(' ', 'T'));
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const nextDayStart = new Date(nextStartDate.getFullYear(), nextStartDate.getMonth(), nextStartDate.getDate());
+    const startLabel = nextDayStart.getTime() === todayStart.getTime()
+      ? formatAvailabilityTime(nextStart, false)
+      : formatAvailabilityTime(nextStart, true);
+
+    return startLabel ? `Reserved • Starts ${startLabel}` : 'Reserved';
   }
 
   function loadVehicleUpcoming(vehicleId, card) {
@@ -2789,13 +2969,8 @@ driverForm.addEventListener('submit', function (e) {
         });
 
       if (bookingsEl) {
-        if (isUnavailable) {
-          bookingsEl.textContent = '';
-          bookingsEl.classList.add('hidden');
-        } else {
-          bookingsEl.textContent = buildVehicleAvailabilitySummary(upcoming);
-          bookingsEl.classList.remove('hidden');
-        }
+        bookingsEl.textContent = buildVehicleAvailabilitySummary(upcoming, currentStatus);
+        bookingsEl.classList.remove('hidden');
       }
 
       const nextTripEl = card.querySelector(`#next-trip-${vehicleId}`);
@@ -2814,20 +2989,24 @@ driverForm.addEventListener('submit', function (e) {
 
       if (badgeEl) {
         const statusTextEl = card.querySelector(`#vehicle-status-text-${vehicleId}`);
-        const badgeText = isUnavailable
-          ? 'Unavailable'
-          : ongoingBooking
-            ? 'On Trip'
-            : 'Available';
+        const badgeText = currentStatus === 'maintenance'
+          ? 'Maintenance'
+          : currentStatus === 'inactive'
+            ? 'Disabled'
+            : ongoingBooking
+              ? 'On Trip'
+              : 'Available';
         if (statusTextEl) {
           statusTextEl.textContent = badgeText;
         }
         if (dotEl) {
-          const dotColor = badgeText === 'Unavailable'
-            ? 'bg-slate-400'
-            : badgeText === 'On Trip'
-              ? 'bg-blue-600'
-              : 'bg-emerald-600';
+          const dotColor = badgeText === 'Maintenance'
+            ? 'bg-amber-600'
+            : badgeText === 'Disabled'
+              ? 'bg-slate-400'
+              : badgeText === 'On Trip'
+                ? 'bg-blue-600'
+                : 'bg-emerald-600';
           dotEl.className = `inline-flex h-1.5 w-1.5 rounded-full ${dotColor}`;
         }
       }

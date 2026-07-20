@@ -111,7 +111,7 @@ if (!empty($rooms) && is_array($rooms)) {
 
 
         
-        <div class="grid mt-4 gap-4 xl:grid-cols-[1.7fr_0.8fr]">
+        <div class="grid mt-4 gap-4 room-split-panel">
           <div id="roomBookingCalendar" class=""></div>
 
           <aside class="rounded-xl border border-slate-200 bg-slate-50/60 p-3 shadow-sm lg:p-4 xl:p-5">
@@ -604,6 +604,28 @@ if (!empty($rooms) && is_array($rooms)) {
   .rc-start { flex: 0 0 auto; white-space:nowrap; }
   .rc-purpose { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rc-end { flex: 0 0 auto; white-space: nowrap; color:var(--muted); }
+
+  .room-split-panel {
+    grid-template-columns: minmax(240px, 2.2fr) minmax(180px, 1fr);
+    align-items: start;
+  }
+
+  .room-split-panel > * {
+    min-width: 0;
+    width: 100%;
+  }
+
+  @media (max-width: 920px) {
+    .room-split-panel {
+      grid-template-columns: minmax(220px, 1.9fr) minmax(160px, 1fr);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .room-split-panel {
+      grid-template-columns: minmax(200px, 1.7fr) minmax(140px, 1fr);
+    }
+  }
 
   /* Breakpoints: progressively hide lower-priority fields on narrow screens */
   @media (max-width: 700px) {

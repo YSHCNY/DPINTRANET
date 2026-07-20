@@ -32,6 +32,34 @@ function staffStatusBadge($status) {
 }
 ?>
 <div class="min-h-screen theme-palette">
+    <style>
+      .staff-split-panel {
+        grid-template-columns: minmax(280px, 2.3fr) minmax(220px, 1fr);
+        align-items: start;
+      }
+
+      .staff-split-panel > * {
+        min-width: 0;
+      }
+
+      @media (max-width: 1100px) {
+        .staff-split-panel {
+          grid-template-columns: minmax(240px, 2fr) minmax(200px, 1fr);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .staff-split-panel {
+          grid-template-columns: minmax(220px, 1.9fr) minmax(180px, 1fr);
+        }
+      }
+
+      @media (max-width: 760px) {
+        .staff-split-panel {
+          grid-template-columns: minmax(200px, 1.7fr) minmax(160px, 1fr);
+        }
+      }
+    </style>
     <div class="max-w-[1400px] mx-auto px-3 py-6 text-xs  sm:text-xs md:text-sm correspondence-ui">
 <div class="space-y-4 p-2 ">
 
@@ -113,7 +141,7 @@ function staffStatusBadge($status) {
             </div>
         </div>
 
-    <div class="grid gap-4 xl:grid-cols-[2.2fr_0.8fr]">
+    <div class="grid gap-4 staff-split-panel">
         <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-w-0">
 
           <div class="flex flex-col mb-4">
@@ -140,13 +168,12 @@ function staffStatusBadge($status) {
                 <table id="staffDirectoryTable" class="w-full text-sm text-slate-900">
             
 
-                    <thead class="bg-white text-left text-[0.75rem] uppercase tracking-[0.2em] text-slate-500">
+                    <thead class="bg-white text-left text-xs uppercase  text-slate-500">
                         <tr>
-                            <th class="px-3 py-3">Staff</th>
-                            <th class="px-3 py-3">Position</th>
-                            <th class="px-3 py-3">Firm</th>
-                            <th class="px-3 py-3">Deployment</th>
-                            <th class="px-3 py-3">Status</th>
+                            <th class="">Staff</th>
+                            <th class="">Position</th>
+                            <th class="">Firm</th>
+                            <th class="">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 bg-white">
@@ -175,10 +202,10 @@ function staffStatusBadge($status) {
                                 </td>
                                 <td class="px-3 py-3 align-top text-xs text-slate-700"><?= escape($staff['position']) ?></td>
                                 <td class="px-3 py-3 align-top text-sm text-slate-700"><?= escape($staff['firm'] ?? '—') ?></td>
-                                <td class="px-3 py-3 align-top text-sm text-slate-700"><?= !empty($staff['deployment_date']) ? date('M j, Y', strtotime($staff['deployment_date'])) : '—' ?></td>
+                                <!-- <td class="px-3 py-3 align-top text-sm text-slate-700"><?= !empty($staff['deployment_date']) ? date('M j, Y', strtotime($staff['deployment_date'])) : '—' ?></td> -->
                                 <td class="px-3 py-3 align-top text-sm text-slate-700">
                                     <?php $statusBadge = staffStatusBadge($staff['status'] ?? 'active'); ?>
-                                    <span class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium <?= escape($statusBadge['pill']) ?>">
+                                    <span class="inline-flex items-center gap-2 rounded-full text-xs  <?= escape($statusBadge['pill']) ?>">
                                         <span class="h-1.5 w-1.5 rounded-full <?= escape($statusBadge['dot']) ?>"></span>
                                         <?= escape($statusBadge['label']) ?>
                                     </span>

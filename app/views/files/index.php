@@ -135,6 +135,56 @@
                 </div>
             </div>
 
+        <style>
+          #filesTable {
+            width: 100%;
+            table-layout: auto;
+            border-collapse: collapse;
+          }
+
+          #filesTable th,
+          #filesTable td {
+            padding: 0.65rem 0.75rem;
+            word-break: break-word;
+            white-space: normal;
+          }
+
+          #filesTable .file-name-text,
+          #filesTable .description-text {
+            min-width: 0;
+          }
+
+          #filesTable .file-name-display,
+          #filesTable .description-display {
+            display: block;
+          }
+
+          @media (max-width: 1100px) {
+            #filesTable th:nth-child(4),
+            #filesTable td:nth-child(4),
+            #filesTable th:nth-child(5),
+            #filesTable td:nth-child(5) {
+              display: none;
+            }
+          }
+
+          @media (max-width: 900px) {
+            #filesTable th:nth-child(3),
+            #filesTable td:nth-child(3),
+            #filesTable th:nth-child(6),
+            #filesTable td:nth-child(6) {
+              display: none;
+            }
+          }
+
+          @media (max-width: 760px) {
+            #filesTable th:nth-child(2),
+            #filesTable td:nth-child(2) {
+              display: none;
+            }
+          }
+        </style>
+
             <div class="overflow-x-auto p-5">
                 <table id="filesTable" class="w-full text-sm">
                     <thead class="bg-slate-50 text-slate-500">
@@ -166,7 +216,7 @@
                                     $category = trim($file['category'] ?? 'Uncategorized');
                                 ?>
                                 <tr class="transition hover:bg-slate-50/70">
-                                    <td class="px-4 py-4 min-w-[240px]">
+                                    <td class="px-4 py-4">
                                         <div class="space-y-1 max-w-[360px]">
                                             <?php
                                                 $filename = htmlspecialchars($file['filename'] ?? '');
@@ -182,7 +232,7 @@
                                             <p class="font-mono text-xs text-slate-500">Upload #<?= htmlspecialchars($file['id'] ?? '') ?></p>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-4 min-w-[280px] text-slate-600">
+                                    <td class="px-4 py-4 text-slate-600">
                                         <div class="max-w-[360px]">
                                             <?php 
                                                 $desc = htmlspecialchars($file['desc'] ?? $file['description'] ?? '');
@@ -209,7 +259,7 @@
                                     <td class="px-4 py-4 text-slate-600 whitespace-nowrap" data-direction="<?= htmlspecialchars($directionLabel) ?>">
                                         <?= htmlspecialchars($directionLabel) ?>
                                     </td>
-                                    <td class="px-4 py-4 min-w-[190px]">
+                                    <td class="px-4 py-4">
                                         <p class="font-semibold text-slate-900"><?= htmlspecialchars($uploaderName !== '' ? $uploaderName : '—') ?></p>
                                         <p class="text-xs text-slate-500"><?= htmlspecialchars($position !== '' ? $position : '—') ?></p>
                                     </td>
@@ -318,6 +368,15 @@ $(document).ready(function () {
     pageLength: 25,
     order: [[5, 'desc']],
     responsive: true,
+    columnDefs: [
+      { responsivePriority: 1, targets: 0 },
+      { responsivePriority: 2, targets: 1 },
+      { responsivePriority: 3, targets: 6 },
+      { responsivePriority: 4, targets: 2 },
+      { responsivePriority: 5, targets: 5 },
+      { responsivePriority: 6, targets: 3 },
+      { responsivePriority: 7, targets: 4 }
+    ],
     orderCellsTop: true,
     dom: '<"flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4"lf>rt<"flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mt-4"ip>',
     language: {
