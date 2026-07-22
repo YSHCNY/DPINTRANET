@@ -438,9 +438,14 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
           <select name="vehicle_id" id="vehicleId" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required>
             <option value="">-- Select a vehicle --</option>
             <?php foreach (($vehicles ?? []) as $v): ?>
-              <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
+              <option value="<?= (int)$v['id'] ?>" data-plate="<?= htmlspecialchars((string)$v['plate_number']) ?>"><?= htmlspecialchars($v['vehicle_name'] . ' (' . $v['plate_number'] . ')') ?></option>
             <?php endforeach; ?>
           </select>
+          <div class="mt-2 flex flex-col gap-1">
+            <div id="bookingVehicleRestrictionStatus" class="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600"></div>
+            <div id="bookingVehicleRestrictionLabel" class="text-[11px] font-semibold text-slate-600"></div>
+            <div id="bookingVehicleRestrictionQuickNote" class="text-[11px] text-slate-500"></div>
+          </div>
         </div>
 
         <!-- Driver Selection -->
@@ -1429,6 +1434,144 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       .replaceAll("'", '&#039;');
   }
 
+  function formatMmdaTimeInput(value) {
+    if (!value) return '';
+    const text = String(value).trim();
+    if (!text) return '';
+    const match = text.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})(?::\d{2})?$/);
+    if (match) {
+      return `${match[1]}T${match[2]}`;
+    }
+    return text;
+  }
+
+  function isVehicleCodingClient(plateNumber, bookingDate, bookingStartTime) {
+    const plate = String(plateNumber || '').trim();
+    const datePart = String(bookingDate || '').trim();
+    const timePart = String(bookingStartTime || '').trim();
+    if (!plate || !datePart || !timePart) {
+      return { coding: false, reason: '', windowHours: false };
+    }
+
+    const matches = plate.match(/(\d)(?!.*\d)/);
+    const lastDigit = matches && matches[1] ? Number(matches[1]) : null;
+    if (lastDigit === null) {
+      return { coding: false, reason: '', windowHours: false };
+    }
+
+    const day = new Date(datePart + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const dayMap = {
+      monday: [1, 2],
+      tuesday: [3, 4],
+      wednesday: [5, 6],
+      thursday: [7, 8],
+      friday: [9, 0]
+    };
+
+    if (!dayMap[day]) {
+      return { coding: false, reason: '', windowHours: false };
+    }
+    if (!dayMap[day].includes(lastDigit)) {
+      return { coding: false, reason: '', windowHours: false };
+    }
+
+    const timeValue = timePart.match(/^(\d{1,2}):(\d{2})$/);
+    if (!timeValue) {
+      return { coding: false, reason: '', windowHours: false };
+    }
+    const hours = Number(timeValue[1]);
+    const minutes = Number(timeValue[2]);
+    const totalMinutes = hours * 60 + minutes;
+    const morningStart = 7 * 60;
+    const morningEnd = 10 * 60;
+    const eveningStart = 17 * 60;
+    const eveningEnd = 20 * 60;
+    const windowStart = 10 * 60 + 1;
+    const windowEnd = 16 * 60 + 59;
+
+    if ((totalMinutes >= morningStart && totalMinutes <= morningEnd) || (totalMinutes >= eveningStart && totalMinutes <= eveningEnd)) {
+      return { coding: true, reason: 'MMDA Number Coding', windowHours: false };
+    }
+    if (totalMinutes >= windowStart && totalMinutes <= windowEnd) {
+      return { coding: false, reason: '', windowHours: true };
+    }
+    return { coding: false, reason: '', windowHours: false };
+  }
+
+  function getMmdaBookingStatus(plateNumber, bookingDate, bookingStartTime) {
+    if (!plateNumber) {
+      return { coding: false, reason: '', windowHours: false };
+    }
+    return isVehicleCodingClient(plateNumber, bookingDate, bookingStartTime);
+  }
+
+  function getVehiclePlateFromOption(optionValue) {
+    if (!optionValue) return '';
+    const select = document.getElementById('vehicleId');
+    if (!select) return '';
+    const option = Array.from(select.options).find(item => String(item.value) === String(optionValue));
+    return option ? option.getAttribute('data-plate') || '' : '';
+  }
+
+  function updateBookingVehicleRestriction() {
+    const select = document.getElementById('vehicleId');
+    const dateInput = document.getElementById('dateTrip');
+    const timeInput = document.getElementById('departureExpected');
+    const statusEl = document.getElementById('bookingVehicleRestrictionStatus');
+    const labelEl = document.getElementById('bookingVehicleRestrictionLabel');
+    const quickNoteEl = document.getElementById('bookingVehicleRestrictionQuickNote');
+    if (!select || !dateInput || !timeInput) return;
+
+    const selectedValue = select.value;
+    const selectedOption = Array.from(select.options).find(option => String(option.value) === String(selectedValue));
+    const plateNumber = selectedOption ? (selectedOption.getAttribute('data-plate') || '') : '';
+    const bookingDate = dateInput.value;
+    const bookingStartTime = formatMmdaTimeInput(timeInput.value);
+    const result = getMmdaBookingStatus(plateNumber, bookingDate, bookingStartTime);
+
+    if (selectedValue) {
+      select.classList.toggle('border-rose-400', result.coding);
+      select.classList.toggle('bg-rose-50', result.coding);
+      select.classList.toggle('text-rose-700', result.coding);
+      select.classList.toggle('border-slate-200', !result.coding);
+      select.classList.toggle('bg-white', !result.coding);
+      select.classList.toggle('text-slate-700', !result.coding);
+    } else {
+      select.classList.remove('border-rose-400', 'bg-rose-50', 'text-rose-700');
+      select.classList.add('border-slate-200', 'bg-white', 'text-slate-700');
+    }
+
+    if (statusEl) {
+      statusEl.className = result.coding
+        ? 'inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-700'
+        : 'inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600';
+      statusEl.textContent = result.coding ? 'MMDA Coding' : (result.windowHours ? 'Available (Window Hours)' : '');
+    }
+
+    if (labelEl) {
+      labelEl.textContent = result.coding ? 'MMDA Coding' : (result.windowHours ? 'Available (Window Hours)' : '');
+      labelEl.className = result.coding
+        ? 'text-[11px] font-semibold text-rose-600'
+        : 'text-[11px] font-semibold text-emerald-600';
+    }
+
+    if (quickNoteEl) {
+      quickNoteEl.textContent = result.coding ? 'This vehicle is affected by MMDA Number Coding during the selected booking time.' : (result.windowHours ? 'Window hours are available for this plate.' : '');
+      quickNoteEl.className = result.coding
+        ? 'text-[11px] text-rose-600'
+        : 'text-[11px] text-slate-500';
+    }
+
+    if (selectedValue) {
+      const options = Array.from(select.options);
+      options.forEach(option => {
+        const optionPlate = option.getAttribute('data-plate') || '';
+        const optionResult = getMmdaBookingStatus(optionPlate, bookingDate, bookingStartTime);
+        option.classList.toggle('opacity-70', optionResult.coding);
+      });
+    }
+  }
+
   const fleetCardActionState = {
     itemType: null,
     itemId: null,
@@ -1691,6 +1834,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
     // Restore editable state + default button visibility
     restoreBookingModalEditable();
+    updateBookingVehicleRestriction();
 
     const saveBtn = document.getElementById('saveBookingBtn');
     if (saveBtn) saveBtn.style.display = '';
@@ -1737,6 +1881,20 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   if (vehicleDetailsModalBackdrop) vehicleDetailsModalBackdrop.addEventListener('click', () => { resetVehicleDetailsModal(); closeModal(vehicleDetailsModalEl); });
 
 
+  const vehicleIdSelect = document.getElementById('vehicleId');
+  const dateTripInput = document.getElementById('dateTrip');
+  const departureExpectedInput = document.getElementById('departureExpected');
+
+  if (vehicleIdSelect) {
+    vehicleIdSelect.addEventListener('change', updateBookingVehicleRestriction);
+  }
+  if (dateTripInput) {
+    dateTripInput.addEventListener('change', updateBookingVehicleRestriction);
+  }
+  if (departureExpectedInput) {
+    departureExpectedInput.addEventListener('change', updateBookingVehicleRestriction);
+  }
+
   bookingForm.addEventListener('submit', function (e) {
     e.preventDefault();
     const formData = new FormData(bookingForm);
@@ -1745,6 +1903,14 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
     const tripDate = document.getElementById('dateTrip') ? document.getElementById('dateTrip').value : formData.get('date_trip');
     const departureExpected = document.getElementById('departureExpected') ? document.getElementById('departureExpected').value : formData.get('departure_expected');
+    const vehicleIdValue = document.getElementById('vehicleId') ? document.getElementById('vehicleId').value : formData.get('vehicle_id');
+    const selectedVehicleOption = document.getElementById('vehicleId') ? Array.from(document.getElementById('vehicleId').options).find(option => String(option.value) === String(vehicleIdValue)) : null;
+    const vehiclePlate = selectedVehicleOption ? (selectedVehicleOption.getAttribute('data-plate') || '') : '';
+    const mmdaCheck = getMmdaBookingStatus(vehiclePlate, tripDate, formatMmdaTimeInput(departureExpected));
+    if (mmdaCheck.coding) {
+      showNotification('This vehicle cannot be booked because it is affected by MMDA Number Coding during the selected schedule.', 'error');
+      return;
+    }
     const returnExpected = document.getElementById('returnExpected') ? document.getElementById('returnExpected').value : formData.get('return_expected');
     if (!departureExpected || !returnExpected) {
       showNotification('Please select both expected departure and return date/time.', 'error');
@@ -1756,7 +1922,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
     // Client-side conflict check to provide immediate, actionable feedback
     try {
-      const vehicle_id = document.getElementById('vehicleId') ? document.getElementById('vehicleId').value : formData.get('vehicle_id');
+      const vehicle_id = vehicleIdValue;
       const driver_id = document.getElementById('driverId') ? document.getElementById('driverId').value : formData.get('driver_id');
       const start = departureExpected;
       const end = returnExpected;
@@ -2477,6 +2643,9 @@ driverForm.addEventListener('submit', function (e) {
   function createVehicleCard(vehicle) {
     const card = document.createElement('div');
     const rawStatus = (vehicle.status || 'active').toString().toLowerCase();
+    const mmdaState = getMmdaBookingStatus(vehicle.plate_number || '', toISODate(new Date()), '09:00');
+    const isMmdaRestricted = Boolean(mmdaState.coding);
+    const mmdaLabel = isMmdaRestricted ? 'MMDA Coding Today' : (mmdaState.windowHours ? 'Available (Window Hours)' : '');
     const statusLabel = rawStatus === 'active' ? 'Available' : 'Unavailable';
     const statusDot = rawStatus === 'active' ? 'bg-emerald-600' : 'bg-slate-400';
     const vehicleName = vehicle.vehicle_name || 'Vehicle';
@@ -2492,6 +2661,8 @@ driverForm.addEventListener('submit', function (e) {
     if (rawStatus !== 'active') {
       card.className += ' opacity-80 filter grayscale';
     }
+    card.setAttribute('data-mmda-restricted', isMmdaRestricted ? '1' : '0');
+    card.setAttribute('title', mmdaLabel ? 'This vehicle is affected by MMDA Number Coding today.' : '');
 
     const filename = vehicle.image_filename || vehicle.image || null;
     const imgSrc = vehicle.image_url ? vehicle.image_url : (filename ? (baseUrl + 'uploads/vehicle/' + filename) : null);
@@ -2517,6 +2688,7 @@ driverForm.addEventListener('submit', function (e) {
           <div class="space-y-1">
             <h3 class="truncate text-base font-semibold text-slate-900">${escapeHtml(vehicleName)}</h3>
             <p class="truncate text-sm text-slate-500">${escapeHtml(metadataText)}</p>
+            ${isMmdaRestricted ? `<div class="inline-flex w-fit items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-700">MMDA Coding</div>` : (mmdaLabel ? `<div class="inline-flex w-fit items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">${escapeHtml(mmdaLabel)}</div>` : '')}
           </div>
           <div id="bookings-${vehicle.id}" class="min-h-[1.5rem] text-base font-semibold text-slate-900">Loading availability…</div>
           <div id="next-trip-${vehicle.id}" class="hidden pt-3 border-t border-slate-100">
@@ -3448,10 +3620,15 @@ driverForm.addEventListener('submit', function (e) {
         body: formData,
         headers: {'X-Requested-With': 'XMLHttpRequest'}
       })
-      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(r => {
+        const ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (ct.includes('application/json')) return r.json();
+        return r.text().then(t => { throw new Error('Server returned non-JSON response: ' + String(t).slice(0,200)); });
+      })
       .then(data => {
         if (!data || !data.success) {
-          throw new Error((data && data.message) ? data.message : 'Unable to save booking');
+          const friendly = friendlyBookingError(data);
+          throw new Error(friendly);
         }
         showNotification('Booking updated', 'success');
         loadBookingPreview(id);
@@ -3566,7 +3743,12 @@ driverForm.addEventListener('submit', function (e) {
   function friendlyBookingError(resp) {
     const code = resp && resp.error_code ? String(resp.error_code) : null;
 
-    if (code === 'vehicle_conflict') return 'This booking can’t be saved: the selected vehicle is already booked for that time period.';
+    if (code === 'vehicle_conflict') {
+      if (resp && resp.message && /mmda/i.test(resp.message)) {
+        return resp.message;
+      }
+      return 'This booking can’t be saved: the selected vehicle is already booked for that time period.';
+    }
     if (code === 'driver_conflict') return 'This booking can’t be saved: the selected driver is already booked for that time period.';
     if (code === 'past_departure') return 'This booking can’t be saved: the departure time is in the past (including today earlier than now).';
 

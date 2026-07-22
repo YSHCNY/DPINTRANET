@@ -5,6 +5,7 @@ require_once '../app/models/CarBookings.php';
 require_once '../app/models/CarVehicles.php';
 require_once '../app/models/CarDrivers.php';
 require_once '../app/models/User.php';
+require_once '../app/Services/MmdaNumberCodingService.php';
 // Load app config if available (try sensible locations)
 if (file_exists(__DIR__ . '/../config.php')) {
     require_once __DIR__ . '/../config.php';
@@ -18,12 +19,13 @@ class CarBookingsController extends Controller {
         // Use unique markers from the model first.
         if (str_contains($message, '[VEHICLE_CONFLICT]')) return 'vehicle_conflict';
         if (str_contains($message, '[DRIVER_CONFLICT]')) return 'driver_conflict';
+        if (str_contains($message, 'MMDA') || str_contains(strtolower($message), 'mmda')) return 'vehicle_conflict';
         if (str_contains($message, '[PAST_DEPARTURE]')) return 'past_departure';
         if (str_contains($message, '[TIME_INVALID]')) return 'time_invalid';
 
         // Backwards-compatible fallback (loose string matching)
         $m = strtolower($message);
-        if (str_contains($m, 'vehicle')) return 'vehicle_conflict';
+        if (str_contains($m, 'vehicle') || str_contains($m, 'mmda')) return 'vehicle_conflict';
         if (str_contains($m, 'driver')) return 'driver_conflict';
         if (str_contains($m, 'past')) return 'past_departure';
         if (str_contains($m, 'return expected') || str_contains($m, 'after departure') || str_contains($m, 'time')) return 'time_invalid';
@@ -138,6 +140,7 @@ class CarBookingsController extends Controller {
 
         try {
             $data = $this->getBookingPostData();
+            $this->validateMmdaBookingRestriction($data);
             if ($this->useJsonStore) {
                 $id = $this->bookingsModel->createBookingJson($data, $actorUserId);
             } else {
@@ -147,12 +150,7 @@ class CarBookingsController extends Controller {
         } catch (Exception $e) {
             http_response_code(400);
             $msg = $e->getMessage();
-            $errorCode = match (true) {
-                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
-                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
-                str_contains(strtolower($msg), 'past') => 'past_departure',
-                default => 'unknown',
-            };
+            $errorCode = $this->classifyBookingError($msg);
             echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
@@ -182,12 +180,15 @@ class CarBookingsController extends Controller {
         }
         header('Content-Type: application/json');
         try {
-            $data = $_POST;
+            $data = $this->getBookingPostData();
+            $this->validateMmdaBookingRestriction($data);
             $id = $this->bookingsModel->createBookingJson($data, (int)($_SESSION['id'] ?? 0));
             echo json_encode(['success' => true, 'booking_id' => $id]);
         } catch (Exception $e) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            $msg = $e->getMessage();
+            $errorCode = $this->classifyBookingError($msg);
+            echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
     }
@@ -204,17 +205,21 @@ class CarBookingsController extends Controller {
         try {
             $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
             if ($id < 1) throw new Exception('Invalid id');
+            $existing = $this->bookingsModel->getBookingById($id);
+            $merged = $existing ? $existing : [];
+            foreach ($_POST as $k => $v) {
+                if ($k === 'id') continue;
+                $merged[$k] = $v;
+            }
+            if ($this->shouldValidateMmdaBookingRestriction($_POST, $existing)) {
+                $this->validateMmdaBookingRestriction($merged);
+            }
             $ok = $this->bookingsModel->updateBookingJson($id, $_POST, (int)($_SESSION['id'] ?? 0));
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
             $msg = $e->getMessage();
-            $errorCode = match (true) {
-                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
-                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
-                str_contains(strtolower($msg), 'past') => 'past_departure',
-                default => 'unknown',
-            };
+            $errorCode = $this->classifyBookingError($msg);
             echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
@@ -237,12 +242,7 @@ class CarBookingsController extends Controller {
         } catch (Exception $e) {
             http_response_code(400);
             $msg = $e->getMessage();
-            $errorCode = match (true) {
-                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
-                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
-                str_contains(strtolower($msg), 'past') => 'past_departure',
-                default => 'unknown',
-            };
+            $errorCode = $this->classifyBookingError($msg);
             echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
@@ -303,6 +303,9 @@ class CarBookingsController extends Controller {
             if ($this->useJsonStore) {
                 $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
                 if ($id < 1) throw new Exception('Invalid id');
+                if ($this->shouldValidateMmdaBookingRestriction($_POST, null)) {
+                    $this->validateMmdaBookingRestriction($_POST);
+                }
                 $ok = $this->bookingsModel->updateBookingJson($id, $_POST, (int)($_SESSION['id'] ?? 0));
             } else {
                 $existing = $this->bookingsModel->getBookingById($id);
@@ -315,6 +318,9 @@ class CarBookingsController extends Controller {
                     $merged[$k] = $v;
                 }
 
+                if ($this->shouldValidateMmdaBookingRestriction($_POST, $existing)) {
+                    $this->validateMmdaBookingRestriction($merged);
+                }
                 $ok = $this->bookingsModel->updateBooking($id, $merged, (int)($_SESSION['id'] ?? 0));
 
                 // log
@@ -327,12 +333,7 @@ class CarBookingsController extends Controller {
         } catch (Exception $e) {
             http_response_code(400);
             $msg = $e->getMessage();
-            $errorCode = match (true) {
-                str_contains(strtolower($msg), 'vehicle') => 'vehicle_conflict',
-                str_contains(strtolower($msg), 'driver') => 'driver_conflict',
-                str_contains(strtolower($msg), 'past') => 'past_departure',
-                default => 'unknown',
-            };
+            $errorCode = $this->classifyBookingError($msg);
             echo json_encode(['success' => false, 'message' => $msg, 'error_code' => $errorCode]);
         }
         exit;
@@ -369,6 +370,55 @@ class CarBookingsController extends Controller {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit;
+    }
+
+    private function validateMmdaBookingRestriction(array $data): void {
+        $vehicleId = (int)($data['vehicle_id'] ?? 0);
+        if ($vehicleId < 1) {
+            return;
+        }
+
+        $vehicle = $this->vehiclesModel->listVehicles('active');
+        $vehicleRow = null;
+        foreach ($vehicle as $row) {
+            if ((int)($row['id'] ?? 0) === $vehicleId) {
+                $vehicleRow = $row;
+                break;
+            }
+        }
+
+        if (!$vehicleRow) {
+            return;
+        }
+
+        $plateNumber = (string)($vehicleRow['plate_number'] ?? '');
+        $dateTrip = (string)($data['date_trip'] ?? '');
+        $departureExpected = (string)($data['departure_expected'] ?? '');
+        $result = \App\Services\MmdaNumberCodingService::isVehicleCoding($plateNumber, $dateTrip, $departureExpected);
+
+        if ($result['coding'] ?? false) {
+            throw new Exception('This vehicle cannot be booked during the selected schedule because it is affected by MMDA Number Coding. Please choose another vehicle or a different booking time.');
+        }
+    }
+
+    private function shouldValidateMmdaBookingRestriction(array $newData, ?array $existing = null): bool {
+        if ($existing === null) {
+            return isset($newData['vehicle_id']) || isset($newData['date_trip']) || isset($newData['departure_expected']);
+        }
+
+        if (isset($newData['vehicle_id']) && (int)$newData['vehicle_id'] !== (int)($existing['vehicle_id'] ?? 0)) {
+            return true;
+        }
+
+        if (isset($newData['date_trip']) && trim((string)$newData['date_trip']) !== trim((string)($existing['date_trip'] ?? ''))) {
+            return true;
+        }
+
+        if (isset($newData['departure_expected']) && trim((string)$newData['departure_expected']) !== trim((string)($existing['departure_expected'] ?? ''))) {
+            return true;
+        }
+
+        return false;
     }
 
     private function getBookingPostData(): array {
