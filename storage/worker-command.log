@@ -48,3 +48,93 @@ Array
 (
 )
 
+2026-07-23T11:10:30+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-23T11:32:54+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-23T11:38:43+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-23T11:49:41+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-23T14:56:33+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-23T16:35:25+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-23T17:07:10+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-24T13:30:04+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+
+2026-07-24T13:43:55+08:00
+PHP_BINARY = php
+SCRIPT     = /var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php
+COMMAND    = php '/var/www/html/DPINTRANET/app/Services/EmailQueueWorkerCli.php' >> '/var/www/html/DPINTRANET/storage/email-worker.log' 2>&1 &
+
+RESULT=0
+Array
+(
+)
+

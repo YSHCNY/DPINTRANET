@@ -167,16 +167,16 @@
                 <!-- Desktop: table view -->
                 <div class="hidden md:block overflow-auto ">
                     <table id="documentTable" class="w-full text-sm compact">
-                    <thead class="bg-white">
+                    <thead class="border-y border-slate-200 bg-slate-100 text-slate-500">
                         <tr>
-                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Tracking</th>
-                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Document</th>
-                            <th class="px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Received</th>
-                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Status</th>
-                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Closed</th>
-                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Circulated</th>
-                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Due</th>
-                            <th class="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Priority</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Tracking</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Document</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Received</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Status</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Closed</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Circulated</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Due</th>
+                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Priority</th>
                             <th class="w-24 px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Actions</th>
                             <th class="hidden">State</th>
                         </tr>

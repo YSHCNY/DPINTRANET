@@ -375,7 +375,13 @@ class StandardPortalController extends Controller {
             $this->redirect('index.php?controller=StandardPortal&action=viewDocument&id=' . (int)$id);
         }
 
-        $this->correspondenceModel->markPortalDocumentReceived($id, $_SESSION['standard_user_id'], $pin, $remarks);
+        $this->correspondenceModel->markPortalDocumentReceived(
+            $id,
+            $_SESSION['standard_user_id'],
+            $pin,
+            $remarks,
+            $_SESSION['standard_user_name'] ?? 'Standard User'
+        );
 
         $_SESSION['portal_message'] = 'Document marked as received.';
         $_SESSION['portal_msg_type'] = 'success';

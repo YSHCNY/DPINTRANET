@@ -174,7 +174,7 @@ class FilesController extends Controller {
 
     // Show form
     public function create() {
-        $this->requireAnyRole([0, 1, 2, 4, 5], 'You do not have permission to upload files.');
+        $this->requireAnyRole([0, 1, 2, 4, 5, 6], 'You do not have permission to upload files.');
 
         // Get categories
         $filesCateg = $this->filesCategModel->getAllCateg();
@@ -185,7 +185,7 @@ class FilesController extends Controller {
 
     // Store new files (multiple upload support)
     public function store() {
-        $this->requireAnyRole([0, 1, 2, 4, 5], 'You do not have permission to upload files.');
+        $this->requireAnyRole([0, 1, 2, 4, 5, 6], 'You do not have permission to upload files.');
 
         if (!isset($_FILES['files']) || empty($_FILES['files']['name'][0])) {
             $_SESSION['message'] = "No files selected.";
@@ -453,6 +453,6 @@ class FilesController extends Controller {
     }
 
     private function canManageFiles(): bool {
-        return $this->hasAnyRole([0, 1, 2, 4, 5]);
+        return $this->hasAnyRole([0, 1, 2, 4, 5, 6]);
     }
 }

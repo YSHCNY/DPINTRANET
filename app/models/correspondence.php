@@ -650,9 +650,9 @@ class CorrespondenceModel {
      * Mark draft as notified to admin-level users and create logs
      */
     public function notifyAdminsOfDraft($documentId) {
-        // Find admin users (userLevel 0 or 1) and create notifications
+        // Find PM/DPM/Superadmin users and create notifications for draft documents produced by encoders or GRP heads.
         try {
-            $stmt = $this->conn->prepare("SELECT id, firstName, lastName, userLevel FROM UserTbl WHERE userLevel IN (0,1,4,5)");
+            $stmt = $this->conn->prepare("SELECT id, firstName, lastName, userLevel FROM UserTbl WHERE userLevel IN (0,4,5)");
             $stmt->execute();
             $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -666,12 +666,23 @@ class CorrespondenceModel {
             $url = "index.php?controller=correspondence&action=correspondence&doc_id={$documentId}";
 
             // Create Notification entries
-            require_once 'Notification.php';
-            $notif = new NotificationModel();
+            require_once __DIR__ . '/../Services/NotificationService.php';
+            $notificationService = new \App\Services\NotificationService();
             $adminIds = array_map(function($a){ return (int)$a['id']; }, $admins);
             $message = "Draft ready for circulation • {$tracking} • By: " . $this->getActorName();
             if (!empty($adminIds)) {
-                $notif->createForMany($adminIds, $message, $url);
+                $notificationService->notify([
+                    'user_id' => $adminIds,
+                    'module' => 'correspondence',
+                    'event_key' => 'draft_ready_for_circulation',
+                    'entity_id' => $documentId,
+                    'title' => 'Draft ready for circulation',
+                    'message' => $message,
+                    'url' => $url,
+                    'priority' => 'normal',
+                    'icon' => 'document',
+                    'created_by' => (int)($_SESSION['id'] ?? 0),
+                ]);
             }
 
             // Also log for audit
@@ -886,6 +897,32 @@ class CorrespondenceModel {
         ]);
     }
 
+    public function getRecipientProgressForDocument(int $documentId): ?array
+    {
+        $stmt = $this->conn->prepare("SELECT
+                COUNT(*) AS total_recipients,
+                SUM(CASE WHEN recipient_id IS NOT NULL AND recipient_id > 0 AND LOWER(status) = 'received' THEN 1 ELSE 0 END) AS received_recipients
+            FROM document_circulations
+            WHERE document_id = ? AND recipient_id IS NOT NULL AND recipient_id > 0");
+        $stmt->execute([$documentId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            return null;
+        }
+
+        $total = (int)($row['total_recipients'] ?? 0);
+        if ($total <= 0) {
+            return null;
+        }
+
+        return [
+            'received' => (int)($row['received_recipients'] ?? 0),
+            'total' => $total,
+            'bar' => '',
+        ];
+    }
+
     public function updateAllCirculationsStatus(int $documentId, string $status): array
 {
     try {
@@ -932,6 +969,94 @@ class CorrespondenceModel {
         $this->logCorrespondenceAction("All circulations set to {$status}", $documentId);
 
         $this->conn->commit();
+
+        // If document was closed (Done), notify each recipient exactly once.
+        if (strtolower($status) === 'done') {
+            try {
+                require_once __DIR__ . '/../Services/NotificationService.php';
+                $notificationService = new \App\Services\NotificationService();
+
+                // Fetch distinct recipient ids for this document
+                $stmtR = $this->conn->prepare("SELECT DISTINCT recipient_id FROM document_circulations WHERE document_id = ? AND recipient_id IS NOT NULL");
+                $stmtR->execute([$documentId]);
+                $recipientIds = [];
+                while ($row = $stmtR->fetch(PDO::FETCH_NUM)) {
+                    $uid = (int)($row[0] ?? 0);
+                    if ($uid > 0) $recipientIds[] = $uid;
+                }
+
+                $recipientIds = array_values(array_unique($recipientIds));
+                if (!empty($recipientIds)) {
+                    // Get document tracking for message context
+                    $docStmt = $this->conn->prepare("SELECT tracking_id, title FROM documents WHERE id = ? LIMIT 1");
+                    $docStmt->execute([$documentId]);
+                    $docRow = $docStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                    $tracking = trim((string)($docRow['tracking_id'] ?? ''));
+                    $title = trim((string)($docRow['title'] ?? ''));
+
+                    $message = $tracking !== '' ? "Document marked done • {$tracking}" : ( $title !== '' ? "Document marked done: {$title}" : 'Document marked done');
+                    $url = "index.php?controller=StandardPortal&action=viewDocument&id={$documentId}";
+
+                    $notificationService->notify([
+                        'user_id' => $recipientIds,
+                        'module' => 'standard_portal',
+                        'event_key' => 'document_done',
+                        'entity_id' => $documentId,
+                        'title' => 'Document Closed',
+                        'message' => $message,
+                        'url' => $url,
+                        'priority' => 'normal',
+                        'icon' => 'document',
+                        'created_by' => null,
+                    ]);
+                }
+            } catch (Throwable $e) {
+                error_log('Failed to send done notifications: ' . $e->getMessage());
+            }
+        }
+
+        // If document was reopened (Suspended), notify each recipient exactly once.
+        if (strtolower($status) === 'suspended') {
+            try {
+                require_once __DIR__ . '/../Services/NotificationService.php';
+                $notificationService = new \App\Services\NotificationService();
+
+                $stmtR = $this->conn->prepare("SELECT DISTINCT recipient_id FROM document_circulations WHERE document_id = ? AND recipient_id IS NOT NULL");
+                $stmtR->execute([$documentId]);
+                $recipientIds = [];
+                while ($row = $stmtR->fetch(PDO::FETCH_NUM)) {
+                    $uid = (int)($row[0] ?? 0);
+                    if ($uid > 0) $recipientIds[] = $uid;
+                }
+
+                $recipientIds = array_values(array_unique($recipientIds));
+                if (!empty($recipientIds)) {
+                    $docStmt = $this->conn->prepare("SELECT tracking_id, title FROM documents WHERE id = ? LIMIT 1");
+                    $docStmt->execute([$documentId]);
+                    $docRow = $docStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                    $tracking = trim((string)($docRow['tracking_id'] ?? ''));
+                    $title = trim((string)($docRow['title'] ?? ''));
+
+                    $message = $tracking !== '' ? "Document reopened • {$tracking}" : ( $title !== '' ? "Document reopened: {$title}" : 'Document reopened');
+                    $url = "index.php?controller=StandardPortal&action=viewDocument&id={$documentId}";
+
+                    $notificationService->notify([
+                        'user_id' => $recipientIds,
+                        'module' => 'standard_portal',
+                        'event_key' => 'document_reopened',
+                        'entity_id' => $documentId,
+                        'title' => 'Document Reopened',
+                        'message' => $message,
+                        'url' => $url,
+                        'priority' => 'normal',
+                        'icon' => 'document',
+                        'created_by' => null,
+                    ]);
+                }
+            } catch (Throwable $e) {
+                error_log('Failed to send reopened notifications: ' . $e->getMessage());
+            }
+        }
 
         return [
             'success' => true,
@@ -1201,10 +1326,18 @@ class CorrespondenceModel {
 	        return $stmt->fetch(PDO::FETCH_ASSOC);
 	    }
 
-	    public function markPortalDocumentReceived($documentId, $recipientId, $pinCode, $remarks = null) {
+	    public function markPortalDocumentReceived($documentId, $recipientId, $pinCode, $remarks = null, $actorName = null) {
 	        $document = $this->getPortalDocument($documentId, $recipientId, false);
 	        if (!$document || !empty($document['is_deleted'])) {
 	            return false;
+	        }
+
+	        $statusStmt = $this->conn->prepare("SELECT status FROM document_circulations WHERE document_id = ? AND recipient_id = ? LIMIT 1");
+	        $statusStmt->execute([$documentId, $recipientId]);
+	        $currentStatus = strtolower(trim((string)($statusStmt->fetch(PDO::FETCH_ASSOC)['status'] ?? '')));
+
+	        if ($currentStatus === 'received') {
+	            return true;
 	        }
 
 	        $sql = "UPDATE document_circulations
@@ -1221,8 +1354,55 @@ class CorrespondenceModel {
 	                "Document received • Tracking ID: " . ($document['tracking_id'] ?? 'Unknown') . " • Received by recipient ID: {$recipientId}",
 	                $documentId
 	            );
+	            $this->notifyAdminsOfPortalReceipt($documentId, $recipientId, $actorName);
 	        }
 
 	        return $result;
+	    }
+
+	    private function notifyAdminsOfPortalReceipt($documentId, $recipientId, $actorName = null) {
+	        try {
+	            $stmt = $this->conn->prepare("SELECT id, firstName, lastName FROM UserTbl WHERE userLevel IN (0,4,5)");
+	            $stmt->execute();
+	            $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	            if (empty($admins)) {
+	                return;
+	            }
+
+	            $docStmt = $this->conn->prepare("SELECT tracking_id, title FROM documents WHERE id = ? LIMIT 1");
+	            $docStmt->execute([$documentId]);
+	            $docRow = $docStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+	            $tracking = trim((string)($docRow['tracking_id'] ?? ''));
+	            $title = trim((string)($docRow['title'] ?? ''));
+	            $actorLabel = trim((string)($actorName ?: 'A standard user'));
+	            $context = $tracking !== '' ? "Document received from standard user • {$tracking}" : ($title !== '' ? "Document received from standard user: {$title}" : 'Document received from standard user');
+	            $message = $actorLabel !== '' ? $context . ' • Received by ' . $actorLabel : $context;
+	            $url = "index.php?controller=correspondence&action=correspondence&doc_id={$documentId}";
+
+	            require_once __DIR__ . '/../Services/NotificationService.php';
+	            $notificationService = new \App\Services\NotificationService();
+	            $adminIds = array_map(function ($admin) {
+	            return (int)($admin['id'] ?? 0);
+	            }, $admins);
+            $adminIds = array_values(array_unique(array_filter($adminIds, function ($id) { return $id > 0; })));
+
+	            if (!empty($adminIds)) {
+	                $notificationService->notify([
+	                    'user_id' => $adminIds,
+	                    'module' => 'correspondence',
+	                    'event_key' => 'document_received_from_standard_user',
+	                    'entity_id' => $documentId,
+	                    'title' => 'Document Received from Standard User',
+	                    'message' => $message,
+	                    'url' => $url,
+	                    'priority' => 'normal',
+	                    'icon' => 'document',
+	                    'created_by' => (int)$recipientId,
+	                    'portal' => 'admin',
+	                ]);
+	            }
+	        } catch (Throwable $e) {
+	            error_log('Portal receipt notification failed for document #' . $documentId . ': ' . $e->getMessage());
+	        }
 	    }
 	}

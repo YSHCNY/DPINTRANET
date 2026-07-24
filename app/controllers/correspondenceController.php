@@ -8,10 +8,12 @@ require_once '../app/config.php';
 require_once '../app/Services/CorrespondenceEmailService.php';
 require_once '../app/Services/CorrespondenceService.php';
 require_once '../app/Services/EmailProgressService.php';
+require_once __DIR__ . '/../Services/StandardPortalNotificationService.php';
 
 use App\Services\CorrespondenceEmailService;
 use App\Services\CorrespondenceService;
 use App\Services\EmailProgressService;
+use App\Services\StandardPortalNotificationService;
 
 class CorrespondenceController extends Controller {
 
@@ -1566,15 +1568,26 @@ public function getDocumentData() {
 
                 // notify creator and recipients
                 try {
-                    require_once __DIR__ . "/../models/Notification.php";
-                    $notif = new NotificationModel();
+                    require_once __DIR__ . '/../Services/NotificationService.php';
+                    $notificationService = new \App\Services\NotificationService();
                     $doc = $this->model->getById($id);
                     $creatorId = (int)($doc['created_by'] ?? $_SESSION['id'] ?? 0);
                     $tracking = $doc['tracking_id'] ?? '';
                     $docUrl = "index.php?controller=correspondence&action=correspondence&doc_id={$id}";
 
                     if ($creatorId > 0) {
-                        $notif->create($creatorId, "Your draft has been finalized and circulated • {$tracking}", $docUrl);
+                        $notificationService->notify([
+                            'user_id' => $creatorId,
+                            'module' => 'correspondence',
+                            'event_key' => 'document_finalized',
+                            'entity_id' => $id,
+                            'title' => 'Document finalized',
+                            'message' => "Your draft has been finalized and circulated • {$tracking}",
+                            'url' => $docUrl,
+                            'priority' => 'normal',
+                            'icon' => 'document',
+                            'created_by' => (int)($_SESSION['id'] ?? 0),
+                        ]);
                     }
 
                     $circs = $this->model->getCirculationDetails($id);
@@ -1584,7 +1597,55 @@ public function getDocumentData() {
                     }
                     $recipientIds = array_values(array_unique(array_filter($recipientIds)));
                     if (!empty($recipientIds)) {
-                        $notif->createForMany($recipientIds, "A document has been circulated to you • {$tracking}", $docUrl);
+                        $notificationService->notify([
+                            'user_id' => $recipientIds,
+                            'module' => 'correspondence',
+                            'event_key' => 'draft_circulated',
+                            'entity_id' => $id,
+                            'title' => 'Document circulated',
+                            'message' => "A document has been circulated to you • {$tracking}",
+                            'url' => $docUrl,
+                            'priority' => 'normal',
+                            'icon' => 'document',
+                            'created_by' => (int)($_SESSION['id'] ?? 0),
+                        ]);
+
+                        // Portal-only notifications for standard users.
+                        $portalNotificationService = new StandardPortalNotificationService();
+                        $portalNotificationService->notifyFinalizedDocument($id, $circs, $doc, (int)($_SESSION['id'] ?? 0));
+                    }
+
+                    // Notify all users with encoder/user grp head access levels when a correspondence draft is finalized.
+                    // Use core `User` model (UserTbl) which contains `userLevel` values.
+                    require_once __DIR__ . '/../models/User.php';
+                    $userModel = new User();
+                    $finalizationNotifyIds = [];
+                    $allUsers = $userModel->getAllUser();
+                    foreach ($allUsers as $user) {
+                        $userId = (int)($user['id'] ?? 0);
+                        $userLevel = (int)($user['userLevel'] ?? 3);
+                        if (!in_array($userLevel, [2, 6], true)) {
+                            continue;
+                        }
+                        if ($userId === $creatorId || in_array($userId, $recipientIds, true)) {
+                            continue;
+                        }
+                        $finalizationNotifyIds[] = $userId;
+                    }
+                    $finalizationNotifyIds = array_values(array_unique(array_filter($finalizationNotifyIds)));
+                    if (!empty($finalizationNotifyIds)) {
+                        $notificationService->notify([
+                            'user_id' => $finalizationNotifyIds,
+                            'module' => 'correspondence',
+                            'event_key' => 'document_finalized',
+                            'entity_id' => $id,
+                            'title' => 'Document finalized',
+                            'message' => "A document has been finalized • {$tracking}",
+                            'url' => $docUrl,
+                            'priority' => 'normal',
+                            'icon' => 'document',
+                            'created_by' => (int)($_SESSION['id'] ?? 0),
+                        ]);
                     }
                 } catch (Throwable $e) {
                     error_log('Finalize notifications failed: ' . $e->getMessage());
@@ -1867,8 +1928,8 @@ public function getDocumentData() {
 
             // notify creator and recipients via internal notifications
             try {
-                require_once __DIR__ . "/../models/Notification.php";
-                $notif = new NotificationModel();
+                require_once __DIR__ . '/../Services/NotificationService.php';
+                $notificationService = new \App\Services\NotificationService();
 
                 // notify creator
                 $doc = $this->model->getById($documentId);
@@ -1877,7 +1938,18 @@ public function getDocumentData() {
                 $docUrl = "index.php?controller=correspondence&action=correspondence&doc_id={$documentId}";
 
                 if ($creatorId > 0) {
-                    $notif->create($creatorId, "Your document has been circulated • {$tracking}", $docUrl);
+                    $notificationService->notify([
+                        'user_id' => $creatorId,
+                        'module' => 'correspondence',
+                        'event_key' => 'document_circulated',
+                        'entity_id' => $documentId,
+                        'title' => 'Document circulated',
+                        'message' => "Your document has been circulated • {$tracking}",
+                        'url' => $docUrl,
+                        'priority' => 'normal',
+                        'icon' => 'document',
+                        'created_by' => (int)($_SESSION['id'] ?? 0),
+                    ]);
                 }
 
                 // notify recipients (standard users) parsed from recipients / cc
@@ -1890,29 +1962,22 @@ public function getDocumentData() {
                 }
                 $recipientIds = array_values(array_unique(array_filter($recipientIds)));
                 if (!empty($recipientIds)) {
-                    $notif->createForMany($recipientIds, "A document has been circulated to you • {$tracking}", $docUrl);
-                }
-            } catch (Throwable $e) {
-                error_log('Post-circulation notification failed: ' . $e->getMessage());
-            }
+                    $notificationService->notify([
+                        'user_id' => $recipientIds,
+                        'module' => 'correspondence',
+                        'event_key' => 'document_circulated',
+                        'entity_id' => $documentId,
+                        'title' => 'Document circulated',
+                        'message' => "A document has been circulated to you • {$tracking}",
+                        'url' => $docUrl,
+                        'priority' => 'normal',
+                        'icon' => 'document',
+                        'created_by' => (int)($_SESSION['id'] ?? 0),
+                    ]);
 
-            try {
-                $doc = $this->model->getById($documentId);
-                if ($doc) {
-                    $attachments = $this->model->getAttachments($documentId);
-                    $circulations = $this->model->getCirculationDetails($documentId);
-                    $creatorName = null;
-                    try {
-                        $userModel = new UserModel();
-                        $creator = $userModel->getUserById((int)($doc['created_by'] ?? 0));
-                        $creatorName = trim((string)($creator['firstName'] ?? '') . ' ' . (string)($creator['lastName'] ?? '')) ?: null;
-                    } catch (Throwable $e) {
-                        error_log('Creator name lookup failed: ' . $e->getMessage());
-                    }
-                    if ($creatorName !== null) {
-                        $doc['created_by_name'] = $creatorName;
-                    }
-                    $this->correspondenceService->queueCorrespondenceNotifications($documentId, $doc, $circulations, $attachments, 'circulated');
+                    // Portal-only notifications for standard users.
+                    $portalNotificationService = new StandardPortalNotificationService();
+                    $portalNotificationService->notifyCirculatedDocument($documentId, $this->model->getCirculationDetails($documentId), $doc, (int)($_SESSION['id'] ?? 0));
                 }
             } catch (Throwable $e) {
                 error_log('Post-circulation email queue failed: ' . $e->getMessage());
