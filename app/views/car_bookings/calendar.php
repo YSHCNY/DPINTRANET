@@ -3146,12 +3146,9 @@ driverForm.addEventListener('submit', function (e) {
     const card = document.createElement('div');
     const bookingContext = getDriverOperationalState(driver, fleetGalleryState.bookings);
     const rawStatus = (driver.status || 'active').toString().toLowerCase();
-    const statusLabel = rawStatus === 'active' ? 'Active' : rawStatus === 'inactive' ? 'Inactive' : rawStatus.toUpperCase();
-    const statusDot = rawStatus === 'active' ? 'bg-emerald-600' : 'bg-slate-400';
     const driverName = driver.driver_name || 'Driver';
-    const employee = driver.employee_id || driver.license_number || 'No ID';
+    const employee = driver.employee_id || 'N/A';
     const driverInitials = (driverName || 'D').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'D';
-    const role = driver.role || driver.department || 'Driver';
     const licenseClass = driver.license_class || 'N/A';
     const licenseExpiry = driver.license_expiry || 'N/A';
     const licenseStatus = (() => {
@@ -3180,70 +3177,43 @@ driverForm.addEventListener('submit', function (e) {
         : licenseStatus.tone === 'emerald'
           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
           : 'bg-slate-50 text-slate-700 border-slate-200';
-    const availabilityState = bookingContext.state;
+    const availabilityState = bookingContext.state === 'Reserved for Upcoming Trip' ? 'Reserved' : bookingContext.state;
     const availabilityClass = bookingContext.badgeClass;
-    const profileImage = driver.image_url || driver.image_filename ?
-      (driver.image_url ? driver.image_url : baseUrl + 'uploads/driver/' + driver.image_filename)
-      : null;
 
-    card.className = 'flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md';
+    card.className = 'flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white transition-colors duration-200 hover:border-slate-300';
 
     card.innerHTML = `
-      <div class="rounded-t-xl bg-slate-100 p-2.5">
-        <div class="flex items-start justify-between gap-2">
-          <div class="rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] ${escapeHtml(availabilityClass)}">${escapeHtml(availabilityState)}</div>
-          <div class="flex-shrink-0">
-            ${profileImage ? `
-              <img src="${escapeHtml(profileImage)}" alt="${escapeHtml(driverName)}" class="h-11 w-11 rounded-full object-cover ring-2 ring-white" />
-            ` : `
-              <div class="flex h-11 w-11 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 ring-2 ring-white">${escapeHtml(driverName.charAt(0).toUpperCase())}</div>
-            `}
-          </div>
-        </div>
-      </div>
-      <div class="flex flex-1 flex-col gap-1.5 p-2.5">
-        <div class="flex items-start gap-2">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
-            ${escapeHtml(driverInitials)}
-          </div>
+      <div class="flex items-start justify-between gap-3 p-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">${escapeHtml(driverInitials)}</div>
           <div class="min-w-0">
-            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Full Name</p>
             <h3 class="truncate text-sm font-semibold text-slate-900">${escapeHtml(driverName)}</h3>
-            <p class="mt-0.5 truncate text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">Employee ID • ${escapeHtml(employee)}</p>
+            <p class="truncate text-xs text-slate-500">ID ${escapeHtml(employee)}</p>
           </div>
         </div>
-        <div class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[12px] text-slate-600">
-          <div class="flex items-center justify-between gap-2">
-            <span class="truncate text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">License</span>
-            <span class="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 ${escapeHtml(licenseToneClass)}">
-              <span class="h-1.5 w-1.5 rounded-full ${escapeHtml(licenseStatus.dot)}"></span>
-              <span>${escapeHtml(licenseStatus.label)}</span>
-            </span>
+        <div class="whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${escapeHtml(availabilityClass)}">${escapeHtml(availabilityState)}</div>
+      </div>
+      <div class="space-y-3 px-4 pb-4">
+        <div class="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+          <div class="truncate">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">License class</p>
+            <p class="truncate font-medium text-slate-900">${escapeHtml(licenseClass)}</p>
           </div>
-          <div class="mt-1 flex items-center justify-between gap-2">
-            <span class="truncate font-medium text-slate-700">${escapeHtml(licenseClass)}</span>
-            <span class="truncate text-slate-500">${escapeHtml(licenseExpiry)}</span>
+          <div class="truncate">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Expiry</p>
+            <p class="truncate font-medium text-slate-900">${escapeHtml(licenseExpiry)}</p>
           </div>
         </div>
-        ${bookingContext.booking ? `
-          <div class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[12px] text-slate-600">
-            <div class="flex items-center justify-between gap-2">
-              <span class="truncate text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Assignment</span>
-              <span class="truncate font-medium text-slate-700">${escapeHtml(bookingContext.booking.vehicle_name || 'Assigned vehicle')}</span>
-            </div>
-            <div class="mt-1 flex items-center justify-between gap-2">
-              <span class="text-slate-500">Start</span>
-              <span class="truncate text-slate-700">${escapeHtml(formatAvailabilityDateTime(bookingContext.booking.start) || '—')}</span>
-            </div>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-slate-500">End</span>
-              <span class="truncate text-slate-700">${escapeHtml(formatAvailabilityDateTime(bookingContext.booking.end) || '—')}</span>
-            </div>
-          </div>
-        ` : ''}
-        <div class="mt-auto flex flex-col gap-1.5">
-          <button type="button" class="h-8 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-700 view-vehicle-btn" data-vehicle-id="${driver.id}">View Details</button>
-          <button type="button" class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}">${rawStatus === 'active' ? 'Disable' : 'Enable'}</button>
+        <div class="flex items-center justify-between text-[12px] text-slate-500">
+          <span class="inline-flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full ${escapeHtml(licenseStatus.dot)}"></span>
+            ${escapeHtml(licenseStatus.label)}
+          </span>
+          <span class="hidden text-slate-400 sm:inline">Driver</span>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" class="flex-1 h-9 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 view-vehicle-btn" data-vehicle-id="${driver.id}">View Details</button>
+          <button type="button" class="flex-1 h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}">${rawStatus === 'active' ? 'Disable' : 'Enable'}</button>
         </div>
       </div>
     `;
