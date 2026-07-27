@@ -349,20 +349,27 @@ class StaffDirectoryController extends Controller {
 
         foreach ($rows as $row) {
             $rowNumber++;
-            $row = array_map('trim', $row);
+            $row = array_values(array_map(function ($value) {
+                if (!is_string($value)) {
+                    return $value;
+                }
+
+                return trim(preg_replace('/^\xEF\xBB\xBF/', '', $value));
+            }, $row));
             if (count(array_filter($row, fn($value) => $value !== '')) === 0) {
                 continue;
             }
 
-            $staffId = $this->getRowValue($row, $headers, 'staff id', 'staffid');
-            $firstName = $this->getRowValue($row, $headers, 'first name', 'firstname');
-            $lastName = $this->getRowValue($row, $headers, 'last name', 'lastname');
-            $position = $this->getRowValue($row, $headers, 'position');
-            $department = $this->getRowValue($row, $headers, 'team/discipline', 'teamdiscipline', 'department');
-            $firm = $this->getRowValue($row, $headers, 'firm');
-            $email = $this->getRowValue($row, $headers, 'email');
-            $contactNumber = $this->getRowValue($row, $headers, 'contact number', 'contactnumber');
-            $deploymentDate = $this->getRowValue($row, $headers, 'deployment date', 'deploymentdate');
+            $staffData = $this->buildStaffImportRecord($row, $headers);
+            $staffId = $staffData['staff_id'];
+            $firstName = $staffData['firstName'];
+            $lastName = $staffData['lastName'];
+            $position = $staffData['position'];
+            $department = $staffData['department'];
+            $firm = $staffData['firm'];
+            $email = $staffData['email'];
+            $contactNumber = $staffData['contact_number'];
+            $deploymentDate = $staffData['deployment_date'];
 
             $rowName = $staffId !== '' ? $staffId : trim(($firstName . ' ' . $lastName));
             if ($rowName === '') {
@@ -475,7 +482,13 @@ class StaffDirectoryController extends Controller {
         }
 
         while (($data = fgetcsv($handle, 0, ',')) !== false) {
-            $rows[] = $data;
+            $rows[] = array_map(function ($value) {
+                if (!is_string($value)) {
+                    return $value;
+                }
+
+                return trim(preg_replace('/^\xEF\xBB\xBF/', '', $value));
+            }, $data);
         }
 
         fclose($handle);
@@ -534,17 +547,28 @@ class StaffDirectoryController extends Controller {
                 }
 
                 $cellType = $cell->getAttribute('t');
-                $valueNode = $cell->getElementsByTagName('v')->item(0);
-                $value = $valueNode ? $valueNode->nodeValue : '';
+                $value = '';
 
-                if ($cellType === 's' && is_numeric($value) && isset($sharedStrings[(int)$value])) {
-                    $value = $sharedStrings[(int)$value];
+                if ($cellType === 's') {
+                    $valueNode = $cell->getElementsByTagName('v')->item(0);
+                    $numericValue = $valueNode ? $valueNode->nodeValue : '';
+                    if (is_numeric($numericValue) && isset($sharedStrings[(int)$numericValue])) {
+                        $value = $sharedStrings[(int)$numericValue];
+                    }
+                } elseif ($cellType === 'inlineStr') {
+                    $textNodes = $cell->getElementsByTagName('t');
+                    foreach ($textNodes as $textNode) {
+                        $value .= $textNode->nodeValue;
+                    }
+                } else {
+                    $valueNode = $cell->getElementsByTagName('v')->item(0);
+                    $value = $valueNode ? $valueNode->nodeValue : '';
                 }
 
                 $rowValues[$cellIndex] = $value;
                 $lastIndex = $cellIndex;
             }
-            $rows[] = $rowValues;
+            $rows[] = array_values($rowValues);
         }
 
         return $rows;
@@ -573,6 +597,7 @@ class StaffDirectoryController extends Controller {
         $headers = [];
         foreach ($headerRow as $index => $header) {
             $headerKey = trim((string)$header);
+            $headerKey = preg_replace('/^\xEF\xBB\xBF/', '', $headerKey) ?? $headerKey;
             if ($headerKey === '') {
                 continue;
             }
@@ -584,8 +609,23 @@ class StaffDirectoryController extends Controller {
 
             $headers[strtolower($headerKey)] = $index;
             $headers[strtolower(str_replace([' ', '/'], '', $headerKey))] = $index;
+            $headers[strtolower(str_replace([' ', '/', '-', '_', '.'], '', $headerKey))] = $index;
         }
         return $headers;
+    }
+
+    private function buildStaffImportRecord(array $row, array $headers): array {
+        return [
+            'staff_id' => $this->getRowValue($row, $headers, 'staff id', 'staffid'),
+            'firstName' => $this->getRowValue($row, $headers, 'first name', 'firstname'),
+            'lastName' => $this->getRowValue($row, $headers, 'last name', 'lastname'),
+            'position' => $this->getRowValue($row, $headers, 'position'),
+            'department' => $this->getRowValue($row, $headers, 'team/discipline', 'teamdiscipline', 'department'),
+            'firm' => $this->getRowValue($row, $headers, 'firm'),
+            'email' => $this->getRowValue($row, $headers, 'email'),
+            'contact_number' => $this->getRowValue($row, $headers, 'contact number', 'contactnumber'),
+            'deployment_date' => $this->getRowValue($row, $headers, 'deployment date', 'deploymentdate'),
+        ];
     }
 
     private function getRowValue(array $row, array $headers, string ...$headerNames): string {

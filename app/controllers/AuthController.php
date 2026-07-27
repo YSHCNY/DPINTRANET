@@ -19,6 +19,85 @@ class AuthController extends Controller {
     }
 
     public function login() {
+        error_log('[recover-debug] AuthController::login() entered');
+        error_log('[recover-debug] GET recover=' . (isset($_GET['recover']) ? (string)$_GET['recover'] : 'absent'));
+        error_log('[recover-debug] GET params=' . json_encode($_GET));
+
+        $dismissExpiredSession = (!empty($_GET['dismissExpired']) && (string)$_GET['dismissExpired'] === '1');
+        if ($dismissExpiredSession) {
+            unset($_SESSION['session_expired'], $_SESSION['session_expired_message'], $_SESSION['session_recovery_user'], $_SESSION['session_recovery_user_id']);
+        }
+
+        $showExpiredSessionModal = (!empty($_GET['expired']) && (string)$_GET['expired'] === '1') || !empty($_SESSION['session_expired']);
+        if ($showExpiredSessionModal) {
+            unset($_SESSION['session_expired']);
+        }
+
+        $recoverSession = (!empty($_GET['recover']) && (string)$_GET['recover'] === '1');
+        error_log('[recover-debug] recoverSession=' . ($recoverSession ? 'true' : 'false'));
+        if ($recoverSession) {
+            error_log('[recover-debug] recovery block entered');
+            $recoveryUser = $_SESSION['session_recovery_user'] ?? null;
+            $recoveryUserId = (int)($_SESSION['session_recovery_user_id'] ?? 0);
+            error_log('[recover-debug] recoveryUserId=' . $recoveryUserId);
+
+            if (empty($recoveryUser) && $recoveryUserId > 0) {
+                error_log('[recover-debug] fetching recovery user from database');
+                $recoveryUser = $this->userModel->findUserById($recoveryUserId);
+            }
+
+            if (!empty($recoveryUser['username'])) {
+                error_log('[recover-debug] recovery user found: ' . $recoveryUser['username']);
+                error_log('[recover-debug] recovery user payload=' . json_encode($recoveryUser));
+                $_SESSION['user'] = $recoveryUser['username'];
+                $_SESSION['user_level'] = $recoveryUser['userLevel'] ?? 3;
+                $_SESSION['user_id'] = $recoveryUser['id'] ?? 0;
+                $_SESSION['position'] = $recoveryUser['position'] ?? '';
+                $_SESSION['firstName'] = $recoveryUser['firstName'] ?? '';
+                $_SESSION['lastName'] = $recoveryUser['lastName'] ?? '';
+                $_SESSION['profile_picture'] = $recoveryUser['profile_picture'] ?? 'default.png';
+                $_SESSION['id'] = $recoveryUser['id'] ?? 0;
+                $_SESSION['last_activity'] = time();
+                unset($_SESSION['session_expired'], $_SESSION['session_expired_message'], $_SESSION['session_recovery_user'], $_SESSION['session_recovery_user_id']);
+                session_regenerate_id(true);
+
+                $restoredSession = [
+                    'user' => $_SESSION['user'] ?? null,
+                    'user_id' => $_SESSION['user_id'] ?? null,
+                    'user_level' => $_SESSION['user_level'] ?? null,
+                    'firstName' => $_SESSION['firstName'] ?? null,
+                    'lastName' => $_SESSION['lastName'] ?? null,
+                    'position' => $_SESSION['position'] ?? null,
+                    'profile_picture' => $_SESSION['profile_picture'] ?? null,
+                    'last_activity' => $_SESSION['last_activity'] ?? null,
+                ];
+
+                $missingValues = [];
+                foreach ($restoredSession as $key => $value) {
+                    $isMissing = false;
+                    if (in_array($key, ['user_id', 'user_level'], true)) {
+                        $isMissing = $value === null || $value === '' || $value === 0;
+                    } else {
+                        $isMissing = $value === null || $value === '';
+                    }
+
+                    if ($isMissing) {
+                        $missingValues[] = $key;
+                    }
+                }
+
+                error_log('[recover-debug] restored session state=' . json_encode($restoredSession));
+                if (!empty($missingValues)) {
+                    error_log('[recover-debug] missing restored values=' . implode(', ', $missingValues));
+                }
+
+                error_log('[recover-debug] redirecting to dashboard');
+                $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
+            }
+
+            error_log('[recover-debug] recovery block completed without matching user');
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = trim((string)($_POST['username'] ?? ''));
             $password = (string)($_POST['password'] ?? '');
@@ -40,7 +119,7 @@ class AuthController extends Controller {
                     ]);
                 }
 
-                $this->view('auth/login', ['error' => 'Login temporarily blocked. Please try again in ' . $remainingSeconds . ' seconds.']);
+                $this->view('auth/login', ['error' => 'Login temporarily blocked. Please try again in ' . $remainingSeconds . ' seconds.', 'showExpiredSessionModal' => $showExpiredSessionModal]);
                 return;
             }
 
@@ -56,6 +135,9 @@ class AuthController extends Controller {
                 $_SESSION['lastName'] = $user['lastName'];
                 $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
                 $_SESSION['id'] = $user['id'];
+                $_SESSION['last_activity'] = time();
+                unset($_SESSION['session_expired'], $_SESSION['session_expired_message'], $_SESSION['session_recovery_user']);
+                session_regenerate_id(true);
 
                 if ($wantsJson) {
                     $this->sendJsonResponse([
@@ -85,14 +167,14 @@ class AuthController extends Controller {
                 ]);
             }
 
-            $this->view('auth/login', ['error' => 'Invalid username or password']);
+            $this->view('auth/login', ['error' => 'Invalid username or password', 'showExpiredSessionModal' => $showExpiredSessionModal]);
             return;
         }
 
-        $this->view('auth/login');
+        $this->view('auth/login', ['showExpiredSessionModal' => $showExpiredSessionModal]);
     }
 
-    private function wantsJsonResponse(): bool {
+    protected function wantsJsonResponse(): bool {
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
             return true;
         }
@@ -111,6 +193,11 @@ class AuthController extends Controller {
     }
 
     public function forgotPassword() {
+        if (!empty($_SESSION['session_expired_message']) && empty($_SESSION['portal_message'])) {
+            $_SESSION['portal_message'] = $_SESSION['session_expired_message'];
+            $_SESSION['portal_msg_type'] = 'error';
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $identifier = trim($_POST['identifier'] ?? '');
             $email = trim($_POST['email'] ?? '');
@@ -541,6 +628,15 @@ class AuthController extends Controller {
     }
 
     public function logout() {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        $_SESSION = [];
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+        }
         session_destroy();
         $this->redirect('index.php?controller=Auth&action=login');
     }

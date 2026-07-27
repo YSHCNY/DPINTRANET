@@ -1,4 +1,8 @@
 <?php
+require_once __DIR__ . '/../Services/Security/SessionTimeoutService.php';
+
+use App\Services\Security\SessionTimeoutService;
+
 class Controller {
     // Role level constants
     public const LEVEL_SUPER_ADMIN = 0;
@@ -22,6 +26,13 @@ class Controller {
 
 
     protected function requireLogin() {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        $timeoutSeconds = (int)($_ENV['SESSION_TIMEOUT_SECONDS'] ?? 900);
+        $service = new SessionTimeoutService($timeoutSeconds, true);
+
         if (!isset($_SESSION['user'])) {
             $isAjax = false;
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
@@ -40,6 +51,44 @@ class Controller {
             header("Location: index.php?controller=Auth&action=login");
             exit;
         }
+
+        if ($service->isExpired()) {
+            $recoveryUser = [
+                'id' => (int)($_SESSION['id'] ?? $_SESSION['user_id'] ?? 0),
+                'username' => (string)($_SESSION['user'] ?? ''),
+                'userLevel' => (int)($_SESSION['user_level'] ?? 3),
+                'position' => $_SESSION['position'] ?? '',
+                'firstName' => $_SESSION['firstName'] ?? '',
+                'lastName' => $_SESSION['lastName'] ?? '',
+                'profile_picture' => $_SESSION['profile_picture'] ?? 'default.png',
+            ];
+
+            $_SESSION['session_expired'] = true;
+            $_SESSION['session_expired_message'] = 'You have been logged out due to inactivity.';
+            $_SESSION['session_recovery_user'] = $recoveryUser;
+            $_SESSION['session_recovery_user_id'] = (int)($recoveryUser['id'] ?? 0);
+            $service->clearSession(['session_expired', 'session_expired_message', 'session_recovery_user', 'session_recovery_user_id']);
+
+            if ($this->wantsJsonResponse()) {
+                header('Content-Type: application/json');
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Session expired due to inactivity.']);
+                exit;
+            }
+
+            header('Location: index.php?controller=Auth&action=login&expired=1');
+            exit;
+        }
+
+        $service->touch();
+    }
+
+    protected function wantsJsonResponse(): bool {
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            return true;
+        }
+
+        return !empty($_SERVER['HTTP_ACCEPT']) && stripos((string)$_SERVER['HTTP_ACCEPT'], 'application/json') !== false;
     }
 
     protected function currentUserLevel(): int {

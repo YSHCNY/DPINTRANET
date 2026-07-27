@@ -78,6 +78,120 @@
           </script>
         <?php endif; ?>
 
+        <?php if (!empty($_SESSION['session_expired_message'])): ?>
+          <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
+            <?= htmlspecialchars($_SESSION['session_expired_message']) ?> Please sign in again to continue.
+          </div>
+        <?php endif; ?>
+
+        <?php if (!empty($showExpiredSessionModal) || !empty($_SESSION['session_expired_message'])): ?>
+          <div id="expiredSessionModal" class="<?= !empty($showExpiredSessionModal) ? '' : 'hidden' ?> fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-4">
+            <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+              <div class="flex items-center justify-center rounded-full bg-amber-100 p-3 text-amber-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.01M10.489 3.606l-8.16 14.04A1.5 1.5 0 0 0 3.66 20.25h16.68a1.5 1.5 0 0 0 1.33-2.304l-8.16-14.04a1.5 1.5 0 0 0-2.66 0Z" />
+                </svg>
+              </div>
+              <h3 class="mt-4 text-center text-lg font-semibold text-slate-900">Session expired</h3>
+              <p class="mt-2 text-center text-sm leading-6 text-slate-600">You were automatically logged out due to inactivity. Please sign in again to continue.</p>
+              <p id="recoverCountdownText" class="mt-3 text-center text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Recover session available</p>
+              <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                <a id="loginAgainLink" href="index.php?controller=Auth&action=login&dismissExpired=1" class="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">Log in again</a>
+                <a id="recoverSessionLink" href="index.php?controller=Auth&action=login&recover=1" class="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400">Recover session</a>
+              </div>
+              <script>
+                (() => {
+                  const modal = document.getElementById('expiredSessionModal');
+                  const loginAgainLink = document.getElementById('loginAgainLink');
+                  const recoverLink = document.getElementById('recoverSessionLink');
+                  const countdownText = document.getElementById('recoverCountdownText');
+                  if (!modal || !recoverLink) return;
+
+                  if (modal.dataset.timerInitialized === 'true') return;
+                  modal.dataset.timerInitialized = 'true';
+
+                  const timeoutMs = 5 * 60 * 1000;
+                  const expiredText = 'RECOVER SESSION EXPIRED';
+                  const storageKey = 'dpintranet-recover-session-timer';
+                  const expiredStateKey = 'dpintranet-recover-session-expired';
+                  const shouldAutoShow = modal.classList.contains('hidden') === false || <?= !empty($showExpiredSessionModal) || !empty($_SESSION['session_expired_message']) ? 'true' : 'false' ?>;
+
+                  if (shouldAutoShow) {
+                    modal.classList.remove('hidden');
+                  }
+
+                  let expired = sessionStorage.getItem(expiredStateKey) === '1';
+                  let countdownTimer = null;
+                  let deadline = parseInt(sessionStorage.getItem(storageKey) || '0', 10);
+
+                  if (!deadline || deadline <= Date.now()) {
+                    sessionStorage.removeItem(expiredStateKey);
+                    expired = false;
+                    deadline = Date.now() + timeoutMs;
+                    sessionStorage.setItem(storageKey, String(deadline));
+                  }
+
+                  if (loginAgainLink) {
+                    loginAgainLink.addEventListener('click', (event) => {
+                      event.preventDefault();
+                      sessionStorage.removeItem(storageKey);
+                      sessionStorage.removeItem(expiredStateKey);
+                      if (countdownTimer) {
+                        window.clearInterval(countdownTimer);
+                        countdownTimer = null;
+                      }
+                      modal.classList.add('hidden');
+                      window.location.href = loginAgainLink.getAttribute('href');
+                    });
+                  }
+
+                  const updateState = () => {
+                    const remainingMs = Math.max(0, deadline - Date.now());
+                    const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+
+                    if (expired) {
+                      recoverLink.textContent = expiredText;
+                      recoverLink.classList.add('pointer-events-none', 'opacity-60', 'cursor-not-allowed');
+                      recoverLink.setAttribute('aria-disabled', 'true');
+                      recoverLink.removeAttribute('href');
+                      if (countdownText) {
+                        countdownText.textContent = 'Recover session expired';
+                      }
+                      return;
+                    }
+
+                    if (countdownText) {
+                      countdownText.textContent = `Recover session available for ${String(remainingSeconds).padStart(2, '0')}s`;
+                    }
+
+                    recoverLink.textContent = 'Recover session';
+                    recoverLink.classList.remove('pointer-events-none', 'opacity-60', 'cursor-not-allowed');
+                    recoverLink.setAttribute('aria-disabled', 'false');
+                    recoverLink.setAttribute('href', 'index.php?controller=Auth&action=login&recover=1');
+                  };
+
+                  const tick = () => {
+                    if (expired) return;
+
+                    if (Date.now() >= deadline) {
+                      expired = true;
+                      sessionStorage.setItem(expiredStateKey, '1');
+                      updateState();
+                      sessionStorage.removeItem(storageKey);
+                      return;
+                    }
+
+                    updateState();
+                  };
+
+                  tick();
+                  countdownTimer = window.setInterval(tick, 1000);
+                })();
+              </script>
+            </div>
+          </div>
+        <?php endif; ?>
+
         <div class="flex items-center gap-3">
           <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-2">
             <img src="<?= BASE_URL ?>uploads/logo/official.png" alt="DPINTRANET logo" class="h-full w-full object-contain">

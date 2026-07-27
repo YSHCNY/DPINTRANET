@@ -47,14 +47,48 @@ class DriversController extends Controller {
             $actorUserId = (int)($_SESSION['id'] ?? 0);
 
             $driver_name = trim((string)($_POST['driver_name'] ?? ''));
-            if ($driver_name === '') {
-                throw new Exception('driver_name is required');
-            }
-
+            $employee_id = trim((string)($_POST['employee_id'] ?? ''));
+            $first_name = trim((string)($_POST['first_name'] ?? ''));
+            $last_name = trim((string)($_POST['last_name'] ?? ''));
+            $mobile_number = trim((string)($_POST['mobile_number'] ?? ''));
+            $email = trim((string)($_POST['email'] ?? ''));
+            $license_number = trim((string)($_POST['license_number'] ?? ''));
+            $license_class = trim((string)($_POST['license_class'] ?? ''));
+            $license_expiry = trim((string)($_POST['license_expiry'] ?? ''));
             $status = isset($_POST['status']) ? (string)$_POST['status'] : 'active';
+
+            if ($employee_id === '') {
+                throw new Exception('employee_id is required');
+            }
+            if ($first_name === '') {
+                throw new Exception('first_name is required');
+            }
+            if ($last_name === '') {
+                throw new Exception('last_name is required');
+            }
+            if ($license_number === '') {
+                throw new Exception('license_number is required');
+            }
+            if ($license_class === '') {
+                throw new Exception('license_class is required');
+            }
+            if ($license_expiry === '') {
+                throw new Exception('license_expiry is required');
+            }
+            if (strtotime($license_expiry) === false) {
+                throw new Exception('license_expiry must be a valid date');
+            }
 
             $id = $this->driversModel->create([
                 'driver_name' => $driver_name,
+                'employee_id' => $employee_id,
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'mobile_number' => $mobile_number !== '' ? $mobile_number : null,
+                'email' => $email !== '' ? $email : null,
+                'license_number' => $license_number,
+                'license_class' => $license_class,
+                'license_expiry' => date('Y-m-d', strtotime($license_expiry)),
                 'status' => $status,
             ], $actorUserId);
 
@@ -78,17 +112,51 @@ class DriversController extends Controller {
 
             $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
             $driver_name = trim((string)($_POST['driver_name'] ?? ''));
+            $employee_id = trim((string)($_POST['employee_id'] ?? ''));
+            $first_name = trim((string)($_POST['first_name'] ?? ''));
+            $last_name = trim((string)($_POST['last_name'] ?? ''));
+            $mobile_number = trim((string)($_POST['mobile_number'] ?? ''));
+            $email = trim((string)($_POST['email'] ?? ''));
+            $license_number = trim((string)($_POST['license_number'] ?? ''));
+            $license_class = trim((string)($_POST['license_class'] ?? ''));
+            $license_expiry = trim((string)($_POST['license_expiry'] ?? ''));
             if ($id < 1) {
                 throw new Exception('id is required');
             }
-            if ($driver_name === '') {
-                throw new Exception('driver_name is required');
+            if ($employee_id === '') {
+                throw new Exception('employee_id is required');
+            }
+            if ($first_name === '') {
+                throw new Exception('first_name is required');
+            }
+            if ($last_name === '') {
+                throw new Exception('last_name is required');
+            }
+            if ($license_number === '') {
+                throw new Exception('license_number is required');
+            }
+            if ($license_class === '') {
+                throw new Exception('license_class is required');
+            }
+            if ($license_expiry === '') {
+                throw new Exception('license_expiry is required');
+            }
+            if (strtotime($license_expiry) === false) {
+                throw new Exception('license_expiry must be a valid date');
             }
 
             $status = isset($_POST['status']) ? (string)$_POST['status'] : 'active';
 
             $ok = $this->driversModel->update($id, [
                 'driver_name' => $driver_name,
+                'employee_id' => $employee_id,
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'mobile_number' => $mobile_number !== '' ? $mobile_number : null,
+                'email' => $email !== '' ? $email : null,
+                'license_number' => $license_number,
+                'license_class' => $license_class,
+                'license_expiry' => date('Y-m-d', strtotime($license_expiry)),
                 'status' => $status,
             ], $actorUserId);
 

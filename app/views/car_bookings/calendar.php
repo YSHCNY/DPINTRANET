@@ -490,8 +490,8 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
      ============================================ -->
   <div id="vehicleModal" class="fixed inset-0 z-50 hidden bg-white" role="dialog" aria-modal="true" aria-labelledby="vehicleModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="vehicleModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-4xl modal-panel">
-    <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
+  <div class="relative mx-auto my-6 w-[95vw] max-w-6xl modal-panel">
+    <div class="modal-header card-header px-5 py-4 lg:px-6 lg:py-5">
       <div>
         <h2 id="vehicleModalTitle" class="text-lg font-semibold text-slate-900">Manage Vehicles</h2>
         <p class="mt-1 text-sm text-slate-500">Add new vehicles or modify existing ones</p>
@@ -501,17 +501,17 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       </button>
     </div>
 
-    <div class="modal-body p-4 lg:p-5">
+    <div class="modal-body p-5 lg:p-6">
       <!-- Add Vehicle Form -->
-      <div class="vehicle-form-card mb-3 rounded-lg border border-surface-2 bg-white p-3 lg:mb-4 lg:p-4">
-        <form id="vehicleForm" class="space-y-3 lg:space-y-4">
-          <div class="flex items-center justify-between gap-2">
+      <div class="vehicle-form-card mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:mb-5 lg:p-5">
+        <form id="vehicleForm" class="space-y-4 lg:space-y-5">
+          <div class="flex flex-col gap-2 border-b border-slate-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 class="text-base font-semibold text-slate-900">Add / Edit Vehicle</h3>
             <p class="text-xs text-slate-500">Keep fields concise — plate number and capacity are required.</p>
           </div>
         <input type="hidden" name="id" id="vehicleIdInput" value="">
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 items-end">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 items-end">
           <div class="sm:col-span-2">
             <label class="mb-2 block text-xs font-semibold text-slate-700">Plate Number <span class="text-red-500">*</span></label>
             <input type="text" name="plate_number" id="plateNumber" placeholder="e.g., ABC-1234" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
@@ -666,8 +666,8 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
      ============================================ -->
   <div id="driversModal" class="fixed inset-0 z-50 hidden bg-white" role="dialog" aria-modal="true" aria-labelledby="driversModalTitle">
   <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="driversModalBackdrop"></div>
-  <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
-    <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
+  <div class="relative mx-auto my-6 w-[95vw] max-w-6xl modal-panel">
+    <div class="modal-header card-header px-5 py-4 lg:px-6 lg:py-5">
       <div>
         <h2 id="driversModalTitle" class="text-lg font-semibold text-slate-900">Manage Drivers</h2>
         <p class="mt-1 text-sm text-slate-500">Add new drivers or modify existing ones</p>
@@ -677,20 +677,55 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         </button>
     </div>
 
-    <div class="modal-body p-4 lg:p-5">
+    <div class="modal-body p-5 lg:p-6">
       <!-- Add Driver Form -->
-      <div class="driver-form-card mb-3 rounded-lg border border-surface-2 bg-white p-3 lg:mb-4 lg:p-4">
-        <form id="driverForm" class="space-y-3 lg:space-y-4">
-          <div class="flex items-center justify-between gap-2">
+      <div class="driver-form-card mb-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:mb-5 lg:p-5">
+        <form id="driverForm" class="space-y-4 lg:space-y-5">
+          <div class="flex flex-col gap-2 border-b border-slate-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 class="text-base font-semibold text-slate-900">Add / Edit Driver</h3>
             <p class="text-xs text-slate-500">Provide the driver's full name and status.</p>
           </div>
           <input type="hidden" name="id" id="driverModalId">
 
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 items-end lg:gap-4">
-            <div class="sm:col-span-2">
-              <label class="text-xs font-semibold text-slate-700 block mb-2">Driver Name <span class="text-red-500">*</span></label>
-              <input type="text" name="driver_name" id="driverNameInput" placeholder="e.g., John Doe" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 items-end lg:gap-4">
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">Employee ID <span class="text-red-500">*</span></label>
+              <input type="text" name="employee_id" id="employeeIdInput" placeholder="e.g., EMP-001" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">First Name <span class="text-red-500">*</span></label>
+              <input type="text" name="first_name" id="firstNameInput" placeholder="e.g., John" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">Last Name <span class="text-red-500">*</span></label>
+              <input type="text" name="last_name" id="lastNameInput" placeholder="e.g., Doe" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">Mobile Number</label>
+              <input type="text" name="mobile_number" id="mobileNumberInput" placeholder="e.g., 08012345678" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" />
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">Email</label>
+              <input type="email" name="email" id="emailInput" placeholder="e.g., john@example.com" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" />
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">License Number <span class="text-red-500">*</span></label>
+              <input type="text" name="license_number" id="licenseNumberInput" placeholder="e.g., ABC12345" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">License Class <span class="text-red-500">*</span></label>
+              <input type="text" name="license_class" id="licenseClassInput" placeholder="e.g., B" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+            </div>
+
+            <div>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">License Expiry <span class="text-red-500">*</span></label>
+              <input type="date" name="license_expiry" id="licenseExpiryInput" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
             </div>
 
             <div>
@@ -701,6 +736,8 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
               </select>
             </div>
 
+            <input type="hidden" name="driver_name" id="driverNameInput" value="" />
+
             <div class="sm:col-span-3 flex items-center gap-2 justify-end">
               <button type="button" id="resetDriverFormBtn" class="btn-ghost">Reset</button>
               <button type="submit" class="btn-primary">Save Driver</button>
@@ -710,8 +747,8 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       </div>
 
       <!-- Drivers Table -->
-      <div class="rounded-lg border border-slate-200 overflow-hidden drivers-table">
-        <div class="flex items-center justify-between gap-3 px-3 py-2 card-header lg:px-4 lg:py-3">
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm drivers-table">
+        <div class="flex items-center justify-between gap-3 px-4 py-3 card-header lg:px-5 lg:py-4">
           <div>
             <h3 class="text-sm font-semibold text-slate-900">Drivers</h3>
             <p class="text-xs text-slate-500">Manage driver records and availability.</p>
@@ -722,18 +759,22 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
             <option value="inactive">Inactive</option>
           </select>
         </div>
-        <div class="max-h-[320px] overflow-auto">
+        <div class="max-h-[420px] overflow-auto">
           <table class="w-full text-left text-sm">
             <thead class="sticky top-0 bg-surface-1 border-b border-slate-200">
               <tr>
-                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Name</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Full Name</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Employee ID</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">License Number</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">License Class</th>
+                <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">License Expiry</th>
                 <th class="px-3 py-2 font-semibold text-slate-700 lg:px-4 lg:py-3">Status</th>
                 <th class="px-3 py-2 font-semibold text-slate-700 text-right lg:px-4 lg:py-3">Actions</th>
               </tr>
             </thead>
             <tbody id="driversTableBody">
               <tr>
-                <td colspan="3" class="px-3 py-4 text-center text-slate-500 lg:px-4">Loading drivers...</td>
+                <td colspan="7" class="px-3 py-4 text-center text-slate-500 lg:px-4">Loading drivers...</td>
               </tr>
             </tbody>
           </table>
@@ -1283,11 +1324,11 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   <!-- Vehicle Details Modal (shows history and clickable bookings) -->
   <div id="vehicleDetailsModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="vehicleDetailsModalTitle">
     <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="vehicleDetailsModalBackdrop"></div>
-    <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
+    <div class="relative mx-auto my-6 w-[95vw] max-w-5xl modal-panel">
       <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
         <div>
           <h2 id="vehicleDetailsModalTitle" class="text-base font-semibold text-slate-900">Vehicle Booking Timeline</h2>
-          <p class="mt-1 text-sm text-slate-500">Recent booking activity and upcoming commitments for this vehicle.</p>
+          <p id="vehicleDetailsModalSubtitle" class="mt-1 text-sm text-slate-500">Recent booking activity and upcoming commitments for this vehicle.</p>
           <div id="vehicleDetailsMeta" class="mt-2 flex flex-wrap gap-2"></div>
           <div id="vehicleDetailsActions" class="mt-3 flex flex-wrap gap-2"></div>
         </div>
@@ -1628,7 +1669,16 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         fd.append('capacity', itemData.capacity || 1);
         fd.append('status', 'active');
       } else {
-        fd.append('driver_name', itemData.driver_name || '');
+        const fullName = [itemData.first_name, itemData.last_name].filter(Boolean).join(' ').trim() || itemData.driver_name || '';
+        fd.append('driver_name', fullName);
+        fd.append('employee_id', itemData.employee_id || itemData.employeeId || '');
+        fd.append('first_name', itemData.first_name || '');
+        fd.append('last_name', itemData.last_name || '');
+        fd.append('mobile_number', itemData.mobile_number || itemData.mobileNumber || '');
+        fd.append('email', itemData.email || '');
+        fd.append('license_number', itemData.license_number || '');
+        fd.append('license_class', itemData.license_class || '');
+        fd.append('license_expiry', itemData.license_expiry || '');
         fd.append('status', 'active');
       }
     }
@@ -2290,6 +2340,14 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   // ==================== DRIVERS MODAL ====================
   const driverIdEl = document.getElementById('driverModalId');
   const driverNameInputEl = document.getElementById('driverNameInput');
+  const employeeIdInputEl = document.getElementById('employeeIdInput');
+  const firstNameInputEl = document.getElementById('firstNameInput');
+  const lastNameInputEl = document.getElementById('lastNameInput');
+  const mobileNumberInputEl = document.getElementById('mobileNumberInput');
+  const emailInputEl = document.getElementById('emailInput');
+  const licenseNumberInputEl = document.getElementById('licenseNumberInput');
+  const licenseClassInputEl = document.getElementById('licenseClassInput');
+  const licenseExpiryInputEl = document.getElementById('licenseExpiryInput');
   const driverStatusInputEl = document.getElementById('driverStatusInput');
   const driverForm = document.getElementById('driverForm');
   const driversTableBodyEl = document.getElementById('driversTableBody');
@@ -2301,13 +2359,21 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
   function setDriversModalFormFromRow(row) {
     driverIdEl.value = row ? String(row.id) : '';
-    driverNameInputEl.value = row ? row.driver_name : '';
+    driverNameInputEl.value = row ? row.driver_name || '' : '';
+    employeeIdInputEl.value = row ? row.employee_id || '' : '';
+    firstNameInputEl.value = row ? row.first_name || '' : '';
+    lastNameInputEl.value = row ? row.last_name || '' : '';
+    mobileNumberInputEl.value = row ? row.mobile_number || '' : '';
+    emailInputEl.value = row ? row.email || '' : '';
+    licenseNumberInputEl.value = row ? row.license_number || '' : '';
+    licenseClassInputEl.value = row ? row.license_class || '' : '';
+    licenseExpiryInputEl.value = row ? row.license_expiry || '' : '';
     driverStatusInputEl.value = row ? row.status : 'active';
   }
 
   function renderDriversTable(rows) {
     if (!rows || rows.length === 0) {
-      driversTableBodyEl.innerHTML = '<tr><td colspan="3" class="px-5 py-8 text-center text-slate-500">No drivers found</td></tr>';
+      driversTableBodyEl.innerHTML = '<tr><td colspan="7" class="px-5 py-8 text-center text-slate-500">No drivers found</td></tr>';
       return;
     }
 
@@ -2318,11 +2384,20 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       const statusBadge = row.status === 'active'
         ? `<span class="driver-badge">Active</span>`
         : `<span class="driver-badge inactive">Inactive</span>`;
+      const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ').trim() || row.driver_name || '—';
+      const employeeId = row.employee_id || row.employeeId || '';
+      const licenseNumber = row.license_number || '';
+      const licenseClass = row.license_class || '';
+      const licenseExpiry = row.license_expiry || '';
 
       tr.innerHTML = `
         <td class="px-5 py-3">
-          <div class="font-medium text-slate-800">${escapeHtml(row.driver_name)}</div>
+          <div class="font-medium text-slate-800">${escapeHtml(fullName)}</div>
         </td>
+        <td class="px-5 py-3">${escapeHtml(employeeId)}</td>
+        <td class="px-5 py-3">${escapeHtml(licenseNumber)}</td>
+        <td class="px-5 py-3">${escapeHtml(licenseClass)}</td>
+        <td class="px-5 py-3">${escapeHtml(licenseExpiry)}</td>
         <td class="px-5 py-3">${statusBadge}</td>
         <td class="px-5 py-3 text-right">
           <div class="inline-flex items-center gap-2">
@@ -2363,8 +2438,17 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         } else {
           if (!confirm(`Enable driver '${name}'? They will be available for new bookings.`)) return;
           const fd = new FormData();
+          const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ').trim() || row.driver_name || '';
           fd.append('id', id);
-          fd.append('driver_name', row.driver_name || '');
+          fd.append('driver_name', fullName);
+          fd.append('employee_id', row.employee_id || row.employeeId || '');
+          fd.append('first_name', row.first_name || '');
+          fd.append('last_name', row.last_name || '');
+          fd.append('mobile_number', row.mobile_number || row.mobileNumber || '');
+          fd.append('email', row.email || '');
+          fd.append('license_number', row.license_number || '');
+          fd.append('license_class', row.license_class || '');
+          fd.append('license_expiry', row.license_expiry || '');
           fd.append('status', 'active');
           fetch(updateDriverUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
@@ -2489,6 +2573,14 @@ driverForm.addEventListener('submit', function (e) {
   const id = driverIdEl.value ? parseInt(driverIdEl.value, 10) : null;
   const fd = new FormData();
   fd.append('driver_name', driverNameInputEl.value);
+  fd.append('employee_id', employeeIdInputEl.value);
+  fd.append('first_name', firstNameInputEl.value);
+  fd.append('last_name', lastNameInputEl.value);
+  fd.append('mobile_number', mobileNumberInputEl.value);
+  fd.append('email', emailInputEl.value);
+  fd.append('license_number', licenseNumberInputEl.value);
+  fd.append('license_class', licenseClassInputEl.value);
+  fd.append('license_expiry', licenseExpiryInputEl.value);
   fd.append('status', driverStatusInputEl.value);
 
   if (id) fd.append('id', id);
@@ -2543,10 +2635,17 @@ driverForm.addEventListener('submit', function (e) {
       headers: {'X-Requested-With': 'XMLHttpRequest'}
     }).then(parseJsonResponse).then(data => Array.isArray(data.drivers) ? data.drivers : []);
 
-    Promise.all([vehiclesRequest, driversRequest])
-      .then(([vehicles, drivers]) => {
+    const range = getTodayRange();
+    const bookingsRequest = fetch(listUrl + '&' + new URLSearchParams({ start: range.start, end: range.end }).toString() + '&t=' + Date.now(), {
+      method: 'GET',
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    }).then(parseJsonResponse).then(data => Array.isArray(data.events) ? data.events : []);
+
+    Promise.all([vehiclesRequest, driversRequest, bookingsRequest])
+      .then(([vehicles, drivers, bookings]) => {
         fleetGalleryState.vehicles = vehicles;
         fleetGalleryState.drivers = drivers;
+        fleetGalleryState.bookings = bookings;
         renderFleetGalleryCards();
         refreshFleetSnapshot(vehicles);
       })
@@ -2569,6 +2668,10 @@ driverForm.addEventListener('submit', function (e) {
     return {
       vehicle_id: props.vehicle_id || props.vehicleId || props.vehicle || null,
       driver_id: props.driver_id || props.driverId || props.driver || null,
+      vehicle_name: props.vehicle_name || props.vehicleName || props.vehicle || null,
+      purpose: props.purpose || props.trip_name || props.title || null,
+      destination: props.destination || props.destinations || props.trip_destination || null,
+      status: props.status || props.booking_status || null,
       start: event.start || event.startStr || props.departure_expected || props.start_at || null,
       end: event.end || event.endStr || props.return_expected || props.end_at || null,
     };
@@ -2632,6 +2735,7 @@ driverForm.addEventListener('submit', function (e) {
 
     Promise.all([vehiclePromise, driverPromise, eventsPromise])
       .then(([vehData, driverData, bookingEvents]) => {
+        fleetGalleryState.bookings = bookingEvents;
         updateFleetSnapshot(vehData, driverData, bookingEvents);
       })
       .catch(err => {
@@ -2726,17 +2830,358 @@ driverForm.addEventListener('submit', function (e) {
     return card;
   }
 
+  function getDriverOperationalState(driver, bookings = []) {
+    const rawStatus = String(driver.status || 'active').toLowerCase();
+    if (rawStatus === 'inactive') {
+      return {
+        state: 'Inactive',
+        badgeClass: 'bg-slate-100 text-slate-700 border-slate-200',
+        booking: null
+      };
+    }
+
+    const matchingBookings = (bookings || [])
+      .map(normalizeBookingEvent)
+      .filter(item => String(item.driver_id || '') === String(driver.id || ''));
+
+    const ongoingBooking = matchingBookings.find(item => getBookingStatus(item.start, item.end) === 'ongoing');
+    if (ongoingBooking) {
+      return {
+        state: 'On Trip',
+        badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+        booking: ongoingBooking
+      };
+    }
+
+    const upcomingBooking = matchingBookings
+      .filter(item => getBookingStatus(item.start, item.end) === 'pending')
+      .sort((a, b) => new Date(a.start || 0).getTime() - new Date(b.start || 0).getTime())[0];
+
+    if (upcomingBooking) {
+      return {
+        state: 'Reserved for Upcoming Trip',
+        badgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
+        booking: upcomingBooking
+      };
+    }
+
+    return {
+      state: 'Available',
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      booking: null
+    };
+  }
+
+  function getDriverProfileData(driver, bookings = []) {
+    const normalizedBookings = (bookings || [])
+      .map((booking) => normalizeBookingEvent(booking))
+      .filter((item) => String(item.driver_id || '') === String(driver.id || ''));
+
+    const operationalState = getDriverOperationalState(driver, bookings);
+    const currentBooking = operationalState.booking || null;
+    const upcomingBooking = normalizedBookings
+      .filter((item) => getBookingStatus(item.start, item.end) === 'pending')
+      .sort((a, b) => new Date(a.start || 0).getTime() - new Date(b.start || 0).getTime())[0] || null;
+
+    const historyRows = normalizedBookings
+      .filter((item) => getBookingStatus(item.start, item.end) === 'finished' || getTimelineBookingStatus(item) === 'cancelled')
+      .sort((a, b) => new Date(b.start || 0).getTime() - new Date(a.start || 0).getTime());
+
+    const completedTrips = historyRows.filter((item) => getBookingStatus(item.start, item.end) === 'finished').length;
+    const cancelledTrips = historyRows.filter((item) => getTimelineBookingStatus(item) === 'cancelled').length;
+    const lastTripDate = historyRows[0] ? historyRows[0].start : null;
+
+    return {
+      operationalState,
+      currentBooking,
+      upcomingBooking,
+      recentTrips: historyRows.slice(0, 5),
+      stats: {
+        totalTrips: normalizedBookings.length,
+        completedTrips,
+        cancelledTrips,
+        lastTripDate
+      }
+    };
+  }
+
+  function renderDriverProfileModal(driver) {
+    if (!vehicleDetailsContentEl || !vehicleDetailsModalEl) return;
+
+    const profile = getDriverProfileData(driver, fleetGalleryState.bookings);
+    const driverName = driver.driver_name || [driver.first_name, driver.last_name].filter(Boolean).join(' ').trim() || 'Driver';
+    const employeeId = driver.employee_id || driver.employeeId || '—';
+    const mobileNumber = driver.mobile_number || driver.mobileNumber || '—';
+    const email = driver.email || '—';
+    const licenseNumber = driver.license_number || '—';
+    const licenseClass = driver.license_class || '—';
+    const licenseExpiry = driver.license_expiry || '—';
+    const rawStatus = String(driver.status || 'active').toLowerCase();
+    const statusLabel = profile.operationalState.state;
+    const statusClass = profile.operationalState.badgeClass;
+
+    const initials = (driverName || 'D').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.charAt(0)).join('').toUpperCase() || 'D';
+    const licenseExpiryDate = licenseExpiry !== '—' ? new Date(String(licenseExpiry).replace(' ', 'T')) : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let licenseStatusLabel = 'Pending';
+    let licenseStatusClass = 'border-slate-200 bg-slate-50 text-slate-700';
+    if (licenseExpiryDate && !Number.isNaN(licenseExpiryDate.getTime())) {
+      const diffDays = Math.ceil((licenseExpiryDate - today) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) {
+        licenseStatusLabel = 'Expired';
+        licenseStatusClass = 'border-rose-200 bg-rose-50 text-rose-700';
+      } else if (diffDays <= 30) {
+        licenseStatusLabel = 'Expiring Soon';
+        licenseStatusClass = 'border-amber-200 bg-amber-50 text-amber-700';
+      } else {
+        licenseStatusLabel = 'Valid';
+        licenseStatusClass = 'border-emerald-200 bg-emerald-50 text-emerald-700';
+      }
+    }
+
+    const profileAvatar = driver.image_url || driver.image_filename ?
+      (driver.image_url ? driver.image_url : baseUrl + 'uploads/driver/' + driver.image_filename)
+      : null;
+
+    const currentAssignmentHtml = profile.currentBooking ? `
+      <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Current Status</span>
+          <span class="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">${escapeHtml(statusLabel)}</span>
+        </div>
+        <div class="space-y-1 text-sm text-slate-700">
+          <div><span class="font-semibold text-slate-900">Assigned Vehicle</span> • ${escapeHtml(profile.currentBooking.vehicle_name || 'Assigned vehicle')}</div>
+          <div><span class="font-semibold text-slate-900">Booking Start</span> • ${escapeHtml(formatAvailabilityDateTime(profile.currentBooking.start) || '—')}</div>
+          <div><span class="font-semibold text-slate-900">Booking End</span> • ${escapeHtml(formatAvailabilityDateTime(profile.currentBooking.end) || '—')}</div>
+        </div>
+      </div>
+    ` : `
+      <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+        Driver is currently available for assignment.
+      </div>
+    `;
+
+    const upcomingAssignmentHtml = profile.upcomingBooking ? `
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+        <div class="space-y-1">
+          <div class="font-semibold text-slate-900">${escapeHtml(profile.upcomingBooking.vehicle_name || 'Assigned vehicle')}</div>
+          <div>${escapeHtml(formatAvailabilityDateTime(profile.upcomingBooking.start) || '—')}</div>
+          <div class="text-slate-500">${escapeHtml(formatAvailabilityDateTime(profile.upcomingBooking.end) || '—')}</div>
+        </div>
+      </div>
+    ` : `
+      <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+        No upcoming bookings.
+      </div>
+    `;
+
+    const recentTripsHtml = profile.recentTrips.length ? `
+      <div class="overflow-hidden rounded-xl border border-slate-200">
+        <table class="min-w-full divide-y divide-slate-200 text-xs">
+          <thead class="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <tr>
+              <th class="px-3 py-2 text-left">Date</th>
+              <th class="px-3 py-2 text-left">Vehicle</th>
+              <th class="px-3 py-2 text-left">Destination</th>
+              <th class="px-3 py-2 text-left">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 bg-white">
+            ${profile.recentTrips.map((item) => {
+              const rowStatus = getTimelineBookingStatus(item) === 'cancelled' ? 'Cancelled' : 'Completed';
+              return `
+                <tr>
+                  <td class="px-3 py-2 text-slate-700">${escapeHtml(formatAvailabilityDateTime(item.start) || '—')}</td>
+                  <td class="px-3 py-2 text-slate-700">${escapeHtml(item.vehicle_name || '—')}</td>
+                  <td class="px-3 py-2 text-slate-700">${escapeHtml(item.destination || item.purpose || '—')}</td>
+                  <td class="px-3 py-2">
+                    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">${escapeHtml(rowStatus)}</span>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    ` : `
+      <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+        No recent trip history is available.
+      </div>
+    `;
+
+    const metaContent = [
+      ['Status', statusLabel],
+      ['Employee ID', employeeId],
+      ['License', licenseStatusLabel]
+    ];
+
+    if (vehicleDetailsMetaEl) {
+      vehicleDetailsMetaEl.innerHTML = metaContent.map(([label, value]) => `
+        <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+          <span class="text-slate-400">${escapeHtml(label)}</span>
+          <span class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-700">${escapeHtml(String(value))}</span>
+        </span>
+      `).join('');
+    }
+
+    const subtitleEl = document.getElementById('vehicleDetailsModalSubtitle');
+    if (subtitleEl) {
+      subtitleEl.textContent = 'Operational overview, assignment status, and recent trip performance.';
+    }
+
+    const titleEl = document.getElementById('vehicleDetailsModalTitle');
+    if (titleEl) {
+      titleEl.textContent = 'Driver Fleet Profile';
+    }
+
+    vehicleDetailsContentEl.innerHTML = `
+      <div class="space-y-3">
+        <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div class="flex items-start gap-3">
+              ${profileAvatar ? `<img src="${escapeHtml(profileAvatar)}" alt="${escapeHtml(driverName)}" class="h-12 w-12 rounded-full object-cover ring-2 ring-slate-200" />` : `<div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 ring-2 ring-white">${escapeHtml(initials)}</div>`}
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-sm font-semibold text-slate-900">${escapeHtml(driverName)}</h3>
+                  <span class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${escapeHtml(statusClass)}">
+                    <span class="h-1.5 w-1.5 rounded-full ${rawStatus === 'inactive' ? 'bg-slate-400' : rawStatus === 'active' ? 'bg-emerald-600' : 'bg-amber-600'}"></span>
+                    ${escapeHtml(statusLabel)}
+                  </span>
+                </div>
+                <div class="mt-1 text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Employee ID • ${escapeHtml(employeeId)}</div>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="driverProfileEditBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50">Edit Driver</button>
+              <button type="button" id="driverProfileActionBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50">${rawStatus === 'active' ? 'Disable Driver' : 'Enable Driver'}</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid gap-3 lg:grid-cols-2">
+          <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Driver Information</h4>
+            <div class="mt-2 space-y-2 text-sm text-slate-700">
+              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">Employee ID</span><span class="font-medium text-slate-900">${escapeHtml(employeeId)}</span></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">Mobile Number</span><span class="font-medium text-slate-900">${escapeHtml(mobileNumber)}</span></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">Email</span><span class="font-medium text-slate-900">${escapeHtml(email)}</span></div>
+            </div>
+          </section>
+          <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">License Information</h4>
+            <div class="mt-2 space-y-2 text-sm text-slate-700">
+              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">License Number</span><span class="font-medium text-slate-900">${escapeHtml(licenseNumber)}</span></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">License Class</span><span class="font-medium text-slate-900">${escapeHtml(licenseClass)}</span></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">License Expiry</span><span class="font-medium text-slate-900">${escapeHtml(licenseExpiry)}</span></div>
+              <div class="mt-2"><span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold ${escapeHtml(licenseStatusClass)}">${escapeHtml(licenseStatusLabel)}</span></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid gap-3 lg:grid-cols-2">
+          <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Current Assignment</h4>
+            <div class="mt-2">${currentAssignmentHtml}</div>
+          </section>
+          <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Upcoming Booking</h4>
+            <div class="mt-2">${upcomingAssignmentHtml}</div>
+          </section>
+        </div>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Quick Statistics</h4>
+          <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+              <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Total Trips</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">${escapeHtml(String(profile.stats.totalTrips))}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+              <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Completed Trips</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">${escapeHtml(String(profile.stats.completedTrips))}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+              <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Cancelled Trips</div>
+              <div class="mt-1 text-lg font-semibold text-slate-900">${escapeHtml(String(profile.stats.cancelledTrips))}</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+              <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Last Trip Date</div>
+              <div class="mt-1 text-sm font-semibold text-slate-900">${escapeHtml(profile.stats.lastTripDate ? formatAvailabilityDateTime(profile.stats.lastTripDate) : '—')}</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Recent Trips</h4>
+          <div class="mt-2">${recentTripsHtml}</div>
+        </section>
+      </div>
+    `;
+
+    const editBtn = document.getElementById('driverProfileEditBtn');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
+        setDriversModalFormFromRow(driver);
+        openModal(driversModalEl);
+        closeModal(vehicleDetailsModalEl);
+      });
+    }
+
+    const actionBtn = document.getElementById('driverProfileActionBtn');
+    if (actionBtn) {
+      actionBtn.addEventListener('click', () => {
+        showFleetCardActionModal({
+          itemType: 'drivers',
+          itemId: driver.id,
+          itemName: driverName,
+          action: rawStatus === 'active' ? 'disable' : 'enable',
+          itemData: driver
+        });
+      });
+    }
+  }
+
   function createDriverCard(driver) {
     const card = document.createElement('div');
+    const bookingContext = getDriverOperationalState(driver, fleetGalleryState.bookings);
     const rawStatus = (driver.status || 'active').toString().toLowerCase();
     const statusLabel = rawStatus === 'active' ? 'Active' : rawStatus === 'inactive' ? 'Inactive' : rawStatus.toUpperCase();
     const statusDot = rawStatus === 'active' ? 'bg-emerald-600' : 'bg-slate-400';
     const driverName = driver.driver_name || 'Driver';
-    const employee = driver.license_number || driver.employee_id || 'No ID';
+    const employee = driver.employee_id || driver.license_number || 'No ID';
+    const driverInitials = (driverName || 'D').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'D';
     const role = driver.role || driver.department || 'Driver';
-    const assignment = driver.vehicle_name || driver.plate_number
-      ? `${driver.vehicle_name || ''}${driver.vehicle_name && driver.plate_number ? ' • ' : ''}${driver.plate_number || ''}`.trim()
-      : 'No vehicle assigned';
+    const licenseClass = driver.license_class || 'N/A';
+    const licenseExpiry = driver.license_expiry || 'N/A';
+    const licenseStatus = (() => {
+      if (!licenseExpiry || licenseExpiry === 'N/A') {
+        return { label: 'Pending', tone: 'slate', dot: 'bg-slate-400' };
+      }
+      const expiryDate = new Date(licenseExpiry);
+      if (Number.isNaN(expiryDate.getTime())) {
+        return { label: 'Pending', tone: 'slate', dot: 'bg-slate-400' };
+      }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) {
+        return { label: 'Expired', tone: 'rose', dot: 'bg-rose-500' };
+      }
+      if (diffDays <= 30) {
+        return { label: 'Expiring Soon', tone: 'amber', dot: 'bg-amber-500' };
+      }
+      return { label: 'Valid', tone: 'emerald', dot: 'bg-emerald-500' };
+    })();
+    const licenseToneClass = licenseStatus.tone === 'rose'
+      ? 'bg-rose-50 text-rose-700 border-rose-200'
+      : licenseStatus.tone === 'amber'
+        ? 'bg-amber-50 text-amber-700 border-amber-200'
+        : licenseStatus.tone === 'emerald'
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : 'bg-slate-50 text-slate-700 border-slate-200';
+    const availabilityState = bookingContext.state;
+    const availabilityClass = bookingContext.badgeClass;
     const profileImage = driver.image_url || driver.image_filename ?
       (driver.image_url ? driver.image_url : baseUrl + 'uploads/driver/' + driver.image_filename)
       : null;
@@ -2744,26 +3189,61 @@ driverForm.addEventListener('submit', function (e) {
     card.className = 'flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md';
 
     card.innerHTML = `
-      <div class="relative flex items-center justify-center rounded-t-xl bg-slate-100 p-4">
-        ${profileImage ? `
-          <img src="${escapeHtml(profileImage)}" alt="${escapeHtml(driverName)}" class="h-14 w-14 rounded-full object-cover" />
-        ` : `
-          <div class="flex h-14 w-14 items-center justify-center rounded-full bg-slate-200 text-base font-semibold text-slate-700">${escapeHtml(driverName.charAt(0).toUpperCase())}</div>
-        `}
-      
-      </div>
-      <div class="flex flex-1 flex-col gap-3 p-4">
-        <div>
-          <h3 class="truncate text-base font-semibold text-slate-900">${escapeHtml(driverName)}</h3>
-          <p class="mt-1 truncate text-sm text-slate-500">${escapeHtml(employee)}</p>
-        </div>
-        <div class="text-xs text-slate-500">${escapeHtml(`${role}`)}</div>
-        <div class="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">${escapeHtml(assignment)}</div>
-        <div class="mt-auto text-right">
-          <div class="grid gap-2">
-            <button type="button" class="h-9 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 view-vehicle-btn" data-vehicle-id="${driver.id}">View Details</button>
-            <button type="button" class="h-9 rounded-lg border ${rawStatus === 'active' ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' : 'border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100'} px-3 text-sm font-semibold transition fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}">${rawStatus === 'active' ? 'Disable' : 'Enable'}</button>
+      <div class="rounded-t-xl bg-slate-100 p-2.5">
+        <div class="flex items-start justify-between gap-2">
+          <div class="rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] ${escapeHtml(availabilityClass)}">${escapeHtml(availabilityState)}</div>
+          <div class="flex-shrink-0">
+            ${profileImage ? `
+              <img src="${escapeHtml(profileImage)}" alt="${escapeHtml(driverName)}" class="h-11 w-11 rounded-full object-cover ring-2 ring-white" />
+            ` : `
+              <div class="flex h-11 w-11 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 ring-2 ring-white">${escapeHtml(driverName.charAt(0).toUpperCase())}</div>
+            `}
           </div>
+        </div>
+      </div>
+      <div class="flex flex-1 flex-col gap-1.5 p-2.5">
+        <div class="flex items-start gap-2">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700">
+            ${escapeHtml(driverInitials)}
+          </div>
+          <div class="min-w-0">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Full Name</p>
+            <h3 class="truncate text-sm font-semibold text-slate-900">${escapeHtml(driverName)}</h3>
+            <p class="mt-0.5 truncate text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500">Employee ID • ${escapeHtml(employee)}</p>
+          </div>
+        </div>
+        <div class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[12px] text-slate-600">
+          <div class="flex items-center justify-between gap-2">
+            <span class="truncate text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">License</span>
+            <span class="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 ${escapeHtml(licenseToneClass)}">
+              <span class="h-1.5 w-1.5 rounded-full ${escapeHtml(licenseStatus.dot)}"></span>
+              <span>${escapeHtml(licenseStatus.label)}</span>
+            </span>
+          </div>
+          <div class="mt-1 flex items-center justify-between gap-2">
+            <span class="truncate font-medium text-slate-700">${escapeHtml(licenseClass)}</span>
+            <span class="truncate text-slate-500">${escapeHtml(licenseExpiry)}</span>
+          </div>
+        </div>
+        ${bookingContext.booking ? `
+          <div class="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[12px] text-slate-600">
+            <div class="flex items-center justify-between gap-2">
+              <span class="truncate text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Assignment</span>
+              <span class="truncate font-medium text-slate-700">${escapeHtml(bookingContext.booking.vehicle_name || 'Assigned vehicle')}</span>
+            </div>
+            <div class="mt-1 flex items-center justify-between gap-2">
+              <span class="text-slate-500">Start</span>
+              <span class="truncate text-slate-700">${escapeHtml(formatAvailabilityDateTime(bookingContext.booking.start) || '—')}</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-slate-500">End</span>
+              <span class="truncate text-slate-700">${escapeHtml(formatAvailabilityDateTime(bookingContext.booking.end) || '—')}</span>
+            </div>
+          </div>
+        ` : ''}
+        <div class="mt-auto flex flex-col gap-1.5">
+          <button type="button" class="h-8 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-700 view-vehicle-btn" data-vehicle-id="${driver.id}">View Details</button>
+          <button type="button" class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}">${rawStatus === 'active' ? 'Disable' : 'Enable'}</button>
         </div>
       </div>
     `;
@@ -2778,6 +3258,14 @@ driverForm.addEventListener('submit', function (e) {
           action: driverActionBtn.getAttribute('data-action'),
           itemData: driver
         });
+      });
+    }
+
+    const detailBtn = card.querySelector('.view-vehicle-btn');
+    if (detailBtn) {
+      detailBtn.addEventListener('click', () => {
+        renderDriverProfileModal(driver);
+        openModal(vehicleDetailsModalEl);
       });
     }
 
@@ -2935,6 +3423,7 @@ driverForm.addEventListener('submit', function (e) {
   let fleetGalleryState = {
     vehicles: [],
     drivers: [],
+    bookings: [],
     activeTab: 'vehicles',
     searchTerm: '',
     currentPage: 1,
