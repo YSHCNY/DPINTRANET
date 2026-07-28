@@ -1324,11 +1324,11 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   <!-- Vehicle Details Modal (shows history and clickable bookings) -->
   <div id="vehicleDetailsModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="vehicleDetailsModalTitle">
     <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="vehicleDetailsModalBackdrop"></div>
-    <div class="relative mx-auto my-6 w-[95vw] max-w-5xl modal-panel">
+    <div class="relative mx-auto my-6 w-[95vw] max-w-3xl modal-panel">
       <div class="modal-header card-header px-4 py-4 lg:px-5 lg:py-5">
         <div>
           <h2 id="vehicleDetailsModalTitle" class="text-base font-semibold text-slate-900">Vehicle Booking Timeline</h2>
-          <p id="vehicleDetailsModalSubtitle" class="mt-1 text-sm text-slate-500">Recent booking activity and upcoming commitments for this vehicle.</p>
+          <p class="mt-1 text-sm text-slate-500">Recent booking activity and upcoming commitments for this vehicle.</p>
           <div id="vehicleDetailsMeta" class="mt-2 flex flex-wrap gap-2"></div>
           <div id="vehicleDetailsActions" class="mt-3 flex flex-wrap gap-2"></div>
         </div>
@@ -2669,9 +2669,6 @@ driverForm.addEventListener('submit', function (e) {
       vehicle_id: props.vehicle_id || props.vehicleId || props.vehicle || null,
       driver_id: props.driver_id || props.driverId || props.driver || null,
       vehicle_name: props.vehicle_name || props.vehicleName || props.vehicle || null,
-      purpose: props.purpose || props.trip_name || props.title || null,
-      destination: props.destination || props.destinations || props.trip_destination || null,
-      status: props.status || props.booking_status || null,
       start: event.start || event.startStr || props.departure_expected || props.start_at || null,
       end: event.end || event.endStr || props.return_expected || props.end_at || null,
     };
@@ -2872,286 +2869,19 @@ driverForm.addEventListener('submit', function (e) {
     };
   }
 
-  function getDriverProfileData(driver, bookings = []) {
-    const normalizedBookings = (bookings || [])
-      .map((booking) => normalizeBookingEvent(booking))
-      .filter((item) => String(item.driver_id || '') === String(driver.id || ''));
-
-    const operationalState = getDriverOperationalState(driver, bookings);
-    const currentBooking = operationalState.booking || null;
-    const upcomingBooking = normalizedBookings
-      .filter((item) => getBookingStatus(item.start, item.end) === 'pending')
-      .sort((a, b) => new Date(a.start || 0).getTime() - new Date(b.start || 0).getTime())[0] || null;
-
-    const historyRows = normalizedBookings
-      .filter((item) => getBookingStatus(item.start, item.end) === 'finished' || getTimelineBookingStatus(item) === 'cancelled')
-      .sort((a, b) => new Date(b.start || 0).getTime() - new Date(a.start || 0).getTime());
-
-    const completedTrips = historyRows.filter((item) => getBookingStatus(item.start, item.end) === 'finished').length;
-    const cancelledTrips = historyRows.filter((item) => getTimelineBookingStatus(item) === 'cancelled').length;
-    const lastTripDate = historyRows[0] ? historyRows[0].start : null;
-
-    return {
-      operationalState,
-      currentBooking,
-      upcomingBooking,
-      recentTrips: historyRows.slice(0, 5),
-      stats: {
-        totalTrips: normalizedBookings.length,
-        completedTrips,
-        cancelledTrips,
-        lastTripDate
-      }
-    };
-  }
-
-  function renderDriverProfileModal(driver) {
-    if (!vehicleDetailsContentEl || !vehicleDetailsModalEl) return;
-
-    const profile = getDriverProfileData(driver, fleetGalleryState.bookings);
-    const driverName = driver.driver_name || [driver.first_name, driver.last_name].filter(Boolean).join(' ').trim() || 'Driver';
-    const employeeId = driver.employee_id || driver.employeeId || '—';
-    const mobileNumber = driver.mobile_number || driver.mobileNumber || '—';
-    const email = driver.email || '—';
-    const licenseNumber = driver.license_number || '—';
-    const licenseClass = driver.license_class || '—';
-    const licenseExpiry = driver.license_expiry || '—';
-    const rawStatus = String(driver.status || 'active').toLowerCase();
-    const statusLabel = profile.operationalState.state;
-    const statusClass = profile.operationalState.badgeClass;
-
-    const initials = (driverName || 'D').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.charAt(0)).join('').toUpperCase() || 'D';
-    const licenseExpiryDate = licenseExpiry !== '—' ? new Date(String(licenseExpiry).replace(' ', 'T')) : null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let licenseStatusLabel = 'Pending';
-    let licenseStatusClass = 'border-slate-200 bg-slate-50 text-slate-700';
-    if (licenseExpiryDate && !Number.isNaN(licenseExpiryDate.getTime())) {
-      const diffDays = Math.ceil((licenseExpiryDate - today) / (1000 * 60 * 60 * 24));
-      if (diffDays < 0) {
-        licenseStatusLabel = 'Expired';
-        licenseStatusClass = 'border-rose-200 bg-rose-50 text-rose-700';
-      } else if (diffDays <= 30) {
-        licenseStatusLabel = 'Expiring Soon';
-        licenseStatusClass = 'border-amber-200 bg-amber-50 text-amber-700';
-      } else {
-        licenseStatusLabel = 'Valid';
-        licenseStatusClass = 'border-emerald-200 bg-emerald-50 text-emerald-700';
-      }
-    }
-
-    const profileAvatar = driver.image_url || driver.image_filename ?
-      (driver.image_url ? driver.image_url : baseUrl + 'uploads/driver/' + driver.image_filename)
-      : null;
-
-    const currentAssignmentHtml = profile.currentBooking ? `
-      <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Current Status</span>
-          <span class="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">${escapeHtml(statusLabel)}</span>
-        </div>
-        <div class="space-y-1 text-sm text-slate-700">
-          <div><span class="font-semibold text-slate-900">Assigned Vehicle</span> • ${escapeHtml(profile.currentBooking.vehicle_name || 'Assigned vehicle')}</div>
-          <div><span class="font-semibold text-slate-900">Booking Start</span> • ${escapeHtml(formatAvailabilityDateTime(profile.currentBooking.start) || '—')}</div>
-          <div><span class="font-semibold text-slate-900">Booking End</span> • ${escapeHtml(formatAvailabilityDateTime(profile.currentBooking.end) || '—')}</div>
-        </div>
-      </div>
-    ` : `
-      <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
-        Driver is currently available for assignment.
-      </div>
-    `;
-
-    const upcomingAssignmentHtml = profile.upcomingBooking ? `
-      <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-        <div class="space-y-1">
-          <div class="font-semibold text-slate-900">${escapeHtml(profile.upcomingBooking.vehicle_name || 'Assigned vehicle')}</div>
-          <div>${escapeHtml(formatAvailabilityDateTime(profile.upcomingBooking.start) || '—')}</div>
-          <div class="text-slate-500">${escapeHtml(formatAvailabilityDateTime(profile.upcomingBooking.end) || '—')}</div>
-        </div>
-      </div>
-    ` : `
-      <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
-        No upcoming bookings.
-      </div>
-    `;
-
-    const recentTripsHtml = profile.recentTrips.length ? `
-      <div class="overflow-hidden rounded-xl border border-slate-200">
-        <table class="min-w-full divide-y divide-slate-200 text-xs">
-          <thead class="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-            <tr>
-              <th class="px-3 py-2 text-left">Date</th>
-              <th class="px-3 py-2 text-left">Vehicle</th>
-              <th class="px-3 py-2 text-left">Destination</th>
-              <th class="px-3 py-2 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 bg-white">
-            ${profile.recentTrips.map((item) => {
-              const rowStatus = getTimelineBookingStatus(item) === 'cancelled' ? 'Cancelled' : 'Completed';
-              return `
-                <tr>
-                  <td class="px-3 py-2 text-slate-700">${escapeHtml(formatAvailabilityDateTime(item.start) || '—')}</td>
-                  <td class="px-3 py-2 text-slate-700">${escapeHtml(item.vehicle_name || '—')}</td>
-                  <td class="px-3 py-2 text-slate-700">${escapeHtml(item.destination || item.purpose || '—')}</td>
-                  <td class="px-3 py-2">
-                    <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">${escapeHtml(rowStatus)}</span>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    ` : `
-      <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
-        No recent trip history is available.
-      </div>
-    `;
-
-    const metaContent = [
-      ['Status', statusLabel],
-      ['Employee ID', employeeId],
-      ['License', licenseStatusLabel]
-    ];
-
-    if (vehicleDetailsMetaEl) {
-      vehicleDetailsMetaEl.innerHTML = metaContent.map(([label, value]) => `
-        <span class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-          <span class="text-slate-400">${escapeHtml(label)}</span>
-          <span class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-700">${escapeHtml(String(value))}</span>
-        </span>
-      `).join('');
-    }
-
-    const subtitleEl = document.getElementById('vehicleDetailsModalSubtitle');
-    if (subtitleEl) {
-      subtitleEl.textContent = 'Operational overview, assignment status, and recent trip performance.';
-    }
-
-    const titleEl = document.getElementById('vehicleDetailsModalTitle');
-    if (titleEl) {
-      titleEl.textContent = 'Driver Fleet Profile';
-    }
-
-    vehicleDetailsContentEl.innerHTML = `
-      <div class="space-y-3">
-        <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div class="flex items-start gap-3">
-              ${profileAvatar ? `<img src="${escapeHtml(profileAvatar)}" alt="${escapeHtml(driverName)}" class="h-12 w-12 rounded-full object-cover ring-2 ring-slate-200" />` : `<div class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 ring-2 ring-white">${escapeHtml(initials)}</div>`}
-              <div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <h3 class="text-sm font-semibold text-slate-900">${escapeHtml(driverName)}</h3>
-                  <span class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${escapeHtml(statusClass)}">
-                    <span class="h-1.5 w-1.5 rounded-full ${rawStatus === 'inactive' ? 'bg-slate-400' : rawStatus === 'active' ? 'bg-emerald-600' : 'bg-amber-600'}"></span>
-                    ${escapeHtml(statusLabel)}
-                  </span>
-                </div>
-                <div class="mt-1 text-[11px] font-medium uppercase tracking-[0.2em] text-slate-500">Employee ID • ${escapeHtml(employeeId)}</div>
-              </div>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button type="button" id="driverProfileEditBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50">Edit Driver</button>
-              <button type="button" id="driverProfileActionBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50">${rawStatus === 'active' ? 'Disable Driver' : 'Enable Driver'}</button>
-            </div>
-          </div>
-        </section>
-
-        <div class="grid gap-3 lg:grid-cols-2">
-          <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-            <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Driver Information</h4>
-            <div class="mt-2 space-y-2 text-sm text-slate-700">
-              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">Employee ID</span><span class="font-medium text-slate-900">${escapeHtml(employeeId)}</span></div>
-              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">Mobile Number</span><span class="font-medium text-slate-900">${escapeHtml(mobileNumber)}</span></div>
-              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">Email</span><span class="font-medium text-slate-900">${escapeHtml(email)}</span></div>
-            </div>
-          </section>
-          <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-            <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">License Information</h4>
-            <div class="mt-2 space-y-2 text-sm text-slate-700">
-              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">License Number</span><span class="font-medium text-slate-900">${escapeHtml(licenseNumber)}</span></div>
-              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">License Class</span><span class="font-medium text-slate-900">${escapeHtml(licenseClass)}</span></div>
-              <div class="flex items-center justify-between gap-2"><span class="text-slate-500">License Expiry</span><span class="font-medium text-slate-900">${escapeHtml(licenseExpiry)}</span></div>
-              <div class="mt-2"><span class="inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold ${escapeHtml(licenseStatusClass)}">${escapeHtml(licenseStatusLabel)}</span></div>
-            </div>
-          </section>
-        </div>
-
-        <div class="grid gap-3 lg:grid-cols-2">
-          <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-            <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Current Assignment</h4>
-            <div class="mt-2">${currentAssignmentHtml}</div>
-          </section>
-          <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-            <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Upcoming Booking</h4>
-            <div class="mt-2">${upcomingAssignmentHtml}</div>
-          </section>
-        </div>
-
-        <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Quick Statistics</h4>
-          <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-              <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Total Trips</div>
-              <div class="mt-1 text-lg font-semibold text-slate-900">${escapeHtml(String(profile.stats.totalTrips))}</div>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-              <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Completed Trips</div>
-              <div class="mt-1 text-lg font-semibold text-slate-900">${escapeHtml(String(profile.stats.completedTrips))}</div>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-              <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Cancelled Trips</div>
-              <div class="mt-1 text-lg font-semibold text-slate-900">${escapeHtml(String(profile.stats.cancelledTrips))}</div>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-              <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Last Trip Date</div>
-              <div class="mt-1 text-sm font-semibold text-slate-900">${escapeHtml(profile.stats.lastTripDate ? formatAvailabilityDateTime(profile.stats.lastTripDate) : '—')}</div>
-            </div>
-          </div>
-        </section>
-
-        <section class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <h4 class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Recent Trips</h4>
-          <div class="mt-2">${recentTripsHtml}</div>
-        </section>
-      </div>
-    `;
-
-    const editBtn = document.getElementById('driverProfileEditBtn');
-    if (editBtn) {
-      editBtn.addEventListener('click', () => {
-        setDriversModalFormFromRow(driver);
-        openModal(driversModalEl);
-        closeModal(vehicleDetailsModalEl);
-      });
-    }
-
-    const actionBtn = document.getElementById('driverProfileActionBtn');
-    if (actionBtn) {
-      actionBtn.addEventListener('click', () => {
-        showFleetCardActionModal({
-          itemType: 'drivers',
-          itemId: driver.id,
-          itemName: driverName,
-          action: rawStatus === 'active' ? 'disable' : 'enable',
-          itemData: driver
-        });
-      });
-    }
-  }
-
   function createDriverCard(driver) {
     const card = document.createElement('div');
     const bookingContext = getDriverOperationalState(driver, fleetGalleryState.bookings);
     const rawStatus = (driver.status || 'active').toString().toLowerCase();
+    const statusLabel = rawStatus === 'active' ? 'Active' : rawStatus === 'inactive' ? 'Inactive' : rawStatus.toUpperCase();
+    const statusDot = rawStatus === 'active' ? 'bg-emerald-600' : 'bg-slate-400';
     const driverName = driver.driver_name || 'Driver';
-    const employee = driver.employee_id || null;
+    const employee = driver.employee_id || driver.license_number || 'No ID';
+    const contactNumber = driver.mobile_number || driver.phone || 'No contact';
     const driverInitials = (driverName || 'D').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'D';
+    const role = driver.role || driver.department || 'Driver';
     const licenseClass = driver.license_class || 'N/A';
     const licenseExpiry = driver.license_expiry || 'N/A';
-    const licenseSummary = `${licenseClass} · ${licenseExpiry}`;
     const licenseStatus = (() => {
       if (!licenseExpiry || licenseExpiry === 'N/A') {
         return { label: 'Pending', tone: 'slate', dot: 'bg-slate-400' };
@@ -3180,37 +2910,49 @@ driverForm.addEventListener('submit', function (e) {
           : 'bg-slate-50 text-slate-700 border-slate-200';
     const availabilityState = bookingContext.state === 'Reserved for Upcoming Trip' ? 'Reserved' : bookingContext.state;
     const availabilityClass = bookingContext.badgeClass;
+    const profileImage = driver.image_url || driver.image_filename ?
+      (driver.image_url ? driver.image_url : baseUrl + 'uploads/driver/' + driver.image_filename)
+      : null;
 
-    card.className = 'flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white transition-colors duration-200 hover:border-slate-300';
+    const licenseWarning = licenseStatus.label === 'Expired' || licenseStatus.label === 'Expiring Soon';
+    const warningClass = licenseStatus.label === 'Expired'
+      ? 'bg-rose-50 text-rose-700'
+      : 'bg-amber-50 text-amber-700';
+
+    card.className = 'flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md';
 
     card.innerHTML = `
-      <div class="flex items-start justify-between gap-3 px-4 py-3">
-        <div class="flex min-w-0 items-center gap-3">
-          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-700">${escapeHtml(driverInitials)}</div>
-          <div class="min-w-0">
-            <h3 class="truncate text-sm font-semibold text-slate-900">${escapeHtml(driverName)}</h3>
-            <p class="truncate text-xs text-slate-500">${escapeHtml(employee ? `Employee ID ${employee}` : 'Employee ID Not Assigned')}</p>
-          </div>
-        </div>
-        <div class="flex flex-col items-end gap-2">
-          <span class="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700 ${escapeHtml(availabilityClass)}">${escapeHtml(availabilityState)}</span>
-          <button type="button" class="h-9 w-9 rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}" aria-label="More actions">⋮</button>
+      <div class="rounded-t-xl bg-slate-100 px-3 py-2.5">
+        <div class="flex h-11 items-center justify-between gap-3">
+          <div class="inline-flex items-center gap-2 rounded-full ${escapeHtml(availabilityClass)} p-2 text-xs font-semibold text-slate-800">${escapeHtml(availabilityState)}</div>
+          ${licenseWarning ? `<span class="inline-flex rounded-full p-2 text-xs font-semibold ${warningClass}">license ${escapeHtml(licenseStatus.label)}</span>` : ''}
+          <button type="button" class="h-9 w-9 rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 fleet-card-action-btn" data-action="${rawStatus === 'active' ? 'disable' : 'enable'}" aria-label="More actions">⋮</button>
         </div>
       </div>
-      <div class="space-y-3 px-4 pb-4">
-        <div class="flex items-center justify-between gap-2 text-sm text-slate-600">
-          <span class="truncate font-semibold text-slate-900">${escapeHtml(licenseSummary)}</span>
-          <span class="inline-flex shrink-0 items-center gap-2 rounded-full ${escapeHtml(licenseToneClass)} px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">
-            <span class="h-2.5 w-2.5 rounded-full ${escapeHtml(licenseStatus.dot)}"></span>
-            ${escapeHtml(licenseStatus.label)}
-          </span>
+      <div class="flex flex-1 flex-col gap-4 p-4">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 min-w-[3rem] items-center justify-center rounded-full bg-slate-200 text-base font-semibold text-slate-700">
+            ${escapeHtml(driverInitials)}
+          </div>
+          <div class="min-w-0">
+            <h3 class="truncate text-base font-semibold text-slate-900">${escapeHtml(driverName)}</h3>
+            <p class="mt-1 text-sm text-slate-500" style="font-size:0.83rem;"><span aria-hidden="true" class="text-slate-400">👤</span> ID ${escapeHtml(employee)}</p>
+       
+          </div>
         </div>
-        <div class="flex items-center gap-2 pt-2">
-          <button type="button" class="flex-1 h-9 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 view-vehicle-btn" data-vehicle-id="${driver.id}">View Details</button>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+          <div class="flex flex-wrap items-center gap-2">
+           
+                 <p class="mt-1 text-sm text-slate-500" style="font-size:0.83rem;"><span aria-hidden="true" class="text-slate-400">📞</span> ${escapeHtml(contactNumber)}</p>
+            
+          </div>
+        </div>
+        <div class="mt-auto">
+          <button type="button" class="h-10 w-full rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 view-vehicle-btn" data-vehicle-id="${driver.id}">View Details</button>
         </div>
       </div>
     `;
-
+ // <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">${escapeHtml(licenseClass)}</span>
     const driverActionBtn = card.querySelector('.fleet-card-action-btn');
     if (driverActionBtn) {
       driverActionBtn.addEventListener('click', () => {
@@ -3221,14 +2963,6 @@ driverForm.addEventListener('submit', function (e) {
           action: driverActionBtn.getAttribute('data-action'),
           itemData: driver
         });
-      });
-    }
-
-    const detailBtn = card.querySelector('.view-vehicle-btn');
-    if (detailBtn) {
-      detailBtn.addEventListener('click', () => {
-        renderDriverProfileModal(driver);
-        openModal(vehicleDetailsModalEl);
       });
     }
 
