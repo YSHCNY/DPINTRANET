@@ -1684,7 +1684,15 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     }
 
     const endpoint = isDisable ? deleteUrl : updateUrl;
-    fetch(endpoint, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
+    fetch(endpoint, {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: fd,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    })
       .then(parseJsonResponse)
       .then(resp => {
         if (!resp || !resp.success) {
@@ -2427,7 +2435,15 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         if (isActive) {
           if (!confirm(`Disable driver '${name}'? They will not be available for new bookings.`)) return;
           const fd = new FormData(); fd.append('id', id);
-          fetch(deleteDriverUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
+          fetch(deleteDriverUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: fd,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            }
+          })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(resp => {
               if (!resp || !resp.success) { alert(resp && resp.message ? resp.message : 'Failed to disable driver'); return; }
@@ -2450,7 +2466,15 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
           fd.append('license_class', row.license_class || '');
           fd.append('license_expiry', row.license_expiry || '');
           fd.append('status', 'active');
-          fetch(updateDriverUrl, { method: 'POST', body: fd, headers: {'X-Requested-With': 'XMLHttpRequest'} })
+          fetch(updateDriverUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: fd,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            }
+          })
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(resp => {
               if (!resp || !resp.success) { alert(resp && resp.message ? resp.message : 'Failed to enable driver'); return; }
@@ -2591,7 +2615,11 @@ driverForm.addEventListener('submit', function (e) {
   fetch(url, {
     method: 'POST',
     body: fd,
-    headers: {'X-Requested-With': 'XMLHttpRequest'}
+    credentials: 'same-origin',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json'
+    }
   })
   .then(r => {
     if (!r.ok) {
@@ -2876,7 +2904,7 @@ driverForm.addEventListener('submit', function (e) {
     const rawStatus = (driver.status || 'active').toString().toLowerCase();
     const statusLabel = rawStatus === 'active' ? 'Active' : rawStatus === 'inactive' ? 'Inactive' : rawStatus.toUpperCase();
     const statusDot = rawStatus === 'active' ? 'bg-emerald-600' : 'bg-slate-400';
-    const driverName = driver.driver_name || 'Driver';
+    const driverName = [driver.first_name, driver.last_name].filter(Boolean).join(' ').trim() || driver.driver_name || 'Driver';
     const employee = driver.employee_id || driver.license_number || 'No ID';
     const contactNumber = driver.mobile_number || driver.phone || 'No contact';
     const driverInitials = (driverName || 'D').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part.charAt(0)).join('').toUpperCase() || 'D';
@@ -3010,7 +3038,8 @@ driverForm.addEventListener('submit', function (e) {
 
     const filtered = items.filter(item => {
       if (activeTab === 'drivers') {
-        return [item.driver_name, item.status, item.license_number, item.contact]
+        const itemName = [item.first_name, item.last_name].filter(Boolean).join(' ').trim() || item.driver_name || '';
+        return [itemName, item.status, item.license_number, item.contact]
           .filter(Boolean)
           .some(value => normalizeFleetSearchTerm(value).includes(term));
       }

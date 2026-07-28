@@ -85,25 +85,13 @@ class CarDrivers extends Model {
         $email = trim((string)($data['email'] ?? ''));
         $name = trim((string)($data['driver_name'] ?? ''));
 
-        if ($employeeId === '') {
-            throw new Exception('employee_id is required');
-        }
         if ($firstName === '') {
             throw new Exception('first_name is required');
         }
         if ($lastName === '') {
             throw new Exception('last_name is required');
         }
-        if ($licenseNumber === '') {
-            throw new Exception('license_number is required');
-        }
-        if ($licenseClass === '') {
-            throw new Exception('license_class is required');
-        }
-        if ($licenseExpiry === '') {
-            throw new Exception('license_expiry is required');
-        }
-        if (strtotime($licenseExpiry) === false) {
+        if ($licenseExpiry !== '' && strtotime($licenseExpiry) === false) {
             throw new Exception('license_expiry must be a valid date');
         }
         $this->validateUniqueValue('employee_id', $employeeId);
@@ -146,14 +134,14 @@ class CarDrivers extends Model {
         );
         $stmt->execute([
             ':driver_name' => $name !== '' ? $name : null,
-            ':employee_id' => $employeeId,
+            ':employee_id' => $employeeId !== '' ? $employeeId : null,
             ':first_name' => $firstName,
             ':last_name' => $lastName,
             ':mobile_number' => $mobileNumber !== '' ? $mobileNumber : null,
             ':email' => $email !== '' ? $email : null,
-            ':license_number' => $licenseNumber,
-            ':license_class' => $licenseClass,
-            ':license_expiry' => date('Y-m-d', strtotime($licenseExpiry)),
+            ':license_number' => $licenseNumber !== '' ? $licenseNumber : null,
+            ':license_class' => $licenseClass !== '' ? $licenseClass : null,
+            ':license_expiry' => $licenseExpiry !== '' ? date('Y-m-d', strtotime($licenseExpiry)) : null,
             ':status' => $status,
         ]);
 
@@ -176,25 +164,13 @@ class CarDrivers extends Model {
         $email = trim((string)($data['email'] ?? ''));
         $name = trim((string)($data['driver_name'] ?? ''));
 
-        if ($employeeId === '') {
-            throw new Exception('employee_id is required');
-        }
         if ($firstName === '') {
             throw new Exception('first_name is required');
         }
         if ($lastName === '') {
             throw new Exception('last_name is required');
         }
-        if ($licenseNumber === '') {
-            throw new Exception('license_number is required');
-        }
-        if ($licenseClass === '') {
-            throw new Exception('license_class is required');
-        }
-        if ($licenseExpiry === '') {
-            throw new Exception('license_expiry is required');
-        }
-        if (strtotime($licenseExpiry) === false) {
+        if ($licenseExpiry !== '' && strtotime($licenseExpiry) === false) {
             throw new Exception('license_expiry must be a valid date');
         }
         $this->validateUniqueValue('employee_id', $employeeId, $id);
@@ -223,14 +199,14 @@ class CarDrivers extends Model {
         );
         $stmt->execute([
             ':driver_name' => $name !== '' ? $name : null,
-            ':employee_id' => $employeeId,
+            ':employee_id' => $employeeId !== '' ? $employeeId : null,
             ':first_name' => $firstName,
             ':last_name' => $lastName,
             ':mobile_number' => $mobileNumber !== '' ? $mobileNumber : null,
             ':email' => $email !== '' ? $email : null,
-            ':license_number' => $licenseNumber,
-            ':license_class' => $licenseClass,
-            ':license_expiry' => date('Y-m-d', strtotime($licenseExpiry)),
+            ':license_number' => $licenseNumber !== '' ? $licenseNumber : null,
+            ':license_class' => $licenseClass !== '' ? $licenseClass : null,
+            ':license_expiry' => $licenseExpiry !== '' ? date('Y-m-d', strtotime($licenseExpiry)) : null,
             ':status' => $status,
             ':id' => $id,
         ]);
