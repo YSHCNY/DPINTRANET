@@ -689,8 +689,8 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 items-end lg:gap-4">
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-2">Employee ID <span class="text-red-500">*</span></label>
-              <input type="text" name="employee_id" id="employeeIdInput" placeholder="e.g., EMP-001" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+              <label class="text-xs font-semibold text-slate-700 block mb-2">Employee ID</label>
+              <input type="text" name="employee_id" id="employeeIdInput" placeholder="e.g., EMP-001" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" />
             </div>
 
             <div>
@@ -714,23 +714,23 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
             </div>
 
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-2">License Number <span class="text-red-500">*</span></label>
-              <input type="text" name="license_number" id="licenseNumberInput" placeholder="e.g., ABC12345" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+              <label class="text-xs font-semibold text-slate-700 block mb-2">License Number</label>
+              <input type="text" name="license_number" id="licenseNumberInput" placeholder="e.g., ABC12345" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" />
             </div>
 
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-2">License Class <span class="text-red-500">*</span></label>
-              <input type="text" name="license_class" id="licenseClassInput" placeholder="e.g., B" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+              <label class="text-xs font-semibold text-slate-700 block mb-2">License Class</label>
+              <input type="text" name="license_class" id="licenseClassInput" placeholder="e.g., B" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" />
             </div>
 
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-2">License Expiry <span class="text-red-500">*</span></label>
-              <input type="date" name="license_expiry" id="licenseExpiryInput" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required />
+              <label class="text-xs font-semibold text-slate-700 block mb-2">License Expiry</label>
+              <input type="date" name="license_expiry" id="licenseExpiryInput" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" />
             </div>
 
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-2">Status <span class="text-red-500">*</span></label>
-              <select name="status" id="driverStatusInput" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition" required>
+              <label class="text-xs font-semibold text-slate-700 block mb-2">Status</label>
+              <select name="status" id="driverStatusInput" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none transition">
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
@@ -2572,7 +2572,8 @@ driverForm.addEventListener('submit', function (e) {
 
   const id = driverIdEl.value ? parseInt(driverIdEl.value, 10) : null;
   const fd = new FormData();
-  fd.append('driver_name', driverNameInputEl.value);
+  const fullName = [firstNameInputEl.value, lastNameInputEl.value].filter(Boolean).join(' ').trim();
+  fd.append('driver_name', driverNameInputEl.value.trim() || fullName);
   fd.append('employee_id', employeeIdInputEl.value);
   fd.append('first_name', firstNameInputEl.value);
   fd.append('last_name', lastNameInputEl.value);
