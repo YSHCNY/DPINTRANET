@@ -2953,6 +2953,13 @@ driverForm.addEventListener('submit', function (e) {
       </div>
     `;
  // <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">${escapeHtml(licenseClass)}</span>
+    const viewDetailsBtn = card.querySelector('.view-vehicle-btn');
+    if (viewDetailsBtn) {
+      viewDetailsBtn.addEventListener('click', () => {
+        setDriversModalFormFromRow(driver);
+        openModal(driversModalEl);
+      });
+    }
     const driverActionBtn = card.querySelector('.fleet-card-action-btn');
     if (driverActionBtn) {
       driverActionBtn.addEventListener('click', () => {
