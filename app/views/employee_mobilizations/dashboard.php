@@ -122,6 +122,7 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
         'employee_id' => $event['employee_id'] ?? null,
         'employee_name' => $fullName,
         'movement_type' => $movementType,
+        'movement_date' => $dayKey,
         'remarks' => $event['remarks'] ?? '',
       ],
     ];
@@ -991,7 +992,17 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
         events: mobilizationCalendarEvents,
         eventDisplay: 'block',
         eventContent: function (arg) {
-          return { html: '<div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-current"></span><span class="fc-event-title">' + escapeText(arg.event.title) + '</span></div>' };
+          const movementType = String(arg.event.extendedProps.movement_type || '').toLowerCase();
+          const movementDate = arg.event.extendedProps.movement_date || arg.event.startStr || '';
+          const typeLabel = movementType === 'demobilization' ? 'DEM' : 'MOB';
+          const pillClass = movementType === 'demobilization'
+            ? 'border-rose-200 bg-rose-50 text-rose-700'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-700';
+          return {
+            html: '<div class="rounded-full border px-2 py-1 text-[11px] font-semibold ' + pillClass + '" title="' + escapeText(typeLabel + ' ' + arg.event.title + ' • ' + movementDate) + '">' +
+                  '<span class="inline-flex items-center gap-1"><span>' + escapeText(typeLabel) + '</span><span>' + escapeText(arg.event.title) + '</span></span>' +
+                  '</div>'
+          };
         },
         eventClick: function (info) {
           const event = info.event;
