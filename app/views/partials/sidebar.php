@@ -108,6 +108,18 @@ function sidebarActiveClass(bool $active): string
             </span>
           </a>
         </li>
+
+        <li>
+          <a href="index.php?controller=EmployeeMobilization&action=dashboard"
+             class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'EmployeeMobilization' && $currentAction == 'dashboard') ?>">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'EmployeeMobilization' && $currentAction == 'dashboard') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
+              <?= $mobiIcon ?>
+            </span>
+            <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
+              Mobilization
+            </span>
+          </a>
+        </li>
       </ul>
     </div>
 
@@ -147,10 +159,10 @@ function sidebarActiveClass(bool $active): string
             <a href="index.php?controller=StandardUsers&action=index"
               class="flex h-10 w-full items-center justify-start gap-3 rounded-2xl px-3 transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white <?= sidebarActiveClass($currentController == 'StandardUsers' && $currentAction == 'index') ?>">
               <span class="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 sidebar-icon-bg <?= ($currentController == 'StandardUsers' && $currentAction == 'index') ? 'bg-green-900 text-white' : 'bg-slate-100 text-slate-600' ?>">
-                <?= $usersIcon ?>
+                <?= $receiversIcon ?>
               </span>
               <span class="sidebar-item-label flex min-w-0 overflow-hidden whitespace-nowrap text-ellipsis text-sm font-medium opacity-0 max-w-0 -translate-x-1 transition-all duration-300 ease-in-out group-hover:max-w-[16rem] group-hover:opacity-100 group-hover:translate-x-0">
-                Std Users
+                Receivers
               </span>
             </a>
           </li>

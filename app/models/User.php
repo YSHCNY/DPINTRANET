@@ -129,6 +129,21 @@ class User extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function findUsersByIds(array $ids): array {
+        $ids = array_filter(array_map('intval', $ids), function ($value) {
+            return $value > 0;
+        });
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->db->prepare("SELECT id, firstName, lastName FROM UserTbl WHERE id IN ({$placeholders})");
+        $stmt->execute($ids);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function findUserById($id) {
         $stmt = $this->db->prepare("SELECT * FROM UserTbl WHERE id = :id");
         $stmt->execute(['id' => $id]);

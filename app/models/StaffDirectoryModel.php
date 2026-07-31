@@ -22,8 +22,24 @@ class StaffDirectoryModel {
         return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'staff_id');
     }
 
-    public function getStaffById(string $staffId): ?array {
-        $sql = "SELECT * FROM staff_directory WHERE staff_id = :staff_id LIMIT 1";
+    public function getStaffByIds(array $ids): array {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static function ($value) {
+            return $value > 0;
+        })));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "SELECT id, staff_id, firstName, lastName, position, department FROM staff_directory WHERE id IN ({$placeholders})";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($ids);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getStaffById($staffId): ?array {
+        $sql = "SELECT * FROM staff_directory WHERE id = :staff_id LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([':staff_id' => $staffId]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
