@@ -212,6 +212,297 @@ class StandardPortalController extends Controller {
         ]);
     }
 
+    public function profileSettings() {
+        $this->requirePortalLogin();
+
+        $userId = (int)($_SESSION['standard_user_id'] ?? 0);
+        $user = $this->userModel->getProfileById($userId);
+
+        if (!$user) {
+            $_SESSION['portal_message'] = 'Profile not found.';
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->redirect('index.php?controller=StandardPortal&action=dashboard');
+        }
+
+        $portalMessage = $_SESSION['portal_message'] ?? null;
+        $portalMessageType = $_SESSION['portal_msg_type'] ?? null;
+        unset($_SESSION['portal_message'], $_SESSION['portal_msg_type']);
+
+        $this->view('standard_portal/profile_settings', [
+            'user' => $user,
+            'errors' => [],
+            'old' => [],
+            'portalMessage' => $portalMessage,
+            'portalMessageType' => $portalMessageType,
+        ]);
+    }
+
+    public function updateProfileSettings() {
+        $this->requirePortalLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('index.php?controller=StandardPortal&action=profileSettings');
+        }
+
+        $userId = (int)($_SESSION['standard_user_id'] ?? 0);
+        $existing = $this->userModel->getProfileById($userId);
+
+        if (!$existing) {
+            $_SESSION['portal_message'] = 'Profile not found.';
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->redirect('index.php?controller=StandardPortal&action=dashboard');
+        }
+
+        $firstName = trim((string)($_POST['firstName'] ?? ''));
+        $middleName = trim((string)($_POST['middleName'] ?? ''));
+        $lastName = trim((string)($_POST['lastName'] ?? ''));
+        $email = trim((string)($_POST['email'] ?? ''));
+        $phone = trim((string)($_POST['phone'] ?? ''));
+        $currentPassword = (string)($_POST['current_password'] ?? '');
+        $newPassword = (string)($_POST['new_password'] ?? '');
+        $confirmPassword = (string)($_POST['confirm_password'] ?? '');
+        $currentPin = trim((string)($_POST['current_pin'] ?? ''));
+        $newPin = trim((string)($_POST['new_pin'] ?? ''));
+        $confirmPin = trim((string)($_POST['confirm_pin'] ?? ''));
+        $removeAvatar = isset($_POST['remove_avatar']) && $_POST['remove_avatar'] === '1';
+
+        $errors = [];
+        $old = [
+            'firstName' => $firstName,
+            'middleName' => $middleName,
+            'lastName' => $lastName,
+            'email' => $email,
+            'phone' => $phone,
+        ];
+
+        if ($firstName === '') {
+            $errors['firstName'] = 'First name is required.';
+        }
+
+        if ($lastName === '') {
+            $errors['lastName'] = 'Last name is required.';
+        }
+
+        if ($email === '') {
+            $errors['email'] = 'Email is required.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Enter a valid email address.';
+        } elseif ($this->userModel->findByEmail($email, $userId)) {
+            $errors['email'] = 'This email is already in use.';
+        }
+
+        if ($phone !== '' && !preg_match('/^[0-9\+\(\)\-\s]{7,25}$/', $phone)) {
+            $errors['phone'] = 'Enter a valid phone number.';
+        }
+
+        $changingPassword = $currentPassword !== '' || $newPassword !== '' || $confirmPassword !== '';
+        $changingPin = $currentPin !== '' || $newPin !== '' || $confirmPin !== '';
+
+        if ($changingPassword) {
+            if ($currentPassword === '') {
+                $errors['current_password'] = 'Current password is required.';
+            } elseif (!password_verify($currentPassword, $existing['password'] ?? '')) {
+                $errors['current_password'] = 'Current password is incorrect.';
+            }
+
+            if ($newPassword === '') {
+                $errors['new_password'] = 'New password is required.';
+            } elseif (strlen($newPassword) < 8) {
+                $errors['new_password'] = 'New password must have at least 8 characters.';
+            }
+
+            if ($confirmPassword === '') {
+                $errors['confirm_password'] = 'Confirm password is required.';
+            } elseif ($newPassword !== $confirmPassword) {
+                $errors['confirm_password'] = 'Passwords do not match.';
+            }
+        }
+
+        if ($changingPin) {
+            if ($currentPin === '') {
+                $errors['current_pin'] = 'Current PIN is required.';
+            } elseif (($existing['pin_code'] ?? '') === '' || $existing['pin_code'] !== $currentPin) {
+                $errors['current_pin'] = 'Current PIN is incorrect.';
+            }
+
+            if ($newPin === '') {
+                $errors['new_pin'] = 'New PIN is required.';
+            } elseif (!preg_match('/^[0-9]{4,10}$/', $newPin)) {
+                $errors['new_pin'] = 'PIN must be 4 to 10 digits.';
+            } elseif (!empty($existing['password']) && password_verify($newPin, $existing['password'])) {
+                $errors['new_pin'] = 'PIN must be different from your current password.';
+            }
+
+            if ($confirmPin === '') {
+                $errors['confirm_pin'] = 'Confirm PIN is required.';
+            } elseif ($newPin !== $confirmPin) {
+                $errors['confirm_pin'] = 'PINs do not match.';
+            }
+
+            if ($newPin !== '' && $newPassword !== '' && $newPin === $newPassword) {
+                $errors['new_pin'] = 'PIN must be different from your password.';
+            }
+        }
+
+        $avatarFileName = null;
+        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $avatarFileName = $this->saveStandardUserAvatar($_FILES['avatar']);
+            } catch (Exception $e) {
+                $errors['avatar'] = $e->getMessage();
+            }
+        }
+
+        if (!empty($errors)) {
+            $user = $existing;
+            $this->view('standard_portal/profile_settings', [
+                'user' => $user,
+                'errors' => $errors,
+                'old' => $old,
+                'portalMessage' => null,
+                'portalMessageType' => null,
+            ]);
+            return;
+        }
+
+        $updatedAvatar = $existing['avatar'] ?? null;
+        if ($avatarFileName !== null) {
+            $updatedAvatar = $avatarFileName;
+        } elseif ($removeAvatar) {
+            $updatedAvatar = null;
+        }
+
+        $this->userModel->updateProfile($userId, [
+            'firstName' => $firstName,
+            'middleName' => $middleName,
+            'lastName' => $lastName,
+            'email' => $email,
+            'phone' => $phone,
+            'avatar' => $updatedAvatar,
+        ]);
+
+        if ($changingPassword) {
+            $this->userModel->updatePassword($userId, $newPassword);
+        }
+
+        if ($changingPin) {
+            $this->userModel->updatePincode($userId, $newPin);
+        }
+
+        if ($avatarFileName !== null || $removeAvatar) {
+            if (!empty($existing['avatar'])) {
+                $this->deleteStandardUserAvatar($existing['avatar']);
+            }
+        }
+
+        $_SESSION['standard_user_avatar'] = $updatedAvatar;
+        $_SESSION['standard_user_name'] = trim($firstName . ' ' . $lastName);
+        $_SESSION['portal_message'] = 'Your profile has been updated successfully.';
+        $_SESSION['portal_msg_type'] = 'success';
+        $this->redirect('index.php?controller=StandardPortal&action=profileSettings');
+    }
+
+    private function saveStandardUserAvatar(array $file): string {
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception('Avatar upload failed.');
+        }
+
+        if ($file['size'] > 3 * 1024 * 1024) {
+            throw new Exception('Avatar must be 3MB or smaller.');
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        $extensions = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+
+        if (!isset($extensions[$mimeType])) {
+            throw new Exception('Avatar must be a JPG, PNG, or WEBP image.');
+        }
+
+        $extension = $extensions[$mimeType];
+        $uploadDir = __DIR__ . '/../../uploads/standard_users/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $fileName = uniqid('standard_user_', true) . '.' . $extension;
+        $destination = $uploadDir . $fileName;
+
+        $image = $this->createImageResource($file['tmp_name'], $mimeType);
+        if ($image === false) {
+            throw new Exception('Unable to process avatar image.');
+        }
+
+        $maxDimension = 1200;
+        $width = imagesx($image);
+        $height = imagesy($image);
+
+        if ($width > $maxDimension || $height > $maxDimension) {
+            $ratio = $width / $height;
+            if ($ratio > 1) {
+                $newWidth = $maxDimension;
+                $newHeight = (int)round($maxDimension / $ratio);
+            } else {
+                $newHeight = $maxDimension;
+                $newWidth = (int)round($maxDimension * $ratio);
+            }
+
+            $resized = imagecreatetruecolor($newWidth, $newHeight);
+            if ($mimeType === 'image/png' || $mimeType === 'image/webp') {
+                imagealphablending($resized, false);
+                imagesavealpha($resized, true);
+            }
+            imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            imagedestroy($image);
+            $image = $resized;
+        }
+
+        $this->saveImageToFile($image, $destination, $mimeType);
+        imagedestroy($image);
+
+        return $fileName;
+    }
+
+    private function createImageResource(string $path, string $mimeType) {
+        return match ($mimeType) {
+            'image/jpeg' => @imagecreatefromjpeg($path),
+            'image/png' => @imagecreatefrompng($path),
+            'image/webp' => @imagecreatefromwebp($path),
+            default => false,
+        };
+    }
+
+    private function saveImageToFile($image, string $destination, string $mimeType): void {
+        switch ($mimeType) {
+            case 'image/jpeg':
+                imagejpeg($image, $destination, 90);
+                break;
+            case 'image/png':
+                imagepng($image, $destination, 6);
+                break;
+            case 'image/webp':
+                imagewebp($image, $destination, 90);
+                break;
+        }
+    }
+
+    private function deleteStandardUserAvatar(string $filename): void {
+        if ($filename === '' || strtolower($filename) === 'default.png') {
+            return;
+        }
+
+        $path = __DIR__ . '/../../uploads/standard_users/' . $filename;
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+
     public function setRemovedItemsPreference() {
         $this->requirePortalLogin();
 

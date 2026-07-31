@@ -150,6 +150,76 @@ class UserModel {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function getProfileById(int $id): ?array {
+        $sql = "SELECT * FROM {$this->table} WHERE id = ? LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([$id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $user ?: null;
+    }
+
+    public function updateProfile(int $id, array $data): bool {
+        $sql = "UPDATE {$this->table}
+                SET firstName = :firstName,
+                    middleName = :middleName,
+                    lastName = :lastName,
+                    email = :email,
+                    phone = :phone,
+                    avatar = :avatar,
+                    updated_at = NOW()
+                WHERE id = :id";
+
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            ':firstName' => $data['firstName'],
+            ':middleName' => $data['middleName'],
+            ':lastName' => $data['lastName'],
+            ':email' => $data['email'],
+            ':phone' => $data['phone'],
+            ':avatar' => $data['avatar'],
+            ':id' => $id,
+        ]);
+    }
+
+    public function updatePassword(int $id, string $password): bool {
+        $sql = "UPDATE {$this->table}
+                SET password = :password,
+                    updated_at = NOW()
+                WHERE id = :id";
+
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            ':password' => password_hash($password, PASSWORD_DEFAULT),
+            ':id' => $id,
+        ]);
+    }
+
+    public function updatePincode(int $id, string $pinCode): bool {
+        $sql = "UPDATE {$this->table}
+                SET pin_code = :pin_code,
+                    updated_at = NOW()
+                WHERE id = :id";
+
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            ':pin_code' => $pinCode,
+            ':id' => $id,
+        ]);
+    }
+
+    public function updateAvatar(int $id, ?string $avatar): bool {
+        $sql = "UPDATE {$this->table}
+                SET avatar = :avatar,
+                    updated_at = NOW()
+                WHERE id = :id";
+
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            ':avatar' => $avatar,
+            ':id' => $id,
+        ]);
+    }
+
     public function getConnection() {
         return $this->conn;
     }

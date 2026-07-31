@@ -343,6 +343,7 @@ function portalHeader($title) {
                     <nav class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
                         <a href="index.php?controller=StandardPortal&action=dashboard" class="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 hover:border-emerald-200 hover:bg-emerald-50 transition">Dashboard</a>
                         <a href="index.php?controller=StandardPortal&action=inbox" class="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 hover:border-emerald-200 hover:bg-emerald-50 transition">Correspondence</a>
+                        <a href="index.php?controller=StandardPortal&action=profileSettings" class="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 hover:border-emerald-200 hover:bg-emerald-50 transition">Settings</a>
                     </nav>
 
                     <div class="relative">
