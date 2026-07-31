@@ -266,18 +266,10 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
           <h2 class="text-base font-semibold text-slate-900">Monthly calendar</h2>
           <p class="text-sm text-slate-500">Placeholder view for planned movements and events.</p>
         </div>
-        <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600"><?= htmlspecialchars((string)($monthLabel ?? '')) ?></div>
+
       </div>
 
-      <div class="mt-3 grid grid-cols-7 gap-2 text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
-        <div>Sun</div>
-        <div>Mon</div>
-        <div>Tue</div>
-        <div>Wed</div>
-        <div>Thu</div>
-        <div>Fri</div>
-        <div>Sat</div>
-      </div>
+      
 
       <div class="mt-3">
         <div id="mobilizationCalendar" class="min-h-[440px]"></div>
@@ -409,7 +401,7 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const mobilizationCalendarEl = document.getElementById('mobilizationCalendar');
-    const mobilizationCalendarEvents = <?= json_encode($mobilizationCalendarEvents ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    const mobilizationMonthUrl = 'index.php?controller=EmployeeMobilization&action=monthlyEvents';
     const activityList = document.getElementById('mobilizationActivityList');
     const openMovementModalBtn = document.getElementById('openMovementModalBtn');
     const movementModal = document.getElementById('movementModal');
@@ -988,8 +980,50 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
           center: 'title',
           right: 'dayGridMonth'
         },
-        dayMaxEvents: 2,
-        events: mobilizationCalendarEvents,
+        // allow all events to render as separate pills (no clipping)
+        dayMaxEvents: false,
+        events: function(fetchInfo, successCallback, failureCallback) {
+          fetch(mobilizationMonthUrl, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+            }
+          })
+            .then(function(response) {
+              return response.json();
+            })
+            .then(function(payload) {
+              if (!payload || !payload.success) {
+                failureCallback(payload && payload.message ? payload.message : 'Unable to load calendar events.');
+                return;
+              }
+
+              // Map server-side movement objects to FullCalendar event objects
+              // Server events look like: { employee_id, employee_name, movement_type, movement_date, status, ... }
+              const fcEvents = (payload.events || []).map(function(ev, idx) {
+                const movementType = String(ev.movement_type || '').toLowerCase();
+                const backgroundColor = movementType === 'demobilization' ? '#FECACA' : '#DCFCE7';
+                const borderColor = movementType === 'demobilization' ? '#FCA5A5' : '#86EFAC';
+                const textColor = movementType === 'demobilization' ? '#B91C1C' : '#166534';
+
+                return {
+                  id: ev.id || ('mv_' + idx),
+                  title: ev.employee_name || ev.employee_staff_id || 'Movement',
+                  start: ev.movement_date || ev.movementDate || ev.date || null,
+                  allDay: true,
+                  backgroundColor: backgroundColor,
+                  borderColor: borderColor,
+                  textColor: textColor,
+                  extendedProps: Object.assign({}, ev)
+                };
+              }).filter(function(e) { return e.start; });
+
+              successCallback(fcEvents);
+            })
+            .catch(function() {
+              failureCallback('Unable to load calendar events.');
+            });
+        },
         eventDisplay: 'block',
         eventContent: function (arg) {
           const movementType = String(arg.event.extendedProps.movement_type || '').toLowerCase();

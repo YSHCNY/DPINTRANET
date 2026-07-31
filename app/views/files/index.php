@@ -81,7 +81,7 @@
             </div>
 
             <div class="p-4 lg:p-5">
-                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[220px_240px_minmax(0,1fr)] gap-3 flex-1">
                         <div>
                             <label for="categoryFilter" class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Category</label>
@@ -101,25 +101,27 @@
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="flex items-end">
-                            <p class="text-[11px] leading-5 text-slate-500">
-                                Filter by category or direction. Search remains available for quick lookup.
-                            </p>
+                        <div class = 'w-1/2'>
+                            <label for="globalSearch" class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Search</label>
+                            <input id="globalSearch" type="text" placeholder="Search files, descriptions, uploader, direction..." class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" />
                         </div>
+                      
                     </div>
 
-                    <?php if ($canManageFiles): ?>
-                        <a href="index.php?controller=Files&action=create"
-                           class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
-                            <?= $fileIcon ?? '' ?>
-                            Upload New File
-                        </a>
-                    <?php else: ?>
-                        <div class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                            <span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
-                            Viewer access only
-                        </div>
-                    <?php endif; ?>
+                    <div class="flex items-center justify-end">
+                        <?php if ($canManageFiles): ?>
+                            <a href="index.php?controller=Files&action=create"
+                               class="inline-flex h-10 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                                <?= $fileIcon ?? '' ?>
+                                Upload New File
+                            </a>
+                        <?php else: ?>
+                            <div class="inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-600">
+                                <span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
+                                Viewer access only
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -378,26 +380,43 @@ $(document).ready(function () {
       { responsivePriority: 7, targets: 4 }
     ],
     orderCellsTop: true,
-    dom: '<"flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4"lf>rt<"flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mt-4"ip>',
+    dom: '<"flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4"l>rt<"flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mt-4"ip>',
     language: {
       search: '',
       searchPlaceholder: 'Search files'
     }
   });
 
-  // Custom search for data attributes
+  const globalSearch = $('#globalSearch');
+
+  // Custom search for category, direction, and global term
   $.fn.DataTable.ext.search.push(function (settings, data, dataIndex) {
     const categoryFilter = $('#categoryFilter').val();
     const directionFilter = $('#directionFilter').val();
+    const searchTerm = String(globalSearch.val() || '').trim().toLowerCase();
+    const rowData = table.row(dataIndex).data() || [];
     const $row = $(table.row(dataIndex).node());
-    
-    const rowCategory = $row.find('td').eq(2).data('category') || '';
-    const rowDirection = $row.find('td').eq(3).data('direction') || '';
-    
-    const categoryMatch = !categoryFilter || rowCategory === categoryFilter;
-    const directionMatch = !directionFilter || rowDirection === directionFilter;
-    
-    return categoryMatch && directionMatch;
+
+    const rowCategory = String($row.find('td').eq(2).data('category') || '').toLowerCase();
+    const rowDirection = String($row.find('td').eq(3).data('direction') || '').toLowerCase();
+    const rowFile = String($row.find('td').eq(0).data('full-file') || rowData[0] || '').toLowerCase();
+    const rowDesc = String($row.find('td').eq(1).data('full-text') || rowData[1] || '').toLowerCase();
+    const rowUploader = String(rowData[4] || '').toLowerCase();
+    const rowUploaded = String(rowData[5] || '').toLowerCase();
+    const rowCategoryText = String(rowData[2] || '').toLowerCase();
+    const rowDirectionText = String(rowData[3] || '').toLowerCase();
+
+    const categoryMatch = !categoryFilter || rowCategory === categoryFilter.toLowerCase();
+    const directionMatch = !directionFilter || rowDirection === directionFilter.toLowerCase();
+    const combinedText = [rowFile, rowDesc, rowUploader, rowUploaded, rowCategoryText, rowDirectionText].join(' ');
+    const searchMatch = !searchTerm || combinedText.includes(searchTerm);
+
+    return categoryMatch && directionMatch && searchMatch;
+  });
+
+  // Global search input
+  globalSearch.on('input', function () {
+    table.draw();
   });
 
   // Category filter

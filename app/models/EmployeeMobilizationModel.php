@@ -107,7 +107,7 @@ class EmployeeMobilizationModel extends Model {
 
     public function getByDateRange(string $startDate, string $endDate): array {
         $stmt = $this->db->prepare(
-            "SELECT employee_id, movement_type, movement_date, status
+            "SELECT id, employee_id, movement_type, movement_date, status, remarks
              FROM {$this->table}
              WHERE movement_date BETWEEN :start_date AND :end_date
              ORDER BY movement_date ASC"
@@ -116,6 +116,16 @@ class EmployeeMobilizationModel extends Model {
             ':start_date' => $startDate,
             ':end_date' => $endDate,
         ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getAll(): array {
+        $stmt = $this->db->prepare(
+            "SELECT id, employee_id, movement_type, movement_date, status, remarks
+             FROM {$this->table}
+             ORDER BY movement_date ASC"
+        );
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

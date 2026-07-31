@@ -43,16 +43,8 @@ class EmployeeMobilizationController extends Controller {
         header('Content-Type: application/json');
 
         try {
-            $year = isset($_GET['year']) ? (int)$_GET['year'] : 0;
-            $month = isset($_GET['month']) ? (int)$_GET['month'] : 0;
-
-            if ($year < 1 || $month < 1 || $month > 12) {
-                throw new Exception('year and month are required and must be valid');
-            }
-
-            $startDate = sprintf('%04d-%02d-01', $year, $month);
-            $endDate = (new DateTime($startDate))->format('Y-m-t');
-            $events = $this->mobilizationService->getCalendarEvents($startDate, $endDate);
+            // Return all mobilization and demobilization events, without month filtering.
+            $events = $this->mobilizationService->getAllCalendarEvents();
 
             echo json_encode(['success' => true, 'events' => $events]);
         } catch (Exception $e) {
@@ -139,14 +131,28 @@ class EmployeeMobilizationController extends Controller {
         }
 
         try {
+            $movementIdParam = isset($_POST['movement_id']) ? (int)$_POST['movement_id'] : 0;
             $data = $this->getMovementDataFromPost();
-            $movementId = $this->mobilizationService->scheduleMobilization(
-                $data['employee_id'],
-                $data['movement_date'],
-                $data['remarks'],
-                $data['created_by']
-            );
-            echo json_encode(['success' => true, 'movement_id' => $movementId]);
+
+            if ($movementIdParam > 0) {
+                $ok = $this->mobilizationService->updateMovement(
+                    $movementIdParam,
+                    $data['employee_id'],
+                    'Mobilization',
+                    $data['movement_date'],
+                    $data['remarks'],
+                    (int)($_SESSION['id'] ?? 0)
+                );
+                echo json_encode(['success' => (bool)$ok, 'movement_id' => $movementIdParam]);
+            } else {
+                $movementId = $this->mobilizationService->scheduleMobilization(
+                    $data['employee_id'],
+                    $data['movement_date'],
+                    $data['remarks'],
+                    $data['created_by']
+                );
+                echo json_encode(['success' => true, 'movement_id' => $movementId]);
+            }
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -165,14 +171,28 @@ class EmployeeMobilizationController extends Controller {
         }
 
         try {
+            $movementIdParam = isset($_POST['movement_id']) ? (int)$_POST['movement_id'] : 0;
             $data = $this->getMovementDataFromPost();
-            $movementId = $this->mobilizationService->scheduleDemobilization(
-                $data['employee_id'],
-                $data['movement_date'],
-                $data['remarks'],
-                $data['created_by']
-            );
-            echo json_encode(['success' => true, 'movement_id' => $movementId]);
+
+            if ($movementIdParam > 0) {
+                $ok = $this->mobilizationService->updateMovement(
+                    $movementIdParam,
+                    $data['employee_id'],
+                    'Demobilization',
+                    $data['movement_date'],
+                    $data['remarks'],
+                    (int)($_SESSION['id'] ?? 0)
+                );
+                echo json_encode(['success' => (bool)$ok, 'movement_id' => $movementIdParam]);
+            } else {
+                $movementId = $this->mobilizationService->scheduleDemobilization(
+                    $data['employee_id'],
+                    $data['movement_date'],
+                    $data['remarks'],
+                    $data['created_by']
+                );
+                echo json_encode(['success' => true, 'movement_id' => $movementId]);
+            }
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);

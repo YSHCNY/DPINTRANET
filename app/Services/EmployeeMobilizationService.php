@@ -97,6 +97,12 @@ class EmployeeMobilizationService
         return $this->formatCalendarEvents($movements);
     }
 
+    public function getAllCalendarEvents(): array
+    {
+        $movements = $this->mobilizationModel->getAll();
+        return $this->formatCalendarEvents($movements);
+    }
+
     public function getEmployeeHistory(int $employeeId): array
     {
         $employeeId = $this->normalizeEmployeeId($employeeId);
@@ -119,16 +125,47 @@ class EmployeeMobilizationService
         foreach ($movements as $movement) {
             $employeeId = isset($movement['employee_id']) ? (int)$movement['employee_id'] : null;
             $employee = $employeeId !== null ? ($employeeDetails[$employeeId] ?? []) : [];
-            $events[] = [
+
+            $fullName = $employee['employee_name'] ?? 'Unknown Employee';
+            $shortName = explode(' ', $fullName)[0] ?: 'Employee';
+            $movementType = $movement['movement_type'] ?? '';
+
+            // normalize movement_date to YYYY-MM-DD (in case DB has datetime)
+            $movementDateRaw = $movement['movement_date'] ?? '';
+            $movementDate = $movementDateRaw !== '' ? substr($movementDateRaw, 0, 10) : '';
+
+            // color mapping for pills
+            $isDemob = strtolower((string)$movementType) === 'demobilization';
+            $backgroundColor = $isDemob ? '#FECACA' : '#DCFCE7';
+            $borderColor = $isDemob ? '#FCA5A5' : '#86EFAC';
+            $textColor = $isDemob ? '#B91C1C' : '#166534';
+
+            // preserve existing keys (movement_date, movement_type, status) for other consumers
+            $base = [
                 'employee_id' => $employeeId,
-                'employee_name' => $employee['employee_name'] ?? 'Unknown Employee',
+                'employee_name' => $fullName,
                 'employee_staff_id' => $employee['employee_staff_id'] ?? null,
                 'employee_position' => $employee['position'] ?? null,
                 'employee_department' => $employee['department'] ?? null,
-                'movement_type' => $movement['movement_type'] ?? '',
-                'movement_date' => $movement['movement_date'] ?? '',
+                'movement_type' => $movementType,
+                'movement_date' => $movementDate,
                 'status' => $movement['status'] ?? 'Scheduled',
             ];
+
+            // Enrich with FullCalendar-compatible fields so client can render pills directly
+            $events[] = array_merge($base, [
+                'id' => $movement['id'] ?? null,
+                'title' => $shortName,
+                'start' => $movementDate,
+                'allDay' => true,
+                'backgroundColor' => $backgroundColor,
+                'borderColor' => $borderColor,
+                'textColor' => $textColor,
+                'extendedProps' => array_merge($base, [
+                    'movement_id' => $movement['id'] ?? null,
+                    'remarks' => $movement['remarks'] ?? '',
+                ]),
+            ]);
         }
 
         return $events;
@@ -270,6 +307,24 @@ class EmployeeMobilizationService
     public function getUpcomingMovements(): array
     {
         return $this->formatMovementsWithEmployeeDetails($this->mobilizationModel->getUpcoming());
+    }
+
+    public function updateMovement(int $movementId, int $employeeId, string $movementType, string $movementDate, ?string $remarks = null, ?int $updatedBy = null): bool
+    {
+        $movementId = $this->normalizeId($movementId);
+        $employeeId = $this->normalizeEmployeeId($employeeId);
+        $movementType = $this->normalizeMovementType($movementType);
+        $movementDate = $this->normalizeMovementDate($movementDate);
+
+        return $this->mobilizationModel->update($movementId, [
+            'employee_id' => $employeeId,
+            'movement_type' => $movementType,
+            'movement_date' => $movementDate,
+            'remarks' => $remarks,
+            'status' => 'Scheduled',
+            'created_by' => null,
+            'updated_by' => $updatedBy,
+        ]);
     }
 
     private function scheduleMovement(int $employeeId, string $movementType, string $movementDate, ?string $remarks, ?int $createdBy): int
