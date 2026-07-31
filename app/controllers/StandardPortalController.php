@@ -4,6 +4,12 @@ require_once '../app/core/Controller.php';
 require_once '../app/models/UserModel.php';
 require_once '../app/models/correspondence.php';
 require_once '../app/Services/PasswordResetService.php';
+if (file_exists(__DIR__ . '/../config.php')) {
+    require_once __DIR__ . '/../config.php';
+} elseif (file_exists(__DIR__ . '/../../app/config.php')) {
+    require_once __DIR__ . '/../../app/config.php';
+}
+
 
 use App\Contracts\RateLimiterInterface;
 use App\Services\Security\StandardUserLoginRateLimiter;
