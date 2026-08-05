@@ -21,8 +21,26 @@ class EmailQueueService
         ?int $maxRetries = null
     ) {
         $this->conn = $conn ?? Database::connect();
+        $this->setConnectionAttributes();
         $this->maxRetries = $maxRetries ?? (int)($_ENV['EMAIL_QUEUE_MAX_RETRIES'] ?? 3);
         $this->ensureTable();
+    }
+
+    private function setConnectionAttributes(): void
+    {
+        if (!($this->conn instanceof PDO)) {
+            return;
+        }
+
+        $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+        $this->conn->setAttribute(PDO::ATTR_TIMEOUT, (int)($_ENV['DB_CONNECT_TIMEOUT'] ?? 5));
+    }
+
+    private function reconnect(): void
+    {
+        $this->conn = Database::connect();
+        $this->setConnectionAttributes();
     }
 
     public function ensureTable(): void
@@ -180,41 +198,92 @@ class EmailQueueService
         );
     }
 
-    public function claimBatch(int $limit = 20): array
+   
+   public function claimBatch(int $limit = 20): array
     {
+        error_log("=== claimBatch() entered ===");
         $limit = max(1, min(100, $limit));
         $jobs = [];
+        $attempts = 0;
 
-        try {
-            $this->conn->beginTransaction();
+        while ($attempts < 2) {
+            $attempts++;
+            $conn = $this->getConnection();
 
-            $stmt = $this->conn->prepare(
-                'SELECT * FROM email_queue WHERE status IN ("Pending", "Failed") AND attempts < :max_retries ORDER BY queued_at ASC, id ASC LIMIT :limit'
-            );
-            $stmt->bindValue(':max_retries', $this->maxRetries, PDO::PARAM_INT);
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            try {
+                $conn->beginTransaction();
 
-            foreach ($rows as $row) {
-                $updateStmt = $this->conn->prepare(
-                    'UPDATE email_queue SET status = "Sending", attempts = attempts + 1, started_at = NOW(), updated_at = NOW() WHERE id = ?'
+                $stmt = $conn->prepare(
+                    'SELECT * FROM email_queue
+                     WHERE status IN ("Pending", "Failed")
+                     AND attempts < :max_retries
+                     ORDER BY queued_at ASC, id ASC
+                     LIMIT :limit'
                 );
-                $updateStmt->execute([(int)$row['id']]);
-                $row['attempts'] = (int)$row['attempts'] + 1;
-                $jobs[] = $row;
-            }
 
-            $this->conn->commit();
-        } catch (Throwable $e) {
-            if ($this->conn->inTransaction()) {
-                $this->conn->rollBack();
+                $stmt->bindValue(':max_retries', $this->maxRetries, PDO::PARAM_INT);
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->execute();
+
+                $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($rows as $row) {
+                    $updateStmt = $conn->prepare(
+                        'UPDATE email_queue
+                         SET status = "Sending",
+                             attempts = attempts + 1,
+                             started_at = NOW(),
+                             updated_at = NOW()
+                         WHERE id = ?'
+                    );
+
+                    $updateStmt->execute([(int)$row['id']]);
+
+                    $row['attempts'] = (int)$row['attempts'] + 1;
+                    $jobs[] = $row;
+                }
+
+                $conn->commit();
+                return $jobs;
+
+            } catch (Throwable $e) {
+                if ($conn->inTransaction()) {
+                    $conn->rollBack();
+                }
+
+                $message = $e->getMessage();
+                error_log('Email queue batch claim failed: ' . $message);
+
+                if (strpos($message, 'MySQL server has gone away') !== false
+                    || strpos($message, 'gone away') !== false
+                    || strpos($message, 'server has gone away') !== false) {
+                    $this->reconnect();
+                    continue;
+                }
+
+                break;
             }
-            error_log('Email queue batch claim failed: ' . $e->getMessage());
         }
 
         return $jobs;
     }
+
+    private function getConnection(): PDO
+    {
+        try {
+            if (!($this->conn instanceof PDO)) {
+                throw new PDOException('Invalid PDO connection');
+            }
+
+            $this->conn->query('SELECT 1');
+        } catch (Throwable $e) {
+            error_log('[EmailQueue] Reconnecting PDO: ' . $e->getMessage());
+            $this->reconnect();
+        }
+
+        return $this->conn;
+    }
+
 
     public function markSent(int $jobId): void
     {

@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../Services/EmployeeMobilizationService.php';
 require_once __DIR__ . '/../../core/Database.php';
 $staffDirectoryModel = new StaffDirectoryModel();
 $employees = $staffDirectoryModel->getAllStaff();
+$mobilizationService = new \App\Services\EmployeeMobilizationService();
+$currentMobilizedEmployeeIds = $mobilizationService->getCurrentlyMobilizedEmployeeIds();
 $employeesJson = json_encode(array_map(static function ($employee) {
   return [
     'id' => (string)($employee['id'] ?? ''),
@@ -14,25 +16,26 @@ $employeesJson = json_encode(array_map(static function ($employee) {
     'department' => (string)($employee['department'] ?? ''),
   ];
 }, $employees), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-$mobilizationService = new \App\Services\EmployeeMobilizationService();
-$mobilizedThisMonthCount = count($mobilizationService->getMobilizedThisMonth());
-$demobilizedThisMonthCount = count($mobilizationService->getDemobilizedThisMonth());
+$currentMobilizedEmployeeIdsJson = json_encode($currentMobilizedEmployeeIds);
+$activeWorkforceCount = count($mobilizationService->getActiveEmployees());
 $todayMovements = $mobilizationService->getTodayMovements();
-$mobilizationsTodayCount = count(array_filter($todayMovements, static function (array $movement) {
-  return isset($movement['movement_type']) && $movement['movement_type'] === 'Mobilization';
-}));
-$demobilizationsTodayCount = count(array_filter($todayMovements, static function (array $movement) {
-  return isset($movement['movement_type']) && $movement['movement_type'] === 'Demobilization';
-}));
+$todayMovementsCount = count($todayMovements);
+$upcomingWeekMovementsCount = count($mobilizationService->getUpcomingThisWeek());
+$thisMonthScheduleCount = count($mobilizationService->getMobilizedThisMonth()) + count($mobilizationService->getDemobilizedThisMonth());
 $db = Database::connect();
-$latestMovements = [];
-$stmt = $db->prepare("SELECT id, employee_id, movement_type, movement_date FROM employee_mobilizations WHERE movement_type IN ('Mobilization', 'Demobilization') ORDER BY movement_date DESC, id DESC LIMIT 10");
-$stmt->execute();
-$latestMovements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$limit = 10;
+$latestMobilizations = [];
+$latestDemobilizations = [];
+
+$stmt = $db->prepare("SELECT id, employee_id, movement_type, movement_date FROM employee_mobilizations WHERE movement_type = :type ORDER BY movement_date DESC, id DESC LIMIT {$limit}");
+$stmt->execute([':type' => 'Mobilization']);
+$latestMobilizations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt->execute([':type' => 'Demobilization']);
+$latestDemobilizations = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $employeeLookup = [];
 $employeeIds = [];
-foreach ($latestMovements as $movement) {
+foreach (array_merge($latestMobilizations, $latestDemobilizations) as $movement) {
   if (!empty($movement['employee_id'])) {
     $employeeIds[] = (int)$movement['employee_id'];
   }
@@ -40,44 +43,36 @@ foreach ($latestMovements as $movement) {
 
 if ($employeeIds !== []) {
   $placeholders = implode(',', array_fill(0, count($employeeIds), '?'));
-  $employeeStmt = $db->prepare("SELECT id, firstName, lastName, department FROM staff_directory WHERE id IN ({$placeholders})");
+  $employeeStmt = $db->prepare("SELECT id, firstName, lastName FROM staff_directory WHERE id IN ({$placeholders})");
   $employeeStmt->execute($employeeIds);
   foreach ($employeeStmt->fetchAll(PDO::FETCH_ASSOC) as $employee) {
     $employeeLookup[(int)($employee['id'] ?? 0)] = $employee;
   }
 }
 
+$formatMovementDate = static function (string $movementDate): string {
+  if ($movementDate === '') {
+    return '';
+  }
+  $dateObj = DateTime::createFromFormat('Y-m-d', $movementDate);
+  return $dateObj instanceof DateTime ? $dateObj->format('F j, Y') : $movementDate;
+};
+
 $mobilizationRows = [];
-$demobilizationRows = [];
-foreach ($latestMovements as $movement) {
+foreach ($latestMobilizations as $movement) {
   $employeeId = isset($movement['employee_id']) ? (int)$movement['employee_id'] : 0;
   $employee = $employeeLookup[$employeeId] ?? [];
-  $employeeName = trim((string)($employee['firstName'] ?? '') . ' ' . (string)($employee['lastName'] ?? ''));
-  if ($employeeName === '') {
-    $employeeName = 'Employee #' . $employeeId;
-  }
-  $department = (string)($employee['department'] ?? 'Department not set');
-  $movementDate = (string)($movement['movement_date'] ?? '');
-  $formattedTime = '';
-  if ($movementDate !== '') {
-    $dateObj = DateTime::createFromFormat('Y-m-d', $movementDate);
-    if ($dateObj instanceof DateTime) {
-      $formattedTime = $dateObj->format('F j, Y');
-    } else {
-      $formattedTime = $movementDate;
-    }
-  }
-  $row = ['name' => $employeeName, 'department' => $department, 'time' => $formattedTime];
-
-  if ((string)($movement['movement_type'] ?? '') === 'Demobilization') {
-    $demobilizationRows[] = $row;
-  } else {
-    $mobilizationRows[] = $row;
-  }
+  $employeeName = trim((string)($employee['firstName'] ?? '') . ' ' . (string)($employee['lastName'] ?? '')) ?: 'Employee #' . $employeeId;
+  $mobilizationRows[] = ['name' => $employeeName, 'time' => $formatMovementDate((string)$movement['movement_date'])];
 }
 
-$mobilizationRows = array_slice($mobilizationRows, 0, 5);
-$demobilizationRows = array_slice($demobilizationRows, 0, 5);
+$demobilizationRows = [];
+foreach ($latestDemobilizations as $movement) {
+  $employeeId = isset($movement['employee_id']) ? (int)$movement['employee_id'] : 0;
+  $employee = $employeeLookup[$employeeId] ?? [];
+  $employeeName = trim((string)($employee['firstName'] ?? '') . ' ' . (string)($employee['lastName'] ?? '')) ?: 'Employee #' . $employeeId;
+  $demobilizationRows[] = ['name' => $employeeName, 'time' => $formatMovementDate((string)$movement['movement_date'])];
+}
 
 $placeholderMovementCards = [
   [
@@ -153,40 +148,40 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
       <div class="space-y-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Mobilizations Today</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($mobilizationsTodayCount ?? 0)) ?></p>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Active Workforce</p>
+          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($activeWorkforceCount ?? 0)) ?></p>
         </div>
-        <p class="text-sm text-slate-400">Total mobilizations scheduled for today.</p>
+        <p class="text-sm text-slate-400">Unique employees with scheduled movement activity.</p>
       </div>
     </div>
 
     <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
       <div class="space-y-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Demobilizations Today</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($demobilizationsTodayCount ?? 0)) ?></p>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Today's Movements</p>
+          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($todayMovementsCount ?? 0)) ?></p>
         </div>
-        <p class="text-sm text-slate-400">Total demobilizations scheduled for today.</p>
+        <p class="text-sm text-slate-400">All mobilizations and demobilizations scheduled for today.</p>
       </div>
     </div>
 
     <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
       <div class="space-y-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Mobilizations This Month</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($mobilizedThisMonthCount ?? 0)) ?></p>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Upcoming (Next 7 Days)</p>
+          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($upcomingWeekMovementsCount ?? 0)) ?></p>
         </div>
-        <p class="text-sm text-slate-400">Total mobilizations for the current month.</p>
+        <p class="text-sm text-slate-400">Scheduled movements in the next 7 days.</p>
       </div>
     </div>
 
     <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
       <div class="space-y-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Demobilizations This Month</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($demobilizedThisMonthCount ?? 0)) ?></p>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">This Month's Schedule</p>
+          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($thisMonthScheduleCount ?? 0)) ?></p>
         </div>
-        <p class="text-sm text-slate-400">Total demobilizations for the current month.</p>
+        <p class="text-sm text-slate-400">Total movements scheduled across the current month.</p>
       </div>
     </div>
   </div>
@@ -195,67 +190,55 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
       <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Today's Workforce Movement</p>
-          <h2 class="mt-1 text-lg font-semibold text-slate-900">Mobilizations Today</h2>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Recent workforce movement</p>
+          <h2 class="mt-1 text-lg font-semibold text-slate-900">Recent Mobilizations</h2>
         </div>
       </div>
-      <div class="mt-3 space-y-2">
-        <?php foreach (array_slice($mobilizationRows, 0, 5) as $row): ?>
-          <?php
-            $initials = implode('', array_filter(array_map(static fn ($part) => $part !== '' ? strtoupper($part[0]) : '', explode(' ', $row['name'])), fn ($char) => $char !== '')) ?: 'E';
-          ?>
-          <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-            <div class="flex min-w-0 items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white"><?= htmlspecialchars($initials) ?></div>
-              <div class="min-w-0">
-                <div class="truncate text-sm font-semibold text-slate-900"><?= htmlspecialchars($row['name']) ?></div>
-                <?php if ($row['department'] !== '' && $row['department'] !== 'Department not set'): ?>
-                  <div class="truncate text-xs text-slate-500"><?= htmlspecialchars($row['department']) ?></div>
-                <?php endif; ?>
+      <div class="mt-3 text-sm text-slate-700">
+        <?php if (count($mobilizationRows) > 0): ?>
+          <?php foreach ($mobilizationRows as $row): ?>
+            <div class="flex items-center justify-between gap-4 border-b border-slate-200 py-2 last:border-none">
+              <div class="flex min-w-0 items-center gap-3">
+                <span class="inline-flex h-10 w-px rounded-full bg-emerald-500"></span>
+                <div class="min-w-0">
+                  <div class="truncate text-sm font-semibold text-slate-900"><?= htmlspecialchars($row['name']) ?></div>
+                  <div class="truncate text-xs text-slate-500">Mobilized</div>
+                </div>
               </div>
+              <div class="flex-shrink-0 text-xs text-slate-500"><?= htmlspecialchars($row['time']) ?></div>
             </div>
-            <div class="shrink-0 text-xs font-medium text-slate-600"><?= htmlspecialchars($row['time']) ?></div>
-          </div>
-        <?php endforeach; ?>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="py-4 text-center text-sm text-slate-500">No recent mobilizations.</div>
+        <?php endif; ?>
       </div>
-      <?php if (count($mobilizationRows) > 5): ?>
-        <div class="mt-3 border-t border-slate-200 pt-3 text-right">
-          <a href="#" class="text-sm font-medium text-slate-700 transition hover:text-slate-900">View All</a>
-        </div>
-      <?php endif; ?>
     </div>
 
     <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
       <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Today's Workforce Movement</p>
-          <h2 class="mt-1 text-lg font-semibold text-slate-900">Demobilizations Today</h2>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Recent workforce movement</p>
+          <h2 class="mt-1 text-lg font-semibold text-slate-900">Recent Demobilizations</h2>
         </div>
       </div>
-      <div class="mt-3 space-y-2">
-        <?php foreach (array_slice($demobilizationRows, 0, 5) as $row): ?>
-          <?php
-            $initials = implode('', array_filter(array_map(static fn ($part) => $part !== '' ? strtoupper($part[0]) : '', explode(' ', $row['name'])), fn ($char) => $char !== '')) ?: 'E';
-          ?>
-          <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-            <div class="flex min-w-0 items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white"><?= htmlspecialchars($initials) ?></div>
-              <div class="min-w-0">
-                <div class="truncate text-sm font-semibold text-slate-900"><?= htmlspecialchars($row['name']) ?></div>
-                <?php if ($row['department'] !== '' && $row['department'] !== 'Department not set'): ?>
-                  <div class="truncate text-xs text-slate-500"><?= htmlspecialchars($row['department']) ?></div>
-                <?php endif; ?>
+      <div class="mt-3 text-sm text-slate-700">
+        <?php if (count($demobilizationRows) > 0): ?>
+          <?php foreach ($demobilizationRows as $row): ?>
+            <div class="flex items-center justify-between gap-4 border-b border-slate-200 py-2 last:border-none">
+              <div class="flex min-w-0 items-center gap-3">
+                <span class="inline-flex h-10 w-px rounded-full bg-rose-500"></span>
+                <div class="min-w-0">
+                  <div class="truncate text-sm font-semibold text-slate-900"><?= htmlspecialchars($row['name']) ?></div>
+                  <div class="truncate text-xs text-slate-500">Demobilized</div>
+                </div>
               </div>
+              <div class="flex-shrink-0 text-xs text-slate-500"><?= htmlspecialchars($row['time']) ?></div>
             </div>
-            <div class="shrink-0 text-xs font-medium text-slate-600"><?= htmlspecialchars($row['time']) ?></div>
-          </div>
-        <?php endforeach; ?>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <div class="py-4 text-center text-sm text-slate-500">No recent demobilizations.</div>
+        <?php endif; ?>
       </div>
-      <?php if (count($demobilizationRows) > 5): ?>
-        <div class="mt-3 border-t border-slate-200 pt-3 text-right">
-          <a href="#" class="text-sm font-medium text-slate-700 transition hover:text-slate-900">View All</a>
-        </div>
-      <?php endif; ?>
     </div>
   </div>
 
@@ -427,6 +410,8 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     const activitySubtitle = document.getElementById('mobilizationActivitySubtitle');
     const createdBy = <?= (int)($_SESSION['id'] ?? 0) ?>;
     const employeeOptions = <?= $employeesJson ?>;
+    const currentlyMobilizedEmployeeIds = <?= $currentMobilizedEmployeeIdsJson ?>;
+    let movementMode = 'create';
     let selectedEmployee = null;
     let activeOptionIndex = -1;
     let searchTimer = null;
@@ -564,6 +549,10 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       window.clearTimeout(searchTimer);
       searchTimer = window.setTimeout(function () {
         const filtered = employeeOptions.filter(function (employee) {
+          const employeeId = String(employee.id || employee.staff_id || '');
+          if (movementMode !== 'edit' && currentlyMobilizedEmployeeIds.map(String).includes(employeeId)) {
+            return false;
+          }
           if (!trimmedQuery) {
             return true;
           }
@@ -572,7 +561,7 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
         }).slice(0, 20);
 
         if (!filtered.length) {
-          movementEmployeeList.innerHTML = '<div class="px-3 py-3 text-sm text-slate-500"><p class="font-medium text-slate-700">No employees found</p><p class="mt-1 text-xs text-slate-400">Try another employee name or employee ID.</p></div>';
+          movementEmployeeList.innerHTML = '<div class="px-3 py-3 text-sm text-slate-500"><p class="font-medium text-slate-700">No eligible employees found</p><p class="mt-1 text-xs text-slate-400">Try another employee name or employee ID.</p></div>';
           return;
         }
 
@@ -626,6 +615,7 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       clearFieldErrors();
       movementForm.reset();
       movementIdInput.value = '';
+      movementMode = mode;
       movementModalTitle.textContent = mode === 'edit' ? 'Edit movement' : 'Create movement';
       movementDateInput.value = new Date().toISOString().split('T')[0];
       movementModal.classList.remove('hidden');
@@ -902,6 +892,13 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
         if (!employeeId) {
           showFieldError('movementEmployee', 'Please select an employee.');
           hasErrors = true;
+        }
+
+        if (movementType === 'Mobilization' && selectedEmployee && currentlyMobilizedEmployeeIds.includes(String(selectedEmployee.id || selectedEmployee.staff_id))) {
+          if (movementMode === 'create') {
+            showFieldError('movementEmployee', 'Selected employee is already mobilized.');
+            hasErrors = true;
+          }
         }
 
         if (!movementType) {

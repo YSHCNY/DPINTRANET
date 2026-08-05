@@ -25,6 +25,9 @@ class EmployeeMobilizationService
 
     public function scheduleMobilization(int $employeeId, string $movementDate, ?string $remarks = null, ?int $createdBy = null): int
     {
+        $employeeId = $this->normalizeEmployeeId($employeeId);
+        $this->assertEmployeeNotCurrentlyMobilized($employeeId);
+
         return $this->scheduleMovement($employeeId, 'Mobilization', $movementDate, $remarks, $createdBy);
     }
 
@@ -316,13 +319,21 @@ class EmployeeMobilizationService
         $movementType = $this->normalizeMovementType($movementType);
         $movementDate = $this->normalizeMovementDate($movementDate);
 
+        $existingMovement = $this->mobilizationModel->findById($movementId);
+        if ($existingMovement === null) {
+            throw new InvalidArgumentException('Movement record not found');
+        }
+
+        $status = $existingMovement['status'] ?? 'Scheduled';
+        $createdBy = isset($existingMovement['created_by']) ? (int)$existingMovement['created_by'] : null;
+
         return $this->mobilizationModel->update($movementId, [
             'employee_id' => $employeeId,
             'movement_type' => $movementType,
             'movement_date' => $movementDate,
             'remarks' => $remarks,
-            'status' => 'Scheduled',
-            'created_by' => null,
+            'status' => $status,
+            'created_by' => $createdBy,
             'updated_by' => $updatedBy,
         ]);
     }
@@ -342,6 +353,52 @@ class EmployeeMobilizationService
             'created_by' => $createdBy,
             'updated_by' => $createdBy,
         ]);
+    }
+
+    public function getCurrentlyMobilizedEmployeeIds(): array
+    {
+        $upcoming = $this->mobilizationModel->getUpcoming();
+        $today = $this->mobilizationModel->getToday();
+        $movements = array_merge($upcoming, $today);
+
+        $employeeIds = [];
+        foreach ($movements as $movement) {
+            if (isset($movement['employee_id'], $movement['movement_type'], $movement['status'])
+                && $movement['movement_type'] === 'Mobilization'
+                && $movement['status'] === 'Scheduled'
+            ) {
+                $employeeIds[] = (int)$movement['employee_id'];
+            }
+        }
+
+        return array_values(array_unique($employeeIds));
+    }
+
+    public function isEmployeeCurrentlyMobilized(int $employeeId): bool
+    {
+        return in_array($employeeId, $this->getCurrentlyMobilizedEmployeeIds(), true);
+    }
+
+    private function assertEmployeeNotCurrentlyMobilized(int $employeeId, ?int $ignoreMovementId = null): void
+    {
+        $employeeId = $this->normalizeEmployeeId($employeeId);
+        $pendingMobilizations = array_filter($this->mobilizationModel->getUpcoming(), static function (array $movement) use ($employeeId, $ignoreMovementId) {
+            if (!isset($movement['employee_id'], $movement['movement_type'], $movement['status'])) {
+                return false;
+            }
+            if ((int)$movement['employee_id'] !== $employeeId) {
+                return false;
+            }
+            if ($ignoreMovementId !== null && isset($movement['id']) && (int)$movement['id'] === $ignoreMovementId) {
+                return false;
+            }
+            return $movement['movement_type'] === 'Mobilization'
+                && $movement['status'] === 'Scheduled';
+        });
+
+        if (count($pendingMobilizations) > 0) {
+            throw new InvalidArgumentException('This employee is already mobilized and cannot be mobilized again until the current mobilization is completed or cancelled.');
+        }
     }
 
     private function normalizeId(int $id): int

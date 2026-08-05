@@ -1980,6 +1980,28 @@ public function getDocumentData() {
                     $portalNotificationService->notifyCirculatedDocument($documentId, $this->model->getCirculationDetails($documentId), $doc, (int)($_SESSION['id'] ?? 0));
                 }
             } catch (Throwable $e) {
+                error_log('Post-circulation notification failed: ' . $e->getMessage());
+            }
+
+            try {
+                if (empty($doc)) {
+                    $doc = $this->model->getById($documentId);
+                }
+                $attachments = $this->model->getAttachments($documentId);
+                $circulations = $this->model->getCirculationDetails($documentId);
+                $creatorName = null;
+                try {
+                    $userModel = new UserModel();
+                    $creator = $userModel->getUserById((int)($doc['created_by'] ?? 0));
+                    $creatorName = trim((string)($creator['firstName'] ?? '') . ' ' . (string)($creator['lastName'] ?? '')) ?: null;
+                } catch (Throwable $e) {
+                    error_log('Creator name lookup failed: ' . $e->getMessage());
+                }
+                if ($creatorName !== null) {
+                    $doc['created_by_name'] = $creatorName;
+                }
+                $this->correspondenceService->queueCorrespondenceNotifications($documentId, $doc, $circulations, $attachments, 'circulated');
+            } catch (Throwable $e) {
                 error_log('Post-circulation email queue failed: ' . $e->getMessage());
             }
 

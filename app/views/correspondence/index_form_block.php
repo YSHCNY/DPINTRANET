@@ -288,8 +288,8 @@
                         class="h-8 md:h-9 px-2 md:px-3 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Save Draft</button>
                     <button type="button" onclick="window.location.href='index.php?controller=correspondence&action=correspondence'"
                         class="h-8 md:h-9 px-2 md:px-3 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
-                    <?php $submitActionLabel = $isFinalizeMode ? 'Finalize' : (in_array($currentUserLevel, [2,6], true) ? 'Draft & Notify' : 'Circulate'); ?>
-                    <button type="submit" onclick="return confirmCorrespondenceAction('<?= htmlspecialchars($submitActionLabel, ENT_QUOTES, 'UTF-8') ?>')"
+                    <?php $submitActionLabel = $isFinalizeMode ? 'Finalize' : (in_array($currentUserLevel, [2,6], true) ? 'Save Draft' : 'Circulate'); ?>
+                    <button type="submit" onclick="return confirmCorrespondenceAction('<?= htmlspecialchars($submitActionLabel, ENT_QUOTES, 'UTF-8') ?>'<?= $submitActionLabel === 'Circulate' ? ', addFinalizeInputAndSubmit' : '' ?>)"
                         class="h-8 md:h-9 px-3 md:px-4 rounded-md bg-blue-600 text-white text-xs font-semibold shadow-sm transition hover:bg-blue-700"><?= $submitActionLabel ?></button>
                 <?php else: ?>
                     <button type="button" onclick="resetForm()"

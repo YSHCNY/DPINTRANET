@@ -675,6 +675,35 @@ function saveDraftFromFinalize() {
     }
 }
 
+function addFinalizeInputAndSubmit() {
+    const form = document.getElementById('circulationForm');
+    if (!form) return;
+
+    let finalizeInput = document.getElementById('finalizeInput');
+    if (!finalizeInput) {
+        finalizeInput = document.createElement('input');
+        finalizeInput.type = 'hidden';
+        finalizeInput.name = 'finalize';
+        finalizeInput.id = 'finalizeInput';
+        finalizeInput.value = '1';
+        form.appendChild(finalizeInput);
+    }
+
+    const desc = document.getElementById('description');
+    if (desc) {
+        const hiddenDesc = document.getElementById('description-hidden');
+        if (hiddenDesc) {
+            hiddenDesc.value = desc.innerHTML;
+        }
+    }
+
+    if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+    } else {
+        form.submit();
+    }
+}
+
 function confirmCorrespondenceAction(message, callback) {
     if (!message) {
         return true;

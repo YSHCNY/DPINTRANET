@@ -39,7 +39,7 @@ class StaffDirectoryModel {
     }
 
     public function getStaffById($staffId): ?array {
-        $sql = "SELECT * FROM staff_directory WHERE id = :staff_id LIMIT 1";
+        $sql = "SELECT * FROM staff_directory WHERE staff_id = :staff_id LIMIT 1";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([':staff_id' => $staffId]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);

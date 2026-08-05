@@ -91,13 +91,15 @@ function notificationContextText(array $notification): string {
 }
 
 function notificationTimeLabel(string $createdAt): string {
-    $timestamp = strtotime($createdAt);
-    if ($timestamp === false) {
+    try {
+        $source = new DateTimeImmutable($createdAt, new DateTimeZone('UTC'));
+    } catch (Throwable $e) {
         return '';
     }
 
-    $now = time();
-    $diff = $now - $timestamp;
+    $timestamp = $source->setTimezone(new DateTimeZone(date_default_timezone_get()));
+    $now = new DateTimeImmutable('now', new DateTimeZone(date_default_timezone_get()));
+    $diff = $now->getTimestamp() - $timestamp->getTimestamp();
 
     if ($diff < 60) {
         return 'Just now';
@@ -105,14 +107,14 @@ function notificationTimeLabel(string $createdAt): string {
     if ($diff < 3600) {
         return floor($diff / 60) . ' min ago';
     }
-    if (date('Y-m-d', $timestamp) === date('Y-m-d', $now)) {
+    if ($timestamp->format('Y-m-d') === $now->format('Y-m-d')) {
         return floor($diff / 3600) . ' hr ago';
     }
-    if (date('Y-m-d', $timestamp) === date('Y-m-d', strtotime('-1 day', $now))) {
+    if ($timestamp->format('Y-m-d') === $now->modify('-1 day')->format('Y-m-d')) {
         return 'Yesterday';
     }
 
-    return date('M j', $timestamp);
+    return $timestamp->format('M j');
 }
 
 function notificationGroupLabel(string $createdAt): string {
