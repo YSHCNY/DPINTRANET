@@ -124,154 +124,161 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
   }
 }
 ?>
-<div class="max-w-[1400px] mx-auto px-3 py-6">
-  <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-    <div class="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+<div class="dashboard-scale-down max-w-[1400px] mx-auto px-3 py-6">
+  <div class="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+    <div class="flex flex-col gap-1.5 lg:flex-row lg:items-end lg:justify-between">
       <div class="space-y-2">
-        <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
+        <div class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
           <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
           Mobilization Dashboard
         </div>
         <div>
-          <h1 class="text-base font-semibold text-slate-900">Employee movement tracking</h1>
-          <p class="text-sm text-slate-500">A streamlined overview for mobilizations, demobilizations, and day-to-day activity.</p>
+          <h1 class="text-sm font-semibold text-slate-900">Employee movement tracking</h1>
+          <p class="text-xs text-slate-500">A streamlined overview for mobilizations, demobilizations, and day-to-day activity.</p>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
        
-        <button id="openMovementModalBtn" type="button" class="inline-flex h-8 items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-medium text-white transition hover:bg-slate-800">New Movement</button>
+        <button id="openMovementModalBtn" type="button" class="inline-flex h-7 items-center justify-center rounded-lg bg-slate-900 px-2.5 text-xs font-medium text-white transition hover:bg-slate-800">New Movement</button>
       </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1  mt-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
-    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div class="space-y-3">
+  <div class="grid grid-cols-1 mt-2 gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div class="space-y-2.5">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Active Workforce</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($activeWorkforceCount ?? 0)) ?></p>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Active Workforce</p>
+          <p class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($activeWorkforceCount ?? 0)) ?></p>
         </div>
-        <p class="text-sm text-slate-400">Unique employees with scheduled movement activity.</p>
+        <p class="text-xs text-slate-400">Unique employees with scheduled movement activity.</p>
       </div>
     </div>
 
-    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div class="space-y-3">
+    <div class="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div class="space-y-2.5">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Today's Movements</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($todayMovementsCount ?? 0)) ?></p>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Today's Movements</p>
+          <p class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($todayMovementsCount ?? 0)) ?></p>
         </div>
-        <p class="text-sm text-slate-400">All mobilizations and demobilizations scheduled for today.</p>
+        <p class="text-xs text-slate-400">All mobilizations and demobilizations scheduled for today.</p>
       </div>
     </div>
 
-    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div class="space-y-3">
+    <div class="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div class="space-y-2.5">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Upcoming (Next 7 Days)</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($upcomingWeekMovementsCount ?? 0)) ?></p>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Upcoming (Next 7 Days)</p>
+          <p class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($upcomingWeekMovementsCount ?? 0)) ?></p>
         </div>
-        <p class="text-sm text-slate-400">Scheduled movements in the next 7 days.</p>
+        <p class="text-xs text-slate-400">Scheduled movements in the next 7 days.</p>
       </div>
     </div>
 
-    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div class="space-y-3">
+    <div class="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div class="space-y-2.5">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">This Month's Schedule</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($thisMonthScheduleCount ?? 0)) ?></p>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">This Month's Schedule</p>
+          <p class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 leading-none"><?= htmlspecialchars((string)($thisMonthScheduleCount ?? 0)) ?></p>
         </div>
-        <p class="text-sm text-slate-400">Total movements scheduled across the current month.</p>
+        <p class="text-xs text-slate-400">Total movements scheduled across the current month.</p>
       </div>
     </div>
   </div>
 
-  <div class="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2">
-    <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
+  <div class="mt-2 grid grid-cols-1 gap-2.5 lg:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div class="flex items-center justify-between gap-1.5 border-b border-slate-200 pb-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Recent workforce movement</p>
-          <h2 class="mt-1 text-lg font-semibold text-slate-900">Recent Mobilizations</h2>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Recent workforce movement</p>
+          <h2 class="mt-1 text-base font-semibold text-slate-900">Recent Mobilizations</h2>
+          
         </div>
       </div>
-      <div class="mt-3 text-sm text-slate-700">
+      <div class="mt-2.5 text-xs text-slate-700">
         <?php if (count($mobilizationRows) > 0): ?>
           <?php foreach ($mobilizationRows as $row): ?>
-            <div class="flex items-center justify-between gap-4 border-b border-slate-200 py-2 last:border-none">
-              <div class="flex min-w-0 items-center gap-3">
-                <span class="inline-flex h-10 w-px rounded-full bg-emerald-500"></span>
+            <div class="flex items-center justify-between gap-3 border-b border-slate-200 py-1.5 last:border-none">
+              <div class="flex min-w-0 items-center gap-2.5">
+                <span class="inline-flex h-8 w-px rounded-full bg-emerald-500"></span>
                 <div class="min-w-0">
-                  <div class="truncate text-sm font-semibold text-slate-900"><?= htmlspecialchars($row['name']) ?></div>
-                  <div class="truncate text-xs text-slate-500">Mobilized</div>
+                  <div class="truncate text-xs font-semibold text-slate-900"><?= htmlspecialchars($row['name']) ?></div>
+                  <div class="truncate text-[11px] text-slate-500">Mobilized</div>
                 </div>
               </div>
-              <div class="flex-shrink-0 text-xs text-slate-500"><?= htmlspecialchars($row['time']) ?></div>
+              <div class="flex-shrink-0 text-[11px] text-slate-500"><?= htmlspecialchars($row['time']) ?></div>
             </div>
           <?php endforeach; ?>
         <?php else: ?>
-          <div class="py-4 text-center text-sm text-slate-500">No recent mobilizations.</div>
+          <div class="py-3 text-center text-xs text-slate-500">No recent mobilizations.</div>
         <?php endif; ?>
       </div>
     </div>
 
-    <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
+    <div class="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div class="flex items-center justify-between gap-1.5 border-b border-slate-200 pb-3">
         <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Recent workforce movement</p>
-          <h2 class="mt-1 text-lg font-semibold text-slate-900">Recent Demobilizations</h2>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Recent workforce movement</p>
+          <h2 class="mt-1 text-base font-semibold text-slate-900">Recent Demobilizations</h2>
         </div>
       </div>
-      <div class="mt-3 text-sm text-slate-700">
+      <div class="mt-2.5 text-xs text-slate-700">
         <?php if (count($demobilizationRows) > 0): ?>
           <?php foreach ($demobilizationRows as $row): ?>
-            <div class="flex items-center justify-between gap-4 border-b border-slate-200 py-2 last:border-none">
-              <div class="flex min-w-0 items-center gap-3">
-                <span class="inline-flex h-10 w-px rounded-full bg-rose-500"></span>
+            <div class="flex items-center justify-between gap-3 border-b border-slate-200 py-1.5 last:border-none">
+              <div class="flex min-w-0 items-center gap-2.5">
+                <span class="inline-flex h-8 w-px rounded-full bg-rose-500"></span>
                 <div class="min-w-0">
-                  <div class="truncate text-sm font-semibold text-slate-900"><?= htmlspecialchars($row['name']) ?></div>
-                  <div class="truncate text-xs text-slate-500">Demobilized</div>
+                  <div class="truncate text-xs font-semibold text-slate-900"><?= htmlspecialchars($row['name']) ?></div>
+                  <div class="truncate text-[11px] text-slate-500">Demobilized</div>
                 </div>
               </div>
-              <div class="flex-shrink-0 text-xs text-slate-500"><?= htmlspecialchars($row['time']) ?></div>
+              <div class="flex-shrink-0 text-[11px] text-slate-500"><?= htmlspecialchars($row['time']) ?></div>
             </div>
           <?php endforeach; ?>
         <?php else: ?>
-          <div class="py-4 text-center text-sm text-slate-500">No recent demobilizations.</div>
+          <div class="py-3 text-center text-xs text-slate-500">No recent demobilizations.</div>
         <?php endif; ?>
       </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 gap-4 mt-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.8fr)]">
-    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
+  <div class="grid gap-2.5 mt-2.5 grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)] min-w-0 overflow-hidden">
+    <div class="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm min-w-0 overflow-hidden">
+      <div class="flex items-center justify-between gap-1.5 border-b border-slate-200 pb-3">
         <div>
-          <h2 class="text-base font-semibold text-slate-900">Monthly calendar</h2>
-          <p class="text-sm text-slate-500">Placeholder view for planned movements and events.</p>
+          <h2 class="text-sm font-semibold text-slate-900">Monthly calendar</h2>
+          <p class="text-[11px] text-slate-500">Placeholder view for planned movements and events.</p>
         </div>
 
       </div>
 
       
 
-      <div class="mt-3">
-        <div id="mobilizationCalendar" class="min-h-[440px]"></div>
+      <div class="mt-2.5 min-w-0">
+        <div id="mobilizationCalendar" class="min-w-0 w-full"></div>
       </div>
     </div>
 
-    <aside class="space-y-3">
-      <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-        <div class="flex items-center justify-between gap-2">
+    <aside class="space-y-2 min-w-0 overflow-hidden">
+      <div class="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm min-h-[400px] min-w-0 overflow-hidden">
+        <div class="flex items-center justify-between gap-1.5">
           <div>
-            <h2 id="mobilizationActivityHeading" class="text-base font-semibold text-slate-900">Upcoming Movements</h2>
-            <p id="mobilizationActivitySubtitle" class="mt-2 text-sm text-slate-500">Showing scheduled mobilizations and demobilizations.</p>
+            <h2 id="mobilizationActivityHeading" class="text-sm font-semibold text-slate-900">Upcoming Movements</h2>
+            <p id="mobilizationActivitySubtitle" class="mt-2 text-[11px] text-slate-500">Showing scheduled mobilizations and demobilizations.</p>
           </div>
         
         </div>
 
-        <div id="mobilizationActivityList" class="mt-3 space-y-3">
-          <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-sm text-slate-500">Loading movements...</div>
+        <div id="mobilizationActivityList" class="mt-2.5 space-y-2.5">
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-500">Loading movements...</div>
         </div>
+        <!-- <div class="mt-3 border-t border-slate-200 pt-3">
+          <a href="index.php?controller=EmployeeMobilization&action=dashboard" class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-slate-700">
+            <span>View all movements</span>
+            <span aria-hidden="true">→</span>
+          </a>
+        </div> -->
       </div>
 
     </aside>
@@ -280,24 +287,21 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
 
 <div id="movementModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="movementModalTitle">
   <div id="movementModalBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-  <div class="relative mx-auto my-4 w-[95vw] max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-xl">
-    <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+  <div class="relative mx-auto my-3 w-[95vw] max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-xl">
+    <div class="flex items-center justify-between border-b border-slate-200 px-3 py-2.5">
       <div>
-        <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Movement</p>
-        <h2 id="movementModalTitle" class="text-lg font-semibold text-slate-900">Create movement</h2>
+        <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Movement</p>
+        <h2 id="movementModalTitle" class="text-base font-semibold text-slate-900">Create movement</h2>
       </div>
       <button type="button" id="closeMovementModalBtn" class="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-50" aria-label="Close">✕</button>
     </div>
 
-    <form id="movementForm" class="space-y-3 px-4 py-3">
-      <div id="movementFormAlert" class="hidden rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700"></div>
-      <input type="hidden" id="movementId" name="movement_id" value="">
-
-      <div class="grid gap-3 md:grid-cols-2">
+    <form id="movementForm" class="space-y-2.5 px-3 py-3">
+      <div id="movementFormAlert" class="hidden rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700"></div>
         <div class="md:col-span-2">
-          <label class="mb-1 block text-sm font-medium text-slate-700">Employee</label>
+          <label class="mb-1 block text-xs font-medium text-slate-700">Employee</label>
           <div class="relative" id="employeePickerRoot">
-            <button id="movementEmployeeToggle" type="button" role="combobox" aria-expanded="false" aria-controls="movementEmployeeDropdown" aria-haspopup="listbox" class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-sm transition hover:border-slate-300">
+            <button id="movementEmployeeToggle" type="button" role="combobox" aria-expanded="false" aria-controls="movementEmployeeDropdown" aria-haspopup="listbox" class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-left shadow-sm transition hover:border-slate-300">
               <div id="movementEmployeeTriggerText" class="min-w-0 flex-1">
                 <div class="flex min-w-0 flex-col">
                   <span class="truncate text-sm font-medium text-slate-700">Select employee...</span>
@@ -308,6 +312,7 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
+            <input type="hidden" id="movementId" name="movement_id" value="">
             <input type="hidden" id="movementEmployee" name="employee_id" value="">
             <div id="movementEmployeeDropdown" class="absolute left-0 right-0 z-20 mt-2 hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-150 ease-out">
               <div class="sticky top-0 border-b border-slate-200 bg-white p-2">
@@ -315,40 +320,39 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <input id="movementEmployeeSearch" type="text" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="movementEmployeeList" aria-haspopup="listbox" placeholder="Search employee..." class="w-full border-0 bg-transparent p-0 text-sm text-slate-700 outline-none" />
+                  <input id="movementEmployeeSearch" type="text" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="movementEmployeeList" aria-haspopup="listbox" placeholder="Search employee..." class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 outline-none" />
                 </div>
               </div>
               <div id="movementEmployeeList" role="listbox" class="max-h-80 overflow-y-auto py-1"></div>
             </div>
           </div>
-          <div id="error-movementEmployee" class="mt-1 hidden text-sm text-rose-600"></div>
-        </div>
+          <div id="error-movementEmployee" class="mt-1 hidden text-xs text-rose-600"></div>
 
         <div>
-          <label for="movementType" class="mb-1 block text-sm font-medium text-slate-700">Movement Type</label>
-          <select id="movementType" name="movement_type" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-slate-400">
+          <label for="movementType" class="mb-1 block text-xs font-medium text-slate-700">Movement Type</label>
+          <select id="movementType" name="movement_type" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-slate-400">
             <option value="Mobilization">Mobilization</option>
             <option value="Demobilization">Demobilization</option>
           </select>
-          <div id="error-movementType" class="mt-1 hidden text-sm text-rose-600"></div>
+          <div id="error-movementType" class="mt-1 hidden text-xs text-rose-600"></div>
         </div>
 
         <div>
-          <label for="movementDate" class="mb-1 block text-sm font-medium text-slate-700">Movement Date</label>
-          <input id="movementDate" name="movement_date" type="date" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-slate-400">
-          <div id="error-movementDate" class="mt-1 hidden text-sm text-rose-600"></div>
+          <label for="movementDate" class="mb-1 block text-xs font-medium text-slate-700">Movement Date</label>
+          <input id="movementDate" name="movement_date" type="date" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-slate-400">
+          <div id="error-movementDate" class="mt-1 hidden text-xs text-rose-600"></div>
         </div>
 
         <div class="md:col-span-2">
-          <label for="movementRemarks" class="mb-1 block text-sm font-medium text-slate-700">Remarks</label>
-          <textarea id="movementRemarks" name="remarks" rows="3" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-slate-400" placeholder="Optional notes"></textarea>
-          <div id="error-movementRemarks" class="mt-1 hidden text-sm text-rose-600"></div>
+          <label for="movementRemarks" class="mb-1 block text-xs font-medium text-slate-700">Remarks</label>
+          <textarea id="movementRemarks" name="remarks" rows="3" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-slate-400" placeholder="Optional notes"></textarea>
+          <div id="error-movementRemarks" class="mt-1 hidden text-xs text-rose-600"></div>
         </div>
       </div>
 
       <div class="flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
-        <button type="button" id="cancelMovementModalBtn" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Cancel</button>
-        <button type="submit" id="movementSaveBtn" class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800">Save movement</button>
+        <button type="button" id="cancelMovementModalBtn" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50">Cancel</button>
+        <button type="submit" id="movementSaveBtn" class="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-slate-800">Save movement</button>
       </div>
     </form>
   </div>
@@ -357,7 +361,8 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 <style>
-  .fc .fc-toolbar-title { font-size: 1rem; font-weight: 600; }
+  .dashboard-scale-down { font-size: 0.93rem; }
+  .fc .fc-toolbar-title { font-size: 0.92rem; font-weight: 600; }
   .fc .fc-button-primary {
     background: #0f172a !important;
     border-color: #0f172a !important;
@@ -368,17 +373,58 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     background: #111827 !important;
     border-color: #111827 !important;
   }
+  /* Event pill styling: single-line, truncated, fixed height */
   .fc .fc-daygrid-event {
     border-radius: 9999px;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.69rem;
-    line-height: 1.2;
+    padding: 0 0.5rem;
+    font-size: 0.68rem;
+    line-height: 1;
+    height: 1.5rem; /* slightly reduced height for density */
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .fc .fc-daygrid-event .fc-event-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
   }
   .fc .fc-daygrid-event-harness {
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.12rem;
   }
   .fc .fc-daygrid-day-number {
     font-weight: 600;
+  }
+
+  /* Ensure +X more link stays compact and inside the cell */
+  .fc .fc-daygrid-more-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.08rem 0.45rem;
+    border-radius: 9999px;
+    font-size: 0.68rem;
+    color: #6b7280;
+    background: transparent;
+  }
+
+  /* Custom wrapper used by eventContent for consistent truncation */
+  .fc .fc-custom-event {
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 0 0.5rem;
+    border-radius: 9999px;
+    cursor: pointer;
+  }
+  .fc .fc-daygrid-event {
+    cursor: pointer;
   }
 </style>
 <script>
@@ -654,29 +700,37 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
         : 'bg-emerald-100 text-emerald-700';
     }
 
-    function renderActivityItem(item) {
-      const name = item.employee_name || 'Unknown employee';
-      const department = item.employee_department || item.department || 'Department not set';
-      const movementType = item.movement_type || 'Movement';
-      const scheduleDate = item.movement_date || 'TBD';
-      const movementId = item.id || '';
-      const employeeId = item.employee_id || '';
-      const remarks = item.remarks || '';
-      const badgeClasses = getMovementBadgeClasses(movementType);
+    function formatShortDate(dateString) {
+      const date = new Date(dateString + 'T00:00:00');
+      if (Number.isNaN(date.getTime())) {
+        return dateString;
+      }
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
 
-      return '<div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm" data-movement-id="' + escapeText(movementId) + '">' +
-        '<div class="flex items-start justify-between gap-2">' +
-        '<div class="min-w-0">' +
-        '<p class="text-sm font-semibold text-slate-900">' + escapeText(name) + '</p>' +
-        '<p class="mt-1 text-xs text-slate-500">' + escapeText(department) + '</p>' +
+    function renderActivityItem(item, showDate) {
+      const name = item.employee_name || '???';
+      const movementType = String(item.movement_type || '').toLowerCase();
+      const dotColor = movementType === 'demobilization' ? 'bg-rose-500' : 'bg-emerald-500';
+      const dateText = showDate && item.movement_date ? formatShortDate(item.movement_date) : '';
+
+      return '<div class="flex items-center justify-between gap-3 py-2 text-sm text-slate-900 min-h-[38px]">' +
+        '<div class="flex min-w-0 items-center gap-3">' +
+        '<span class="inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full ' + dotColor + '"></span>' +
+        '<span class="truncate font-semibold">' + escapeText(name) + '</span>' +
         '</div>' +
-        '<span class="rounded-full border px-2 py-1 text-[11px] font-medium ' + badgeClasses + '">' + escapeText(movementType) + '</span>' +
-        '</div>' +
-        '<div class="mt-3 flex items-center justify-between gap-2 text-xs text-slate-500">' +
-        '<span class="font-medium text-slate-600">' + escapeText(scheduleDate) + '</span>' +
-        '<button type="button" class="edit-movement-trigger rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50" data-movement-id="' + escapeText(movementId) + '" data-employee-id="' + escapeText(employeeId) + '" data-movement-type="' + escapeText(movementType) + '" data-movement-date="' + escapeText(scheduleDate) + '" data-remarks="' + escapeText(remarks) + '">Edit</button>' +
-        '</div>' +
+        (dateText ? '<span class="shrink-0 text-xs text-slate-500">' + escapeText(dateText) + '</span>' : '') +
         '</div>';
+    }
+
+    function sortMovementItems(items) {
+      return Array.from(items).sort(function (a, b) {
+        const aDate = String(a.movement_date || '').slice(0, 10);
+        const bDate = String(b.movement_date || '').slice(0, 10);
+        if (aDate < bDate) return -1;
+        if (aDate > bDate) return 1;
+        return String(a.employee_name || '').localeCompare(String(b.employee_name || ''));
+      });
     }
 
     function getActivityGroups(items) {
@@ -730,15 +784,15 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
         }
 
         const renderedItems = section.items.map(function (item) {
-          return renderActivityItem(item);
+          return renderActivityItem(item, section.key !== 'today');
         }).join('');
 
-        return '<div class="space-y-2">' +
-          '<div class="flex items-center justify-between">' +
+        return '<div class="space-y-3">' +
+          '<div class="flex items-center justify-between gap-3">' +
           '<h3 class="text-sm font-semibold text-slate-800">' + escapeText(section.title) + '</h3>' +
-          '<span class="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">' + section.items.length + '</span>' +
+          '<span class="text-xs font-medium text-slate-500">' + section.items.length + '</span>' +
           '</div>' +
-          '<div class="space-y-2">' + renderedItems + '</div>' +
+          '<div class="space-y-0 divide-y divide-slate-200">' + renderedItems + '</div>' +
           '</div>';
       }).join('');
 
@@ -795,7 +849,8 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
             });
           });
 
-          renderActivityPanel(combinedItems);
+          const visibleItems = sortMovementItems(combinedItems).slice(0, 8);
+          renderActivityPanel(visibleItems);
         })
         .catch(function () {
           activityList.innerHTML = '<div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">Unable to load activity.</div>';
@@ -972,13 +1027,19 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       const mobilizationCalendar = new FullCalendar.Calendar(mobilizationCalendarEl, {
         initialView: 'dayGridMonth',
         themeSystem: 'standard',
+        height: 'auto',
+        contentHeight: 'auto',
         headerToolbar: {
           left: 'prev,next today',
           center: 'title',
           right: 'dayGridMonth'
         },
-        // allow all events to render as separate pills (no clipping)
-        dayMaxEvents: false,
+        // limit visible events per day to prevent overcrowding
+        dayMaxEvents: 3,
+        moreLinkContent: function(arg) {
+          return { html: '<span class="text-xs font-medium text-slate-500">+' + arg.num + ' more</span>' };
+        },
+        moreLinkClick: 'popover',
         events: function(fetchInfo, successCallback, failureCallback) {
           fetch(mobilizationMonthUrl, {
             headers: {
@@ -1022,22 +1083,51 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
             });
         },
         eventDisplay: 'block',
+        eventClassNames: ['fc-clickable-event'],
+        eventDidMount: function(info) {
+          info.el.style.cursor = 'pointer';
+        },
         eventContent: function (arg) {
+          // Render compact pill showing FirstName + S. (surname initial). Full name remains in tooltip.
           const movementType = String(arg.event.extendedProps.movement_type || '').toLowerCase();
           const movementDate = arg.event.extendedProps.movement_date || arg.event.startStr || '';
-          const typeLabel = movementType === 'demobilization' ? 'DEM' : 'MOB';
           const pillClass = movementType === 'demobilization'
             ? 'border-rose-200 bg-rose-50 text-rose-700'
             : 'border-emerald-200 bg-emerald-50 text-emerald-700';
-          return {
-            html: '<div class="rounded-full border px-2 py-1 text-[11px] font-semibold ' + pillClass + '" title="' + escapeText(typeLabel + ' ' + arg.event.title + ' • ' + movementDate) + '">' +
-                  '<span class="inline-flex items-center gap-1"><span>' + escapeText(typeLabel) + '</span><span>' + escapeText(arg.event.title) + '</span></span>' +
-                  '</div>'
-          };
+
+          const employeeId = arg.event.extendedProps && arg.event.extendedProps.employee_id ? String(arg.event.extendedProps.employee_id) : '';
+          const nameValue = (arg.event.extendedProps && arg.event.extendedProps.employee_name) || '';
+          const fullName = nameValue.trim();
+          const fallbackName = employeeId ? ('#' + employeeId) : '???';
+          const rawName = fullName || fallbackName;
+
+          const parts = String(rawName || '').trim().split(/\s+/).filter(Boolean);
+          let displayName = rawName;
+          if (fullName && parts.length) {
+            const first = parts[0];
+            const lastInitial = parts.length > 1 ? (parts[parts.length - 1].charAt(0).toUpperCase() + '.') : '';
+            displayName = first + (lastInitial ? ' ' + lastInitial : '');
+          }
+
+          const safeDisplay = escapeText(displayName);
+          const tooltipLabel = fullName ? fullName : fallbackName;
+          const props = arg.event.extendedProps || {};
+
+          const html = '<div class="fc-custom-event ' + pillClass + '" title="' + escapeText(tooltipLabel + ' • ' + movementDate) + '"' +
+            ' data-movement-id="' + escapeText(props.movement_id || arg.event.id) + '"' +
+            ' data-employee-id="' + escapeText(props.employee_id || '') + '"' +
+            ' data-movement-type="' + escapeText(props.movement_type || '') + '"' +
+            ' data-movement-date="' + escapeText(movementDate) + '"' +
+            ' data-remarks="' + escapeText(props.remarks || '') + '">' +
+            '<span class="fc-event-title">' + safeDisplay + '</span>' +
+            '</div>';
+
+          return { html: html };
         },
         eventClick: function (info) {
           const event = info.event;
           const props = event.extendedProps || {};
+          const element = info.el || info.jsEvent && info.jsEvent.target;
           const movement = {
             id: props.movement_id || event.id,
             employee_id: props.employee_id || '',
@@ -1045,6 +1135,15 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
             movement_date: event.startStr || '',
             remarks: props.remarks || ''
           };
+
+          if (element && element.dataset) {
+            movement.id = element.dataset.movementId || movement.id;
+            movement.employee_id = element.dataset.employeeId || movement.employee_id;
+            movement.movement_type = element.dataset.movementType || movement.movement_type;
+            movement.movement_date = element.dataset.movementDate || movement.movement_date;
+            movement.remarks = element.dataset.remarks || movement.remarks;
+          }
+
           openMovementModal('edit', movement);
         }
       });
