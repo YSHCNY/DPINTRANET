@@ -56,6 +56,12 @@ class EmployeeMobilizationService
         ]);
     }
 
+    public function deleteMovement(int $id): bool
+    {
+        $id = $this->normalizeId($id);
+        return $this->mobilizationModel->delete($id);
+    }
+
     public function getDashboardSummary(): array
     {
         $todayMovements = $this->getTodayMovements();

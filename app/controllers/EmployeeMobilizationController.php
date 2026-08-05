@@ -250,6 +250,31 @@ class EmployeeMobilizationController extends Controller {
         exit;
     }
 
+    public function deleteMovement() {
+        $this->requireLogin();
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            exit;
+        }
+
+        try {
+            $movementId = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            if ($movementId < 1) {
+                throw new Exception('Movement id is required');
+            }
+
+            $ok = $this->mobilizationService->deleteMovement($movementId);
+            echo json_encode(['success' => $ok]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
     private function getDashboardViewData(): array {
         $summary = $this->mobilizationService->getDashboardSummary();
         $upcomingMovements = $this->mobilizationService->getUpcomingMovements();

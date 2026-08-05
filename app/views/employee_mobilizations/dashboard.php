@@ -350,9 +350,12 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
         </div>
       </div>
 
-      <div class="flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
-        <button type="button" id="cancelMovementModalBtn" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50">Cancel</button>
-        <button type="submit" id="movementSaveBtn" class="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-slate-800">Save movement</button>
+      <div class="flex items-center justify-between gap-2 border-t border-slate-200 pt-3">
+        <button type="button" id="deleteMovementBtn" class="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 hidden">Delete</button>
+        <div class="ml-auto flex items-center gap-2">
+          <button type="button" id="cancelMovementModalBtn" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50">Cancel</button>
+          <button type="submit" id="movementSaveBtn" class="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white transition hover:bg-slate-800">Save movement</button>
+        </div>
       </div>
     </form>
   </div>
@@ -451,10 +454,12 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     const movementDateInput = document.getElementById('movementDate');
     const movementRemarksInput = document.getElementById('movementRemarks');
     const movementSaveBtn = document.getElementById('movementSaveBtn');
+    const deleteMovementBtn = document.getElementById('deleteMovementBtn');
     const movementFormAlert = document.getElementById('movementFormAlert');
     const activityHeading = document.getElementById('mobilizationActivityHeading');
     const activitySubtitle = document.getElementById('mobilizationActivitySubtitle');
     const createdBy = <?= (int)($_SESSION['id'] ?? 0) ?>;
+    let mobilizationCalendar = null;
     const employeeOptions = <?= $employeesJson ?>;
     const currentlyMobilizedEmployeeIds = <?= $currentMobilizedEmployeeIdsJson ?>;
     let movementMode = 'create';
@@ -668,6 +673,14 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       setSelectedEmployee(null);
       closeEmployeePicker();
 
+      if (deleteMovementBtn) {
+        if (mode === 'edit') {
+          deleteMovementBtn.classList.remove('hidden');
+        } else {
+          deleteMovementBtn.classList.add('hidden');
+        }
+      }
+
       if (mode === 'edit' && movement) {
         movementIdInput.value = movement.id || '';
         const employee = getEmployeeById(movement.employee_id || '');
@@ -871,6 +884,56 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       }
     });
 
+    if (deleteMovementBtn) {
+      deleteMovementBtn.addEventListener('click', function () {
+        if (!movementIdInput.value) {
+          return;
+        }
+
+        if (!window.confirm('Delete this movement? This action cannot be undone.')) {
+          return;
+        }
+
+        deleteMovementBtn.disabled = true;
+        deleteMovementBtn.textContent = 'Deleting...';
+
+        fetch('index.php?controller=EmployeeMobilization&action=deleteMovement', {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+          },
+          body: new URLSearchParams({ id: movementIdInput.value }).toString()
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (payload) {
+            if (!payload || !payload.success) {
+              const message = payload && payload.message ? payload.message : 'Unable to delete movement.';
+              movementFormAlert.textContent = message;
+              movementFormAlert.classList.remove('hidden');
+              return;
+            }
+
+            closeMovementModal();
+            refreshActivityPanel();
+            if (mobilizationCalendar) {
+              mobilizationCalendar.refetchEvents();
+            }
+          })
+          .catch(function () {
+            movementFormAlert.textContent = 'Unable to delete movement right now.';
+            movementFormAlert.classList.remove('hidden');
+          })
+          .finally(function () {
+            deleteMovementBtn.disabled = false;
+            deleteMovementBtn.textContent = 'Delete';
+          });
+      });
+    }
+
     movementEmployeeToggle.addEventListener('click', function () {
       if (movementEmployeeDropdown.classList.contains('hidden')) {
         openEmployeePicker();
@@ -1024,7 +1087,7 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     refreshActivityPanel();
 
     if (mobilizationCalendarEl && typeof FullCalendar !== 'undefined') {
-      const mobilizationCalendar = new FullCalendar.Calendar(mobilizationCalendarEl, {
+      mobilizationCalendar = new FullCalendar.Calendar(mobilizationCalendarEl, {
         initialView: 'dayGridMonth',
         themeSystem: 'standard',
         height: 'auto',
