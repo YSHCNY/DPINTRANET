@@ -1,7 +1,7 @@
 <?php require __DIR__ . '/../partials/icons.php'; ?>
 
 <div class="min-h-screen theme-palette">
-    <div class="max-w-[1400px] mx-auto px-3 py-6 text-xs sm:text-xs md:text-sm correspondence-ui">
+    <div class="max-w-[1400px] mx-auto px-3 py-6 text-[10px] sm:text-[10px] md:text-xs correspondence-ui">
         <?php
             $currentUserLevel = (int)($_SESSION['user_level'] ?? 3);
             $isSuperAdmin = $currentUserLevel === 0;
@@ -24,7 +24,7 @@
         ?>
 
         <?php if (isset($_SESSION['message'])): ?>
-            <div class="mb-6 p-4 rounded-xl <?= $_SESSION['msg_type'] === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+            <div class="mb-6 p-3 rounded-lg <?= $_SESSION['msg_type'] === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
                 <?= htmlspecialchars($_SESSION['message']) ?>
             </div>
             <?php unset($_SESSION['message'], $_SESSION['msg_type']); ?>
@@ -36,22 +36,22 @@
         <?php require __DIR__ . '/_shared.php'; ?>
         <div class="rounded-lg  overflow-hidden">
             <div class="">
-               <div class="mb-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+               <div class="mb-6 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.06)]">
 
 
-            <div class="border-b bg-slate-50 border-slate-200  px-5 py-4">
-                <div class=" flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+<div class="border-b bg-slate-50 border-slate-200 px-3 py-3">
+                <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
 
             <!-- Left -->
 
                <div class="max-w-3xl ">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-blue-600">
+                <p class="text-[9px] font-semibold uppercase tracking-[0.24em] text-blue-600">
                     Correspondence
                 </p>
 
-                <h2 class=" text-xl font-semibold tracking-tight text-slate-900">Correspondence Dashboard</h2>
+                <h2 class="text-lg font-semibold tracking-tight text-slate-900">Correspondence Dashboard</h2>
 
-                 <p class=" max-w-2xl text-sm leading-6 text-slate-500">
+                 <p class="max-w-2xl text-xs leading-5 text-slate-500">
                     Manage correspondence, drafts, and repository documents from one workspace
                         </p>
 
@@ -59,25 +59,25 @@
 
             <!-- Right Stats -->
 
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-2">
 
-                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 shadow-sm">
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 shadow-sm">
                     <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                    <span class="text-[11px] font-medium text-slate-700">
+                    <span class="text-[10px] font-medium text-slate-700">
                         <?= count($documents) ?> file(s)
                     </span>
                 </div>
 
-                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 shadow-sm">
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 shadow-sm">
                     <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
-                    <span class="text-[11px] font-medium text-slate-700">
+                    <span class="text-[10px] font-medium text-slate-700">
                         <?= $draftsCount ?? 0 ?> draft(s)
                     </span>
                 </div>
 
-                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 shadow-sm">
+                <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 shadow-sm">
                     <span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>
-                    <span class="text-[11px] font-medium text-slate-700">
+                    <span class="text-[10px] font-medium text-slate-700">
                         <?= $removedCount ?? 0 ?> removed
                     </span>
                 </div>
@@ -93,12 +93,12 @@
     <!-- ========================= -->
 
     <div class="p-2">
-        <div class="flex flex-col gap-3 rounded-xl  bg-slate-50/70 p-3 lg:flex-row lg:items-end lg:justify-between">
-            <div class="flex flex-1 flex-col gap-3 md:flex-row md:items-end">
-                <div class="w-full md:w-44">
-                    <label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Priority</label>
+        <div class="flex flex-col gap-2 rounded-xl bg-slate-50/70 p-2.5 lg:flex-row lg:items-end lg:justify-between">
+            <div class="flex flex-1 flex-col gap-2 md:flex-row md:items-end">
+                <div class="w-full md:w-40">
+                    <label class="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">Priority</label>
                     <select id="priorityFilter"
-                        class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+                        class="h-9 w-full rounded-2xl border border-slate-200 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
                         <option value="">All priorities</option>
                         <option>Low</option>
                         <option>Medium</option>
@@ -107,10 +107,10 @@
                     </select>
                 </div>
 
-                <div class="w-full md:w-44">
-                    <label class="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Status</label>
+                <div class="w-full md:w-40">
+                    <label class="mb-1.5 block text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">Status</label>
                     <select id="statusFilter"
-                        class="h-10 w-full rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+                        class="h-9 w-full rounded-2xl border border-slate-200 bg-white px-2.5 text-xs text-slate-700 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
                         <option value="">All status</option>
                         <option>Inprogress</option>
                         <option>Done</option>
@@ -119,24 +119,24 @@
                     </select>
                 </div>
 
-                <label class="flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700">
+                <label class="flex h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-700">
                     <span class="h-2 w-2 rounded-full <?= !empty($showRemovedItems) ? 'bg-amber-500' : 'bg-slate-400' ?>"></span>
                     <span class="font-medium">Show Removed</span>
                     <input
                         id="showRemovedItems"
                         type="checkbox"
                         <?= !empty($showRemovedItems) ? 'checked' : '' ?>
-                        class="h-10 w-4 rounded rounded-2xl border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                        class="h-8 w-4 rounded rounded-2xl border-slate-300 text-emerald-600 focus:ring-emerald-500">
                 </label>
 
-                <label class="flex h-9 w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-500 md:w-72">
+                <label class="flex h-8 w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-500 md:w-72">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-4.35-4.35m1.85-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
-                    <input id="repoSearch" type="search" placeholder="Search documents" class="w-full border-0 bg-transparent p-0 text-sm text-slate-700 outline-none placeholder:text-slate-400">
+                    <input id="repoSearch" type="search" placeholder="Search documents" class="w-full border-0 bg-transparent p-0 text-xs text-slate-700 outline-none placeholder:text-slate-400">
                 </label>
             </div>
 
             <a href="index.php?controller=correspondence&action=newCirculation"
-                class="inline-flex h-9 items-center rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                class="inline-flex h-8 items-center rounded-lg bg-blue-600 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700">
                 Create Correspondence
             </a>
         </div>
@@ -147,11 +147,11 @@
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-4">
                 
 
-                                <div class="border-b border-slate-200 px-4 py-4 md:px-6">
-                    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                                <div class="border-b border-slate-200 px-3 py-3 md:px-4">
+                    <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                         <div>
                             <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Document circulation repo</p>
-                            <h3 class="mt-1 text-base font-semibold text-slate-900">All circulations</h3>
+                            <h3 class="mt-1 text-sm font-semibold text-slate-900">All circulations</h3>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
@@ -161,23 +161,23 @@
                     </div>
                 </div>
 
-                    <div class="p-5">
+                    <div class="p-3">
                 <div id="dropdown-root" class="pointer-events-none fixed inset-0 z-[9999]"></div>
 
                 <!-- Desktop: table view -->
                 <div class="hidden md:block overflow-auto ">
-                    <table id="documentTable" class="w-full text-sm compact">
+                    <table id="documentTable" class="w-full text-xs compact">
                     <thead class="border-y border-slate-200 bg-slate-100 text-slate-500">
                         <tr>
-                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Tracking</th>
-                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Document</th>
-                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Received</th>
-                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Status</th>
-                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Closed</th>
-                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Circulated</th>
-                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Due</th>
-                            <th class="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Priority</th>
-                            <th class="w-24 px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Actions</th>
+                            <th class="px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Tracking</th>
+                            <th class="px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Document</th>
+                            <th class="px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Received</th>
+                            <th class="px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Status</th>
+                            <th class="px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Closed</th>
+                            <th class="px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Circulated</th>
+                            <th class="px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Due</th>
+                            <th class="px-2.5 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.18em]">Priority</th>
+                            <th class="w-24 px-2.5 py-2.5 text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Actions</th>
                             <th class="hidden">State</th>
                         </tr>
                     </thead>
@@ -188,8 +188,8 @@
                             $totalRecipients = (int)($doc['total_recipients'] ?? 0);
                             $doneCount = (int)($doc['done_count'] ?? 0);
                             // Status is driven by Open/Close which marks circulations as 'Done'
-                            $status =  $doc['status'];
                             $isDeleted = !empty($doc['is_deleted']);
+                            $status = $isDeleted ? 'Removed' : $doc['status'];
                             $isDraftDocument = !empty($doc['is_draft']) || strtolower(trim((string)($status ?? ''))) === 'draft';
                             $isEdited = !empty($doc['is_edited']);
                             $canManage = false;
@@ -236,23 +236,23 @@
                         default  => 'bg-slate-400',
                     };
                         ?>
-                        <tr class="border-b border-slate-100 bg-white align-middle transition-colors hover:bg-slate-50 <?= $isDeleted ? 'text-slate-500' : 'text-slate-900' ?>">
-                            <td class="px-3 py-3 align-middle whitespace-nowrap">
-                                <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
+                        <tr class="border-b border-slate-100 align-middle transition-colors <?= $isDeleted ? 'bg-slate-50 text-slate-400 hover:bg-slate-50' : 'bg-white text-slate-900 hover:bg-slate-50' ?>">
+                            <td class="px-2.5 py-2.5 align-middle whitespace-nowrap">
+                                <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.75 text-[10px] font-medium text-slate-500">
                                     <?= htmlspecialchars($doc['tracking_id']) ?>
                                 </span>
                             </td>
-                            <td class="min-w-[260px] px-3 py-3 align-middle">
+                            <td class="min-w-[260px] px-2 py-2.5 align-middle">
                                 <div class="min-w-0">
                                     <?php $titleText = (string)($doc['title'] ?? ''); $isLongTitle = mb_strlen($titleText) > 60; $previewTitle = $isLongTitle ? mb_substr($titleText, 0, 60) : $titleText; ?>
-                                    <div class="title-container break-words whitespace-normal text-sm font-semibold text-slate-900" style="max-width:56ch;">
+                                    <div class="title-container break-words whitespace-normal text-xs font-semibold <?= $isDeleted ? 'text-slate-400' : 'text-slate-900' ?>" style="max-width:56ch;">
                                         <span class="title-preview"><?= htmlspecialchars($isLongTitle ? $previewTitle . '...' : $previewTitle) ?></span>
                                         <?php if ($isLongTitle): ?>
                                             <span class="title-full hidden"><?= htmlspecialchars($titleText) ?></span>
                                             <button type="button" data-title-toggle aria-expanded="false" class="ml-2 text-[11px] font-medium text-slate-500 transition hover:text-slate-700">See more</button>
                                         <?php endif; ?>
                                     </div>
-                                    <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                                    <div class="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
                                         <span class="font-medium text-slate-400"><?= htmlspecialchars($doc['tracking_id']) ?></span>
                                         <span class="text-slate-300">•</span>
                                         <span><?= !empty($doc['created_at']) ? date('M d, Y', strtotime($doc['created_at'])) : '—' ?></span>
@@ -263,41 +263,40 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-3 py-3 align-middle text-center whitespace-nowrap">
+                            <td class="px-2.5 py-2.5 align-middle text-center whitespace-nowrap">
                                 <?php $percent = $totalRecipients ? (int) floor(($receivedCount / $totalRecipients) * 100) : 0; ?>
-                                <div class="text-sm font-semibold <?= $isDeleted ? 'text-slate-400' : 'text-slate-700' ?>"><?= $receivedCount ?>/<?= $totalRecipients ?></div>
+                                <div class="text-[11px] font-semibold <?= $isDeleted ? 'text-slate-400' : 'text-slate-700' ?>"><?= $receivedCount ?>/<?= $totalRecipients ?></div>
                                 <div class="mx-auto mt-1.5 h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
                                     <div class="h-1.5 rounded-full bg-emerald-500" style="width:<?= $percent ?>%"></div>
                                 </div>
                             </td>
-                            <td class="px-3 py-3 align-middle" data-search="<?= htmlspecialchars($status) ?>">
-                                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
+                            <td class="px-2.5 py-2.5 align-middle" data-search="<?= htmlspecialchars($status) ?>">
+                                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 <?= $isDeleted ? 'bg-slate-100 text-slate-500' : 'bg-white text-slate-600' ?> px-2 py-0.75 text-[10px] font-medium">
                                     <span class="h-2 w-2 rounded-full <?= $statusDotClass ?>"></span>
                                     <span><?= htmlspecialchars($status ?: 'Pending') ?></span>
                                 </span>
                             </td>
-                            <td class="px-3 py-3 align-middle whitespace-nowrap">
-                                <span class="text-sm <?= $isClosedDocument ? 'text-slate-700' : 'text-slate-400' ?>"><?= htmlspecialchars($closedDisplay) ?></span>
+                            <td class="px-2.5 py-2.5 align-middle whitespace-nowrap">
+                                <span class="text-[11px] <?= $isClosedDocument ? ($isDeleted ? 'text-slate-400' : 'text-slate-700') : 'text-slate-400' ?>"><?= htmlspecialchars($closedDisplay) ?></span>
                             </td>
-                            <td class="px-3 py-3 align-middle whitespace-nowrap text-sm text-slate-600"><?= !empty($doc['created_at']) ? date('M d, Y', strtotime($doc['created_at'])) : '—' ?></td>
-                            <td class="px-3 py-3 align-middle whitespace-nowrap text-sm text-slate-600">
+                            <td class="px-2.5 py-2.5 align-middle whitespace-nowrap text-[11px] <?= $isDeleted ? 'text-slate-400' : 'text-slate-600' ?>"><?= !empty($doc['created_at']) ? date('M d, Y', strtotime($doc['created_at'])) : '—' ?></td>
+                            <td class="px-2.5 py-2.5 align-middle whitespace-nowrap text-[11px] <?= $isDeleted ? 'text-slate-400' : 'text-slate-600' ?>">
                                 <?php if ($doc['due_date']): ?>
                                     <?= date('M d, Y', strtotime($doc['due_date'])) ?>
                                 <?php else: ?>
                                     <span class="text-slate-400">No due date</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="px-3 py-3 align-middle" data-search="<?= htmlspecialchars($doc['priority']) ?>">
-                                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
+                            <td class="px-2.5 py-2.5 align-middle" data-search="<?= htmlspecialchars($doc['priority']) ?>">
+                                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 <?= $isDeleted ? 'bg-slate-100 text-slate-500' : 'bg-white text-slate-600' ?> px-2 py-0.75 text-xs font-medium">
                                     <span class="h-2 w-2 rounded-full <?= $priorityDotClass ?>"></span>
-                                    <span><?= htmlspecialchars($doc['priority'] ?: 'Not set') ?></span>
+                                    <span><?= htmlspecialchars($isDeleted ? 'Removed' : ($doc['priority'] ?: 'Not set')) ?></span>
                                 </span>
                             </td>
-                            <td class="px-3 py-3 align-middle text-center">
-                                <div class="inline-flex items-center justify-center gap-1.5">
-                                    <?php if ($isDraftDocument && $canFinalize): ?>
-                                        <button type="button"
-                                    class="relative z-10 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-110 hover:border-blue-300 hover:bg-blue-100 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 active:scale-80 animate-bounce"
+                            <td class="px-2.5 py-2.5 align-middle text-center">
+                                <div class="inline-flex items-center justify-center gap-1">
+                                    <?php if ($isDraftDocument && $canFinalize && !$isDeleted): ?>
+                                    <button type="button" class="relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-110 hover:border-blue-300 hover:bg-blue-100 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 active:scale-80 animate-bounce"
                                             title="Draft document"
                                             aria-label="Draft document"
                                             data-draft-action
@@ -312,10 +311,11 @@
                                         data-view-action
                                         aria-label="View document"
                                         data-document-id="<?= (int)$doc['id'] ?>"
-                                        class="relative z-10 h-10 w-10 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400 active:translate-y-0"
+                                        class="relative z-10 h-9 w-9 inline-flex items-center justify-center rounded-lg border border-slate-200 <?= $isDeleted ? 'bg-slate-100 text-slate-400' : 'bg-white text-slate-600' ?> shadow-sm transition-all duration-200 ease-out <?= $isDeleted ? '' : 'hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md' ?> focus:outline-none focus:ring-2 focus:ring-slate-400 active:translate-y-0"
                                         title="View">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                     </button>
+                                    <?php if (!$isDeleted): ?>
                                     <button type="button"
                                         data-actions-toggle
                                         aria-haspopup="menu"
@@ -326,10 +326,11 @@
                                         data-can-delete="<?= $canDeleteCorrespondence && !$isDeleted ? '1' : '0' ?>"
                                         data-can-hard-delete="<?= $canHardDeleteCorrespondence ? '1' : '0' ?>"
                                         data-is-deleted="<?= $isDeleted ? '1' : '0' ?>"
-                                        class="relative z-10 h-10 w-10 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400 active:translate-y-0"
+                                        class="relative z-10 h-9 w-9 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400 active:translate-y-0"
                                         title="More options">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M12 6v.01M12 12v.01M12 18v.01"/></svg>
                                     </button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td class="hidden"><?= $isDeleted ? 'Removed' : 'Active' ?></td>
@@ -368,49 +369,49 @@
                             ? (!empty($doc['closed_at']) ? date('M d, Y', strtotime($doc['closed_at'])) : '—')
                             : 'Open';
                     ?>
-                    <article data-state="<?= $cardState ?>" class="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
-                        <div class="flex items-start justify-between gap-3">
+                    <article data-state="<?= $cardState ?>" class="group rounded-2xl border border-slate-200 <?= $isDeleted ? 'bg-slate-50 text-slate-400' : 'bg-white' ?> p-3 shadow-sm transition <?= $isDeleted ? '' : 'hover:shadow-md' ?>">
+                        <div class="flex items-start justify-between gap-2">
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-mono text-xs text-blue-700"><?= htmlspecialchars($doc['tracking_id']) ?></span>
+                                    <span class="font-mono text-xs <?= $isDeleted ? 'text-slate-500' : 'text-blue-700' ?>"><?= htmlspecialchars($doc['tracking_id']) ?></span>
                                     <?php $mt = (string)($doc['title'] ?? ''); $mtLong = mb_strlen($mt) > 80; $mtPreview = $mtLong ? mb_substr($mt, 0, 80) : $mt; ?>
-                                    <h3 class="title-container truncate text-sm font-semibold text-slate-900 break-words whitespace-normal" style="max-width:80ch;">
+                                    <h3 class="title-container truncate text-xs font-semibold <?= $isDeleted ? 'text-slate-500' : 'text-slate-900' ?> break-words whitespace-normal" style="max-width:80ch;">
                                         <span class="title-preview"><?= htmlspecialchars($mtLong ? $mtPreview . '...' : $mtPreview) ?></span>
                                         <?php if ($mtLong): ?>
                                             <span class="title-full hidden"><?= htmlspecialchars($mt) ?></span>
-                                            <button type="button" data-title-toggle aria-expanded="false" class="ml-2 text-xs text-blue-600 hover:underline">See more</button>
+                                            <button type="button" data-title-toggle aria-expanded="false" class="ml-2 text-xs <?= $isDeleted ? 'text-slate-400' : 'text-blue-600' ?> <?= $isDeleted ? '' : 'hover:underline' ?>">See more</button>
                                         <?php endif; ?>
                                     </h3>
                                 </div>
-                                <p class="mt-1 text-xs text-slate-500 truncate"><?= htmlspecialchars($doc['sender_email']) ?></p>
+                                <p class="mt-1 text-[10px] <?= $isDeleted ? 'text-slate-400' : 'text-slate-500' ?> truncate"><?= htmlspecialchars($doc['sender_email']) ?></p>
                             </div>
                             <div class="flex flex-col items-end gap-2">
-                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold <?= $statusClass ?>"><?= htmlspecialchars($status) ?></span>
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold <?= $priorityClass ?>"><?= htmlspecialchars($doc['priority'] ?? '—') ?></span>
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.75 text-[10px] font-semibold <?= $isDeleted ? 'bg-slate-100 text-slate-500' : $statusClass ?>"><?= htmlspecialchars($isDeleted ? 'Removed' : $status) ?></span>
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold <?= $isDeleted ? 'bg-slate-100 text-slate-500' : $priorityClass ?>"><?= htmlspecialchars($isDeleted ? 'Removed' : ($doc['priority'] ?? '—')) ?></span>
                             </div>
                         </div>
-                        <div class="mt-3 flex items-center justify-between">
-                            <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <div class="mt-2.5 flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-[10px] <?= $isDeleted ? 'text-slate-400' : 'text-slate-500' ?>">
                                 <span>Due: <?= $doc['due_date'] ? date('M d, Y', strtotime($doc['due_date'])) : '—' ?></span>
                             </div>
+                            <?php if (!$isDeleted): ?>
                             <div class="inline-flex items-center gap-2">
                                 <button type="button" data-row-action="edit" data-document-id="<?= (int)$doc['id'] ?>" data-document-title="<?= htmlspecialchars((string)($doc['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                                    <?= (!$canEditCorrespondence || $isDeleted) ? 'disabled' : '' ?>
                                     class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
                                     ✎
                                 </button>
                                 <button type="button" data-row-action="delete" data-document-id="<?= (int)$doc['id'] ?>" data-document-title="<?= htmlspecialchars((string)($doc['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                                    <?= (!$canDeleteCorrespondence || $isDeleted) ? 'disabled' : '' ?>
                                     class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100">
                                     🗑
                                 </button>
-                                    <?php if ($canHardDeleteCorrespondence): ?>
-                                        <button type="button" data-row-action="hard-delete" data-document-id="<?= (int)$doc['id'] ?>" data-document-title="<?= htmlspecialchars((string)($doc['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-rose-600 bg-rose-600 text-white hover:bg-rose-700">
-                                            🗡
-                                        </button>
-                                    <?php endif; ?>
+                                <?php if ($canHardDeleteCorrespondence): ?>
+                                    <button type="button" data-row-action="hard-delete" data-document-id="<?= (int)$doc['id'] ?>" data-document-title="<?= htmlspecialchars((string)($doc['title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-rose-600 bg-rose-600 text-white hover:bg-rose-700">
+                                        🗡
+                                    </button>
+                                <?php endif; ?>
                             </div>
+                            <?php endif; ?>
                         </div>
                     </article>
                     <?php endforeach; ?>
@@ -452,22 +453,29 @@
     .correspondence-ui .dataTables_wrapper .dataTables_length select,
     .correspondence-ui .dataTables_wrapper .dataTables_filter input {
         border: 1px solid rgba(15, 23, 42, 0.12) !important;
-        border-radius: 0.75rem !important;
+        border-radius: 0.65rem !important;
         background: white !important;
         color: #0f172a !important;
         box-shadow: none !important;
-        padding: 0.5rem 0.75rem !important;
-        min-height: 2.25rem !important;
-        font-size: 0.875rem !important;
+        padding: 0.35rem 0.65rem !important;
+        min-height: 2rem !important;
+        font-size: 0.82rem !important;
+    }
+
+    .correspondence-ui .dataTables_wrapper .dataTables_info,
+    .correspondence-ui .dataTables_wrapper .dataTables_length,
+    .correspondence-ui .dataTables_wrapper .dataTables_filter,
+    .correspondence-ui .dataTables_wrapper .dataTables_paginate {
+        font-size: 0.82rem !important;
     }
 
     .correspondence-ui .dataTables_wrapper .dataTables_paginate .paginate_button {
         border: 1px solid rgba(15, 23, 42, 0.1) !important;
-        border-radius: 0.6rem !important;
+        border-radius: 0.55rem !important;
         background: white !important;
         color: #475569 !important;
-        padding: 0.45rem 0.7rem !important;
-        margin: 0 0.2rem !important;
+        padding: 0.3rem 0.55rem !important;
+        margin: 0 0.15rem !important;
         transition: all 160ms ease !important;
     }
 
@@ -530,15 +538,40 @@
     .correspondence-ui .modal-panel .px-5, .correspondence-ui .modal-panel .px-6 { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
 
     /* Cleaner table with more vertical rhythm: compact CRM-style */
-    .correspondence-ui table#documentTable { border-collapse: separate; border-spacing: 0 6px; font-size: 0.82rem; }
-    .correspondence-ui #documentTable thead th { background: transparent; color: var(--cb-muted); border-bottom: none; padding: 0.35rem 0.5rem; font-size: 0.66rem; letter-spacing: 0.04em; }
+    .correspondence-ui table#documentTable { border-collapse: separate; border-spacing: 0 5px; font-size: 0.78rem; }
+    .correspondence-ui #documentTable thead th { background: transparent; color: var(--cb-muted); border-bottom: none; padding: 0.3rem 0.45rem; font-size: 0.62rem; letter-spacing: 0.04em; }
     .correspondence-ui #documentTable tbody tr { background: transparent; box-shadow: none; }
-    .correspondence-ui #documentTable td, .correspondence-ui #documentTable th { padding: 0.45rem 0.5rem; vertical-align: middle; }
+    .correspondence-ui #documentTable td, .correspondence-ui #documentTable th { padding: 0.4rem 0.45rem; vertical-align: middle; }
 
     /* Default compact tweaks (applied by `compact` class) */
-    .correspondence-ui table#documentTable.compact { border-spacing: 0 6px; }
-    .correspondence-ui table#documentTable.compact td, .correspondence-ui table#documentTable.compact th { padding: 0.25rem 0.35rem; }
+    .correspondence-ui table#documentTable.compact { border-spacing: 0 5px; }
+    .correspondence-ui table#documentTable.compact td, .correspondence-ui table#documentTable.compact th { padding: 0.2rem 0.3rem; }
     .correspondence-ui table#documentTable.compact tbody tr { border-radius: 8px; }
+
+    .correspondence-ui table#documentTable .inline-flex.h-8 { height: 32px; padding: 0 .55rem; font-size: 0.74rem; }
+    .correspondence-ui table#documentTable button.h-8 { height: 32px; }
+
+    .correspondence-ui .dataTables_wrapper.compact-mode .dataTables_length select,
+    .correspondence-ui .dataTables_wrapper.compact-mode .dataTables_filter input {
+        padding: 0.25rem 0.5rem !important;
+        min-height: 1.8rem !important;
+        font-size: 0.78rem !important;
+    }
+
+    .correspondence-ui .dataTables_wrapper.compact-mode .dataTables_paginate .paginate_button {
+        padding: 0.25rem 0.45rem !important;
+        margin: 0 0.1rem !important;
+    }
+
+    .correspondence-ui .dataTables_wrapper.compact-mode .dataTables_info {
+        font-size: 0.78rem !important;
+    }
+
+    .correspondence-ui .dataTables_wrapper.compact-mode .dataTables_length,
+    .correspondence-ui .dataTables_wrapper.compact-mode .dataTables_filter,
+    .correspondence-ui .dataTables_wrapper.compact-mode .dataTables_paginate {
+        margin-bottom: 0.45rem !important;
+    }
 
     /* Smaller, sleeker badges */
     .correspondence-ui .inline-flex.items-center.justify-center.rounded-md { background: rgba(15,23,42,0.03); border: none; padding: 0.18rem 0.5rem; font-size: 0.72rem; }
@@ -567,9 +600,9 @@
         width: 100%;
         border: 0;
         background: transparent;
-        padding: 0.7rem 0.9rem;
+        padding: 0.55rem 0.75rem;
         text-align: left;
-        font-size: 0.875rem;
+        font-size: 0.82rem;
         color: #334155;
         cursor: pointer;
         transition: background-color 140ms ease, color 140ms ease;
@@ -638,14 +671,9 @@ $(document).ready(function() {
         columnDefs: [
             { targets: 9, visible: false, searchable: true }
         ],
-        dom: '<"flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4"l>rt<"flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4"ip>',
-        language: {
-            search: '',
-            searchPlaceholder: 'Search documents'
-        }
+        dom: '<"flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3"l>rt<"flex flex-col md:flex-row md:items-center md:justify-between gap-2 mt-3"ip>'
     });
 
-    
     // expose instance globally for other handlers
     window.documentTableInstance = documentTable;
 

@@ -1018,25 +1018,25 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   }
 
   .modal-header {
-    padding: 20px;
+    padding: 16px;
     border-bottom: 1px solid #eef2f7;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
   }
 
   .modal-body {
-    padding: 20px;
+    padding: 16px;
     max-height: calc(100vh - 240px);
     overflow: auto;
   }
 
   .modal-footer {
-    padding: 18px 20px;
+    padding: 14px 16px;
     border-top: 1px solid #f1f5f9;
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: flex-end;
     align-items: center;
   }
@@ -1045,9 +1045,9 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
     background: transparent;
     color: #64748b;
     border: none;
@@ -1064,13 +1064,13 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   .btn-primary {
     background: #059669;
     color: #fff;
-    padding: 10px 16px;
-    border-radius: 10px;
+    padding: 8px 14px;
+    border-radius: 8px;
     border: none;
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
     display: inline-flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -1084,8 +1084,8 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
   .btn-ghost {
     background: transparent;
-    border-radius: 10px;
-    padding: 8px 12px;
+    border-radius: 8px;
+    padding: 6px 10px;
     border: 1px solid transparent;
     color: var(--muted);
     cursor: pointer;
@@ -1101,8 +1101,8 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     background: #fff;
     border: 1px solid rgba(220, 38, 38, 0.12);
     color: #dc2626;
-    border-radius: 10px;
-    padding: 8px 12px;
+    border-radius: 8px;
+    padding: 6px 10px;
     cursor: pointer;
     transition: all 0.2s ease;
   }
@@ -1116,9 +1116,9 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
     background: transparent;
     border: 1px solid rgba(15, 23, 42, 0.1);
     color: var(--text);
-    padding: 6px 8px;
-    border-radius: 8px;
-    font-size: 12px;
+    padding: 5px 7px;
+    border-radius: 6px;
+    font-size: 11px;
     cursor: pointer;
     transition: all 0.2s ease;
   }
@@ -1223,46 +1223,94 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   .fleet-module .modal-body,
   .fleet-module .modal-footer,
   .fleet-module .modal-header {
-    padding: 0.75rem !important;
+    padding: 0.65rem !important;
   }
 
-  .fleet-module [class*="p-4"] { padding: 0.75rem !important; }
-  .fleet-module [class*="p-3"] { padding: 0.5rem !important; }
-  .fleet-module [class*="p-2"] { padding: 0.375rem !important; }
+  .fleet-module [class*="p-4"] { padding: 0.65rem !important; }
+  .fleet-module [class*="p-3"] { padding: 0.45rem !important; }
+  .fleet-module [class*="p-2"] { padding: 0.3rem !important; }
   .fleet-module [class*="px-5"],
-  .fleet-module [class*="py-5"] { padding: 0.75rem !important; }
+  .fleet-module [class*="py-5"] { padding: 0.7rem !important; }
   .fleet-module [class*="px-4"],
-  .fleet-module [class*="py-4"] { padding: 0.65rem !important; }
+  .fleet-module [class*="py-4"] { padding: 0.55rem !important; }
   .fleet-module [class*="px-3"],
-  .fleet-module [class*="py-3"] { padding: 0.5rem !important; }
+  .fleet-module [class*="py-3"] { padding: 0.45rem !important; }
 
-  .fleet-module [class*="gap-4"] { gap: 0.75rem !important; }
-  .fleet-module [class*="gap-3"] { gap: 0.5rem !important; }
-  .fleet-module [class*="gap-2"] { gap: 0.375rem !important; }
-  .fleet-module [class*="gap-1"] { gap: 0.25rem !important; }
-  .fleet-module [class*="space-y-4"] > * + * { margin-top: 0.75rem !important; }
-  .fleet-module [class*="space-y-3"] > * + * { margin-top: 0.5rem !important; }
-  .fleet-module [class*="space-y-2"] > * + * { margin-top: 0.375rem !important; }
+  .fleet-module [class*="gap-4"] { gap: 0.65rem !important; }
+  .fleet-module [class*="gap-3"] { gap: 0.45rem !important; }
+  .fleet-module [class*="gap-2"] { gap: 0.3rem !important; }
+  .fleet-module [class*="gap-1"] { gap: 0.2rem !important; }
+  .fleet-module [class*="space-y-4"] > * + * { margin-top: 0.65rem !important; }
+  .fleet-module [class*="space-y-3"] > * + * { margin-top: 0.45rem !important; }
+  .fleet-module [class*="space-y-2"] > * + * { margin-top: 0.3rem !important; }
 
-  .fleet-module [class*="mt-4"] { margin-top: 0.75rem !important; }
-  .fleet-module [class*="mb-4"] { margin-bottom: 0.75rem !important; }
-  .fleet-module [class*="mt-3"] { margin-top: 0.5rem !important; }
-  .fleet-module [class*="mb-3"] { margin-bottom: 0.5rem !important; }
-  .fleet-module [class*="mt-2"] { margin-top: 0.375rem !important; }
-  .fleet-module [class*="mb-2"] { margin-bottom: 0.375rem !important; }
+  .fleet-module [class*="mt-4"] { margin-top: 0.65rem !important; }
+  .fleet-module [class*="mb-4"] { margin-bottom: 0.65rem !important; }
+  .fleet-module [class*="mt-3"] { margin-top: 0.45rem !important; }
+  .fleet-module [class*="mb-3"] { margin-bottom: 0.45rem !important; }
+  .fleet-module [class*="mt-2"] { margin-top: 0.3rem !important; }
+  .fleet-module [class*="mb-2"] { margin-bottom: 0.3rem !important; }
 
-  .fleet-module [class*="h-9"] { height: 2rem !important; }
-  .fleet-module [class*="h-10"] { height: 2.25rem !important; }
+  .fleet-module [class*="h-9"] { height: 1.9rem !important; }
+  .fleet-module [class*="h-10"] { height: 2rem !important; }
 
-  .fleet-module [class*="px-4"] { padding-left: 0.65rem !important; padding-right: 0.65rem !important; }
-  .fleet-module [class*="text-sm"] { font-size: 0.875rem; }
+  .fleet-module [class*="px-4"] { padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
+  .fleet-module [class*="text-sm"] { font-size: 0.82rem; }
+
+  .fleet-module .text-base { font-size: 0.9rem !important; }
+  .fleet-module .text-sm { font-size: 0.8rem !important; }
+  .fleet-module .text-xs { font-size: 0.72rem !important; }
+  .fleet-module .text-lg { font-size: 0.95rem !important; }
+  .fleet-module .text-xl { font-size: 1.05rem !important; }
+  .fleet-module .text-[10px] { font-size: 0.7rem !important; }
+  .fleet-module .text-[11px] { font-size: 0.74rem !important; }
+
+  .fleet-module .h-8 { height: 1.75rem !important; }
+  .fleet-module .h-9 { height: 2rem !important; }
+  .fleet-module .h-10 { height: 2.25rem !important; }
+
+  .fleet-module .px-5 { padding-left: 0.85rem !important; padding-right: 0.85rem !important; }
+  .fleet-module .px-4 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .fleet-module .px-3 { padding-left: 0.55rem !important; padding-right: 0.55rem !important; }
+  .fleet-module .px-2 { padding-left: 0.35rem !important; padding-right: 0.35rem !important; }
+  .fleet-module .py-3 { padding-top: 0.55rem !important; padding-bottom: 0.55rem !important; }
+  .fleet-module .py-2 { padding-top: 0.35rem !important; padding-bottom: 0.35rem !important; }
+
+  .fleet-module .gap-4 { gap: 0.75rem !important; }
+  .fleet-module .gap-3 { gap: 0.5rem !important; }
+  .fleet-module .gap-2 { gap: 0.35rem !important; }
+  .fleet-module .gap-1 { gap: 0.2rem !important; }
+  .fleet-module .space-y-4 > * + * { margin-top: 0.75rem !important; }
+  .fleet-module .space-y-3 > * + * { margin-top: 0.5rem !important; }
+  .fleet-module .space-y-2 > * + * { margin-top: 0.35rem !important; }
 
   .fleet-module #vehicleCardsContainer {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    grid-auto-rows: minmax(0, auto) !important;
+    align-items: start !important;
+    align-content: start !important;
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+
+  @media (min-width: 640px) {
+    .fleet-module #vehicleCardsContainer {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .fleet-module #vehicleCardsContainer {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .fleet-module #vehicleCardsContainer {
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
   }
 
   .fleet-module .calendar-split-panel {
-    grid-template-columns: minmax(240px, 2.2fr) minmax(160px, 1fr);
+    grid-template-columns: minmax(220px, 2fr) minmax(140px, 1fr);
     align-items: start;
   }
 
@@ -1277,12 +1325,12 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   }
 
   .fleet-module #fleetPaginationControls {
-    padding: 0.75rem !important;
+    padding: 0.65rem !important;
   }
 
   .fleet-module #fleetGalleryMeta,
   .fleet-module #fleetPaginationInfo {
-    font-size: 0.85rem !important;
+    font-size: 0.82rem !important;
   }
 
   @media (max-width: 920px) {
