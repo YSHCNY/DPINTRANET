@@ -1,6 +1,7 @@
 <?php require __DIR__ . '/partials.php'; ?>
 <?php portalHeader('Dashboard'); ?>
 <?php portalFlash(); ?>
+<?php portalWelcomeToast(); ?>
 
 <?php
 $total = (int)($stats['total'] ?? 0);

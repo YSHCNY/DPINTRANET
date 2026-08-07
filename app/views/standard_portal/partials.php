@@ -309,6 +309,27 @@ function formatUnreadBadgeCount(int $count): string {
     return (string)$count;
 }
 
+function portalWelcomeToast() {
+    if (empty($_SESSION['portal_welcome_message'])) {
+        return;
+    }
+
+    $message = htmlspecialchars($_SESSION['portal_welcome_message'], ENT_QUOTES, 'UTF-8');
+    unset($_SESSION['portal_welcome_message']);
+
+    echo '<div id="portalWelcomeToast" class="fixed bottom-6 right-6 z-[9999] max-w-sm rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-lg text-slate-900">'
+        . '<div class="flex items-start gap-3">'
+        . '<span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span>'
+        . '<div class="min-w-0">'
+        . '<p class="font-semibold">Welcome back!</p>'
+        . '<p class="mt-1 text-sm leading-6">' . $message . '</p>'
+        . '</div>'
+        . '<button type="button" onclick="document.getElementById(\'portalWelcomeToast\')?.remove()" class="text-emerald-700 hover:text-emerald-900">✕</button>'
+        . '</div>'
+        . '</div>';
+    echo '<script>setTimeout(function(){var t=document.getElementById("portalWelcomeToast"); if(t) t.remove();},6000);</script>';
+}
+
 function portalFlash() {
     if (!isset($_SESSION['portal_message'])) {
         return;

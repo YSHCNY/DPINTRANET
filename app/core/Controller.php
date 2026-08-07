@@ -33,16 +33,15 @@ class Controller {
         $timeoutSeconds = (int)($_ENV['SESSION_TIMEOUT_SECONDS'] ?? 900);
         $service = new SessionTimeoutService($timeoutSeconds, true);
 
-        if (!isset($_SESSION['user'])) {
-            $isAjax = false;
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                $isAjax = true;
-            } elseif (!empty($_SERVER['HTTP_ACCEPT']) && stripos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
-                $isAjax = true;
-            }
+        $isAuthenticated = isset($_SESSION['user'])
+            || !empty($_SESSION['standard_user_id'])
+            || !empty($_SESSION['user_id']);
 
-            if ($isAjax) {
-                header('Content-Type: application/json');
+        if (!$isAuthenticated) {
+            if ($this->wantsJsonResponse()) {
+                if (!headers_sent()) {
+                    header('Content-Type: application/json; charset=utf-8');
+                }
                 http_response_code(401);
                 echo json_encode(['success' => false, 'message' => 'Authentication required']);
                 exit;
@@ -70,7 +69,9 @@ class Controller {
             $service->clearSession(['session_expired', 'session_expired_message', 'session_recovery_user', 'session_recovery_user_id']);
 
             if ($this->wantsJsonResponse()) {
-                header('Content-Type: application/json');
+                if (!headers_sent()) {
+                    header('Content-Type: application/json; charset=utf-8');
+                }
                 http_response_code(401);
                 echo json_encode(['success' => false, 'message' => 'Session expired due to inactivity.']);
                 exit;
@@ -88,7 +89,30 @@ class Controller {
             return true;
         }
 
-        return !empty($_SERVER['HTTP_ACCEPT']) && stripos((string)$_SERVER['HTTP_ACCEPT'], 'application/json') !== false;
+        if (!empty($_SERVER['HTTP_ACCEPT']) && stripos((string)$_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+            return true;
+        }
+
+        if (!empty($_GET['action']) && is_string($_GET['action']) && str_ends_with($_GET['action'], 'Ajax')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Send a standardized JSON response and exit.
+     * Payload should contain keys: success, message, data, errors
+     */
+    protected function jsonResponse(array $payload, int $statusCode = 200): void {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        http_response_code($statusCode);
+        // Ensure canonical shape
+        $out = array_merge(['success' => false, 'message' => '', 'data' => new \stdClass(), 'errors' => new \stdClass()], $payload);
+        echo json_encode($out);
+        exit;
     }
 
     protected function currentUserLevel(): int {

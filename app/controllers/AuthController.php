@@ -3,6 +3,12 @@ session_start();
 require_once '../app/core/Controller.php';
 require_once '../app/models/User.php';
 require_once '../app/Services/PasswordResetService.php';
+require_once __DIR__ . '/../core/Database.php';
+require_once __DIR__ . '/../Services/OTPService.php';
+require_once __DIR__ . '/../Services/MailService.php';
+require_once __DIR__ . '/../Services/EmailTemplateService.php';
+require_once __DIR__ . '/../Services/TrustedDeviceService.php';
+require_once __DIR__ . '/../Services/CookieHelper.php';
 
 use App\Contracts\RateLimiterInterface;
 use App\Services\Security\LoginRateLimiter;
@@ -11,11 +17,16 @@ class AuthController extends Controller {
     private $userModel;
     private $passwordResetService;
     private RateLimiterInterface $rateLimiter;
+    private \App\Services\OTPService $otpService;
+    private \App\Services\TrustedDeviceService $trustedDeviceService;
 
     public function __construct(?RateLimiterInterface $rateLimiter = null) {
         $this->userModel = new User();
         $this->passwordResetService = new PasswordResetService($this->userModel);
         $this->rateLimiter = $rateLimiter ?? new LoginRateLimiter();
+        $pdo = Database::connect();
+        $this->otpService = new \App\Services\OTPService($pdo);
+        $this->trustedDeviceService = new \App\Services\TrustedDeviceService($pdo, $_ENV['TRUSTED_DEVICE_HMAC_KEY'] ?? 'replace_me_in_env');
     }
 
     public function login() {
@@ -52,6 +63,8 @@ class AuthController extends Controller {
                 $_SESSION['user'] = $recoveryUser['username'];
                 $_SESSION['user_level'] = $recoveryUser['userLevel'] ?? 3;
                 $_SESSION['user_id'] = $recoveryUser['id'] ?? 0;
+                $_SESSION['auth_user_type'] = 'admin';
+                $_SESSION['auth_user_id'] = $_SESSION['user_id'];
                 $_SESSION['position'] = $recoveryUser['position'] ?? '';
                 $_SESSION['firstName'] = $recoveryUser['firstName'] ?? '';
                 $_SESSION['lastName'] = $recoveryUser['lastName'] ?? '';
@@ -100,6 +113,8 @@ class AuthController extends Controller {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = trim((string)($_POST['username'] ?? ''));
+            // Normalize common invisible whitespace that may be pasted into the username field
+            $username = preg_replace('/[\p{C}\s]+/u', ' ', $username);
             $password = (string)($_POST['password'] ?? '');
             $ipAddress = (string)($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
             $userAgent = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
@@ -123,36 +138,183 @@ class AuthController extends Controller {
                 return;
             }
 
-            $user = $this->userModel->findByUsername($username);
+            // Support login by username OR email for robustness
+            $user = $this->userModel->findByIdentifier($username);
+            if ($user) {
+                error_log('[auth-debug] user found for login attempt: id=' . ($user['id'] ?? 'n/a') . ' username=' . ($user['username'] ?? 'n/a') . ' hash_len=' . (isset($user['password']) ? strlen($user['password']) : '0'));
+            } else {
+                error_log('[auth-debug] no user found for identifier=' . $username);
+            }
 
             if ($user && password_verify($password, $user['password'])) {
+                // Credentials valid — do NOT create a login session yet.
                 $this->rateLimiter->registerSuccess($username, $ipAddress, 'admin', (int)($user['id'] ?? 0), $userAgent);
-                $_SESSION['user'] = $user['username'];
-                $_SESSION['user_level'] = $user['userLevel'];
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['position'] = $user['position'];
-                $_SESSION['firstName'] = $user['firstName'];
-                $_SESSION['lastName'] = $user['lastName'];
-                $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
-                $_SESSION['id'] = $user['id'];
-                $_SESSION['last_activity'] = time();
-                unset($_SESSION['session_expired'], $_SESSION['session_expired_message'], $_SESSION['session_recovery_user']);
-                session_regenerate_id(true);
+
+                $userId = (int)($user['id'] ?? 0);
+                $email = (string)($user['email'] ?? '');
+
+                // If this browser already has a valid trusted-device token, skip OTP and sign in directly.
+                $trustedCookieName = \App\Services\CookieHelper::trustedDeviceCookieName('admin', $userId);
+                $trustedToken = $_COOKIE[$trustedCookieName] ?? null;
+                if (!empty($trustedToken)) {
+                    $validated = $this->trustedDeviceService->validateTrustedDevice('admin', $userId, (string)$trustedToken, $ipAddress, $userAgent, true);
+                    if ($validated !== null) {
+                        $rotatedToken = $validated['rotated_token'] ?? null;
+                        if (!empty($rotatedToken)) {
+                            $cookie = \App\Services\CookieHelper::trustedDeviceCookie($rotatedToken, 'admin', $userId);
+                            setcookie($cookie['name'], $cookie['value'], $cookie['options']);
+                        }
+
+                        $_SESSION['user'] = $user['username'];
+                        $_SESSION['user_level'] = $user['userLevel'];
+                        $_SESSION['user_type'] = 'admin';
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['auth_user_type'] = 'admin';
+                        $_SESSION['auth_user_id'] = $_SESSION['user_id'];
+                        $_SESSION['position'] = $user['position'];
+                        $_SESSION['firstName'] = $user['firstName'];
+                        $_SESSION['lastName'] = $user['lastName'];
+                        $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
+                        $_SESSION['id'] = $user['id'];
+                        $_SESSION['last_activity'] = time();
+                        session_regenerate_id(true);
+
+                        if ($wantsJson) {
+                            $this->sendJsonResponse(['success' => true, 'message' => 'Trusted device recognized.', 'redirectUrl' => 'index.php?controller=Auth&action=dashboard&wc=welcome']);
+                        }
+
+                        $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
+                    }
+                }
+
+                // Generate and email OTP for second factor. Store minimal state in session
+                try {
+                    $otpResult = $this->otpService->generate('admin', $userId, $email, 'login', $ipAddress, $userAgent, true);
+                    if (!($otpResult['success'] ?? false)) {
+                        throw new \RuntimeException($otpResult['message'] ?? 'OTP generation failed');
+                    }
+
+                    $plainOtp = $otpResult['otp'] ?? null;
+                    if ($plainOtp !== null) {
+                        $tpl = (new \App\Services\EmailTemplateService())->renderOtpEmail([
+                            'otp' => $plainOtp,
+                            'valid_minutes' => 5,
+                            'brand_name' => $_ENV['MAIL_FROM_NAME'] ?? 'Organization',
+                            'organization_name' => $_ENV['ORG_NAME'] ?? ($_ENV['MAIL_FROM_NAME'] ?? 'Organization'),
+                        ]);
+                        $mail = new \App\Services\MailService();
+                        $sent = $mail->send($email, $tpl['subject'], $tpl['html']);
+                        if (! $sent) {
+                            throw new \RuntimeException('Mail send failed');
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    error_log('OTP generation/send failed: ' . $e->getMessage());
+                    if ($wantsJson) {
+                        $this->sendJsonResponse(['success' => false, 'message' => 'Unable to send verification code. Please try again later.']);
+                    }
+                    $this->view('auth/login', ['error' => 'Unable to send verification code. Please try again later.', 'showExpiredSessionModal' => $showExpiredSessionModal]);
+                    return;
+                }
+
+                // Store a pending two-factor session state (no login session created)
+                $_SESSION['twofactor_user_type'] = 'admin';
+                $_SESSION['twofactor_user_id'] = $userId;
+                $_SESSION['twofactor_email'] = $email;
+                $_SESSION['twofactor_reference'] = $otpResult['reference'] ?? null;
+                $_SESSION['twofactor_expires_at'] = $otpResult['expires_at'] ?? null;
+                $_SESSION['twofactor_remaining_attempts'] = 5;
 
                 if ($wantsJson) {
                     $this->sendJsonResponse([
                         'success' => true,
-                        'message' => 'Authentication successful.',
-                        'remainingAttempts' => null,
-                        'isLocked' => false,
-                        'lockExpiresInSeconds' => 0,
-                        'redirectUrl' => 'index.php?controller=Auth&action=dashboard&wc=welcome',
+                        'message' => 'Verification code sent.',
+                        'redirectUrl' => 'index.php?controller=Auth&action=verify2fa',
                     ]);
                 }
 
-                $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
+                $this->redirect('index.php?controller=Auth&action=verify2fa');
             }
 
+            if ($user) {
+                error_log('[auth-debug] password verification failed for user id=' . ($user['id'] ?? 'n/a') . ' username=' . ($user['username'] ?? 'n/a'));
+                $stored = (string)($user['password'] ?? '');
+                error_log('[auth-debug] stored password length=' . strlen($stored) . ' prefix=' . substr($stored, 0, 8));
+
+                // Backwards compatibility: check legacy MD5 or SHA1 hashed passwords and migrate to password_hash()
+                $stored = (string)($user['password'] ?? '');
+                $pwMatched = false;
+                if ($stored !== '') {
+                    if (preg_match('/^[0-9a-f]{32}$/i', $stored)) {
+                        if (hash_equals($stored, md5($password))) {
+                            $pwMatched = true;
+                        }
+                    } elseif (preg_match('/^[0-9a-f]{40}$/i', $stored)) {
+                        if (hash_equals($stored, sha1($password))) {
+                            $pwMatched = true;
+                        }
+                    }
+                }
+
+                if ($pwMatched) {
+                    // Migrate password to current algorithm
+                    try {
+                        $this->userModel->updatePassword((int)$user['id'], $password);
+                    } catch (\Throwable $e) {
+                        error_log('[auth-debug] password migration failed for user id=' . ($user['id'] ?? 'n/a') . ' err=' . $e->getMessage());
+                    }
+
+                    // Credentials accepted (legacy hash). Continue with OTP flow (do not create session yet)
+                    $this->rateLimiter->registerSuccess($username, $ipAddress, 'admin', (int)($user['id'] ?? 0), $userAgent);
+                    $userId = (int)($user['id'] ?? 0);
+                    $email = (string)($user['email'] ?? '');
+                    try {
+                        $otpResult = $this->otpService->generate('admin', $userId, $email, 'login', $ipAddress, $userAgent, true);
+                        if (!($otpResult['success'] ?? false)) {
+                            throw new \RuntimeException($otpResult['message'] ?? 'OTP generation failed');
+                        }
+                        $plainOtp = $otpResult['otp'] ?? null;
+                        if ($plainOtp !== null) {
+                            $tpl = (new \App\Services\EmailTemplateService())->renderOtpEmail([
+                                'otp' => $plainOtp,
+                                'valid_minutes' => 5,
+                                'brand_name' => $_ENV['MAIL_FROM_NAME'] ?? 'Organization',
+                                'organization_name' => $_ENV['ORG_NAME'] ?? ($_ENV['MAIL_FROM_NAME'] ?? 'Organization'),
+                            ]);
+                            $mail = new \App\Services\MailService();
+                            $sent = $mail->send($email, $tpl['subject'], $tpl['html']);
+                            if (! $sent) {
+                                throw new \RuntimeException('Mail send failed');
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        error_log('OTP generation/send failed (legacy match): ' . $e->getMessage());
+                        if ($wantsJson) {
+                            $this->sendJsonResponse(['success' => false, 'message' => 'Unable to send verification code. Please try again later.']);
+                        }
+                        $this->view('auth/login', ['error' => 'Unable to send verification code. Please try again later.', 'showExpiredSessionModal' => $showExpiredSessionModal]);
+                        return;
+                    }
+
+                    $_SESSION['twofactor_user_type'] = 'admin';
+                    $_SESSION['twofactor_user_id'] = $userId;
+                    $_SESSION['twofactor_email'] = $email;
+                    $_SESSION['twofactor_reference'] = $otpResult['reference'] ?? null;
+                    $_SESSION['twofactor_expires_at'] = $otpResult['expires_at'] ?? null;
+                    $_SESSION['twofactor_remaining_attempts'] = 5;
+
+                    if ($wantsJson) {
+                        $this->sendJsonResponse([
+                            'success' => true,
+                            'message' => 'Verification code sent.',
+                            'redirectUrl' => 'index.php?controller=Auth&action=verify2fa',
+                        ]);
+                    }
+
+                    $this->redirect('index.php?controller=Auth&action=verify2fa');
+                    return;
+                }
+            }
             $this->rateLimiter->registerFailure($username, $ipAddress, 'invalid_credentials', 'admin', (int)($user['id'] ?? 0), $userAgent);
             $failureCount = $this->rateLimiter->getFailureCount($username, $ipAddress, 'admin', (int)($user['id'] ?? 0));
             $remainingAttempts = max(0, 4 - $failureCount);
@@ -219,6 +381,167 @@ class AuthController extends Controller {
         }
 
         $this->view('auth/forgot_password');
+    }
+
+    public function verify2fa() {
+        $userId = (int)($_SESSION['twofactor_user_id'] ?? 0);
+        if ($userId <= 0) {
+            $_SESSION['portal_message'] = 'Please authenticate first.';
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->redirect('index.php?controller=Auth&action=login');
+        }
+
+        $message = $_SESSION['portal_message'] ?? null;
+        $type = $_SESSION['portal_msg_type'] ?? 'info';
+        unset($_SESSION['portal_message'], $_SESSION['portal_msg_type']);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' || $this->wantsJsonResponse()) {
+            $ipAddress = (string)($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+            $userAgent = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+
+            $raw = file_get_contents('php://input');
+            $data = json_decode($raw, true);
+            if (!is_array($data)) {
+                $data = $_POST;
+            }
+
+            $otp = trim((string)($data['otp'] ?? ''));
+            // sanitize OTP: remove any non-digit chars and trim to 6 digits
+            $otp = preg_replace('/\D/', '', $otp);
+            if (strlen($otp) > 6) $otp = substr($otp, 0, 6);
+            $sessionReference = $_SESSION['twofactor_reference'] ?? null;
+            $reference = $data['reference'] ?? null;
+            if (!empty($sessionReference) && (empty($reference) || (string)$reference !== (string)$sessionReference)) {
+                $reference = $sessionReference;
+            }
+            $remember = !empty($data['remember']) && (int)$data['remember'] === 1;
+
+            $ok = false;
+            $result = ['success' => false, 'reason' => 'error', 'remainingAttempts' => 0];
+            error_log('OTP RESULT=' . json_encode($result));
+            error_log('OTP OK=' . ($ok ? 'YES' : 'NO'));
+            try {
+                $result = $this->otpService->verify('admin', $userId, $otp, 'login', $reference);
+                $ok = (bool)$result['success'];
+            } catch (\Throwable $e) {
+                error_log('OTP verify error: ' . $e->getMessage());
+            }
+
+            if ($ok) {
+                // create real login session now
+                $user = $this->userModel->findUserById($userId);
+                if ($user) {
+                    $_SESSION['user'] = $user['username'];
+                    $_SESSION['user_level'] = $user['userLevel'];
+                        $_SESSION['user_type'] = 'admin';
+                        $_SESSION['user_id'] = $user['id'];
+                        $_SESSION['auth_user_type'] = 'admin';
+                        $_SESSION['auth_user_id'] = $_SESSION['user_id'];
+                    $_SESSION['position'] = $user['position'];
+                    $_SESSION['firstName'] = $user['firstName'];
+                    $_SESSION['lastName'] = $user['lastName'];
+                    $_SESSION['profile_picture'] = $user['profile_picture'] ?? 'default.png';
+                    $_SESSION['id'] = $user['id'];
+                    $_SESSION['last_activity'] = time();
+                    unset($_SESSION['twofactor_user_id'], $_SESSION['twofactor_user_type'], $_SESSION['twofactor_email'], $_SESSION['twofactor_reference'], $_SESSION['twofactor_expires_at'], $_SESSION['twofactor_remaining_attempts']);
+                    session_regenerate_id(true);
+
+                    if ($remember) {
+                        $deviceInfo = $this->buildTrustedDeviceInfo($userAgent, $ipAddress);
+                        $trustedDevice = $this->trustedDeviceService->createTrustedDevice(
+                            'admin',
+                            $userId,
+                            $deviceInfo,
+                            30,
+                            null,
+                            true
+                        );
+
+                        if (!empty($trustedDevice['token'])) {
+                            $cookie = \App\Services\CookieHelper::trustedDeviceCookie($trustedDevice['token'], 'admin', $userId);
+                            setcookie($cookie['name'], $cookie['value'], $cookie['options']);
+                        }
+                    }
+                }
+
+                if ($this->wantsJsonResponse()) {
+                    $this->sendJsonResponse(['success' => true, 'message' => 'Verification successful', 'redirectUrl' => 'index.php?controller=Auth&action=dashboard&wc=welcome']);
+                }
+
+                $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
+            }
+
+            // failure - surface specific messages
+            $msg = 'The verification code is incorrect.';
+            if (!empty($result['reason'])) {
+                switch ($result['reason']) {
+                    case 'expired': $msg = 'Your verification code has expired.'; break;
+                    case 'attempts_exceeded': $msg = 'Too many incorrect attempts. Please request a new verification code.'; break;
+                    case 'no_active_otp': $msg = 'No verification code found. Please request a new code.'; break;
+                    default: $msg = 'The verification code is incorrect.'; break;
+                }
+            }
+
+            // update remaining attempts in session if provided
+            if (isset($result['remainingAttempts'])) {
+                $_SESSION['twofactor_remaining_attempts'] = (int)$result['remainingAttempts'];
+            }
+
+            if ($this->wantsJsonResponse()) {
+                $this->sendJsonResponse(['success' => false, 'message' => $msg, 'remainingAttempts' => $_SESSION['twofactor_remaining_attempts'] ?? 0]);
+            }
+
+            $_SESSION['portal_message'] = $msg;
+            $_SESSION['portal_msg_type'] = 'error';
+            $this->view('auth/verify_2fa', ['message' => $msg, 'msgType' => 'error', 'remainingAttempts' => $_SESSION['twofactor_remaining_attempts'] ?? 0]);
+            return;
+        }
+
+        $this->view('auth/verify_2fa', ['email' => $_SESSION['twofactor_email'] ?? null, 'reference' => $_SESSION['twofactor_reference'] ?? null, 'remainingAttempts' => $_SESSION['twofactor_remaining_attempts'] ?? 5]);
+    }
+
+    public function resend2fa() {
+        header('Content-Type: application/json');
+        $userId = (int)($_SESSION['twofactor_user_id'] ?? 0);
+        if ($userId <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'No pending verification found']);
+            exit;
+        }
+
+        $email = $_SESSION['twofactor_email'] ?? '';
+        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+        $agent = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+
+        try {
+            $otpResult = $this->otpService->generate('admin', $userId, $email, 'login', $ip, $agent, true);
+            if (!($otpResult['success'] ?? false)) {
+                throw new \RuntimeException($otpResult['message'] ?? 'OTP generation failed');
+            }
+            $plainOtp = $otpResult['otp'] ?? null;
+            $sent = true;
+            if ($plainOtp !== null) {
+                $tpl = (new \App\Services\EmailTemplateService())->renderOtpEmail([
+                    'otp' => $plainOtp,
+                    'valid_minutes' => 5,
+                    'brand_name' => $_ENV['MAIL_FROM_NAME'] ?? 'Organization',
+                    'organization_name' => $_ENV['ORG_NAME'] ?? ($_ENV['MAIL_FROM_NAME'] ?? 'Organization'),
+                ]);
+                $mail = new \App\Services\MailService();
+                $sent = (bool)$mail->send($email, $tpl['subject'], $tpl['html']);
+            }
+        } catch (\Throwable $e) {
+            error_log('OTP resend failed: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Unable to resend verification code']);
+            exit;
+        }
+
+        $_SESSION['twofactor_reference'] = $otpResult['reference'] ?? $_SESSION['twofactor_reference'];
+        $_SESSION['twofactor_expires_at'] = $otpResult['expires_at'] ?? $_SESSION['twofactor_expires_at'];
+
+        echo json_encode(['success' => $sent]);
+        exit;
     }
 
     public function verifyOtp() {
@@ -314,6 +637,9 @@ class AuthController extends Controller {
 
     public function dashboard() {
         $this->requireLogin();
+        error_log('===== TRUSTED DEVICES =====');
+        error_log('SESSION=' . json_encode($_SESSION));
+        error_log('GET=' . json_encode($_GET));
 
         require_once '../app/models/correspondence.php';
         require_once '../app/models/Files.php';
@@ -711,6 +1037,56 @@ class AuthController extends Controller {
         }
 
         return $data;
+    }
+
+    private function buildTrustedDeviceInfo(string $userAgent, string $ipAddress): array
+    {
+        $browserName = 'Unknown Browser';
+        $operatingSystem = 'Unknown OS';
+        $deviceName = 'Desktop';
+
+        if (preg_match('/Edg\//i', $userAgent)) {
+            $browserName = 'Microsoft Edge';
+        } elseif (preg_match('/OPR\//i', $userAgent) || preg_match('/Opera/i', $userAgent)) {
+            $browserName = 'Opera';
+        } elseif (preg_match('/Chrome\//i', $userAgent)) {
+            $browserName = 'Chrome';
+        } elseif (preg_match('/Firefox\//i', $userAgent)) {
+            $browserName = 'Firefox';
+        } elseif (preg_match('/Safari\//i', $userAgent)) {
+            $browserName = 'Safari';
+        } elseif (preg_match('/Trident\//i', $userAgent) || preg_match('/MSIE/i', $userAgent)) {
+            $browserName = 'Internet Explorer';
+        }
+
+        if (preg_match('/Windows/i', $userAgent)) {
+            $operatingSystem = 'Windows';
+        } elseif (preg_match('/Mac OS X|Macintosh/i', $userAgent)) {
+            $operatingSystem = 'macOS';
+        } elseif (preg_match('/Android/i', $userAgent)) {
+            $operatingSystem = 'Android';
+        } elseif (preg_match('/iPhone|iPad|iOS/i', $userAgent)) {
+            $operatingSystem = 'iOS';
+        } elseif (preg_match('/Linux/i', $userAgent)) {
+            $operatingSystem = 'Linux';
+        }
+
+        if (preg_match('/iPad/i', $userAgent)) {
+            $deviceName = 'iPad';
+        } elseif (preg_match('/iPhone/i', $userAgent)) {
+            $deviceName = 'iPhone';
+        } elseif (preg_match('/Android/i', $userAgent)) {
+            $deviceName = 'Android Device';
+        } elseif (preg_match('/Mobile/i', $userAgent)) {
+            $deviceName = 'Mobile';
+        }
+
+        return [
+            'browser_name' => $browserName,
+            'operating_system' => $operatingSystem,
+            'device_name' => $deviceName,
+            'registration_ip' => $ipAddress,
+        ];
     }
 
     private function uploadProfilePicture() {

@@ -1,35 +1,100 @@
 <?php
 ob_start();
-require_once __DIR__ . '/../app/config.php';
-require_once __DIR__ . '/../app/core/bootstrap.php';
 
-// 1. Error Reporting (Keep this during development)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// 2. Routing Logic & Controller Handling
+// 1. Routing Logic & Controller Handling
 $controller = $_GET['controller'] ?? 'Auth';
 $action = $_GET['action'] ?? 'login';
 
-// Detect XHR (AJAX) requests
-$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+// Detect AJAX/API requests by header or Ajax-style action naming.
+$isAjax = false;
+if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+    $isAjax = true;
+} elseif (!empty($_SERVER['HTTP_ACCEPT']) && stripos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+    $isAjax = true;
+} elseif (is_string($action) && str_ends_with($action, 'Ajax')) {
+    $isAjax = true;
+}
 
-require_once "../app/controllers/{$controller}Controller.php";
+if ($isAjax) {
+    ini_set('display_errors', '0');
+    ini_set('display_startup_errors', '0');
+    error_reporting(E_ALL);
 
+    function sendJsonAjaxError(int $code, string $message): void {
+        if (ob_get_length() !== false) {
+            @ob_clean();
+        }
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        http_response_code($code);
+        echo json_encode(['success' => false, 'message' => $message]);
+        exit;
+    }
+
+    set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
+        if (!(error_reporting() & $errno)) {
+            return false;
+        }
+        throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+    });
+
+    set_exception_handler(function(Throwable $exception) {
+        sendJsonAjaxError(500, 'Internal server error');
+    });
+
+    register_shutdown_function(function() {
+        $error = error_get_last();
+        if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR], true)) {
+            sendJsonAjaxError(500, 'Internal server error');
+        }
+    });
+} else {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+}
+
+require_once __DIR__ . '/../app/config.php';
+require_once __DIR__ . '/../app/core/bootstrap.php';
+
+$controllerFile = __DIR__ . "/../app/controllers/{$controller}Controller.php";
+if (!file_exists($controllerFile)) {
+    if ($isAjax) {
+        sendJsonAjaxError(404, 'Not found');
+    }
+    http_response_code(404);
+    exit;
+}
+
+require_once $controllerFile;
 $class = $controller . 'Controller';
-$ctrl = new $class();
+if (!class_exists($class, false)) {
+    if ($isAjax) {
+        sendJsonAjaxError(404, 'Not found');
+    }
+    http_response_code(404);
+    exit;
+}
 
+$ctrl = new $class();
 $id = $_POST['id'] ?? $_GET['id'] ?? null;
 
-// If it's an AJAX request, execute controller immediately and stop to prevent HTML wrapping
 if ($isAjax) {
-    if ($id !== null) {
-        $ctrl->$action($id);
-    } else {
-        $ctrl->$action();
+    try {
+        if (!is_callable([$ctrl, $action])) {
+            sendJsonAjaxError(404, 'Not found');
+        }
+
+        if ($id !== null) {
+            $ctrl->$action($id);
+        } else {
+            $ctrl->$action();
+        }
+    } catch (Throwable $exception) {
+        sendJsonAjaxError(500, 'Internal server error');
     }
-    exit; 
+    exit;
 }
 ?>
 <!DOCTYPE html>
