@@ -5,6 +5,7 @@ require_once '../app/models/CarBookings.php';
 require_once '../app/models/CarVehicles.php';
 require_once '../app/models/CarDrivers.php';
 require_once '../app/models/User.php';
+require_once '../app/core/Database.php';
 require_once '../app/Services/MmdaNumberCodingService.php';
 // Load app config if available (try sensible locations)
 if (file_exists(__DIR__ . '/../config.php')) {
@@ -37,6 +38,45 @@ class CarBookingsController extends Controller {
     private CarBookings $bookingsModel;
     private CarVehicles $vehiclesModel;
     private CarDrivers $driversModel;
+
+    private function logCarBookingAction(string $action, int $bookingId, array $context = []): void {
+        $actorId = (int)($_SESSION['id'] ?? $_SESSION['user_id'] ?? 0);
+        $actorName = (string)($_SESSION['user'] ?? ($actorId > 0 ? $actorId : 'system'));
+
+        $details = [];
+        $bookingRef = $bookingId > 0 ? "#{$bookingId}" : 'new booking';
+
+        if (!empty($context['purpose'])) {
+            $details[] = 'Purpose: ' . $context['purpose'];
+        }
+        if (!empty($context['vehicle_id'])) {
+            $details[] = 'Vehicle ID: ' . $context['vehicle_id'];
+        }
+        if (!empty($context['driver_id'])) {
+            $details[] = 'Driver ID: ' . $context['driver_id'];
+        }
+        if (!empty($context['date_trip'])) {
+            $details[] = 'Date: ' . $context['date_trip'];
+        }
+        if (!empty($context['message'])) {
+            $details[] = $context['message'];
+        }
+
+        $description = match ($action) {
+            'create' => 'Created car booking ' . $bookingRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'update' => 'Updated car booking ' . $bookingRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'delete' => 'Deleted car booking ' . $bookingRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            default => 'Car booking action ' . $action . ' for ' . $bookingRef,
+        };
+
+        try {
+            $db = Database::connect();
+            $stmt = $db->prepare("INSERT INTO systemLogs (userName, logDesc, module, logDate) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$actorName, $description, 'Car Bookings', date('Y-m-d H:i:s')]);
+        } catch (Throwable $e) {
+            // Keep booking flow intact even if logging fails.
+        }
+    }
 
     public function __construct() {
         $this->bookingsModel = new CarBookings();
@@ -146,6 +186,12 @@ class CarBookingsController extends Controller {
             } else {
                 $id = $this->bookingsModel->createBooking($data, $actorUserId);
             }
+            $this->logCarBookingAction('create', (int)$id, [
+                'purpose' => (string)($data['purpose'] ?? ''),
+                'vehicle_id' => (int)($data['vehicle_id'] ?? 0),
+                'driver_id' => (int)($data['driver_id'] ?? 0),
+                'date_trip' => (string)($data['date_trip'] ?? ''),
+            ]);
             echo json_encode(['success' => true, 'booking_id' => $id]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -183,6 +229,12 @@ class CarBookingsController extends Controller {
             $data = $this->getBookingPostData();
             $this->validateMmdaBookingRestriction($data);
             $id = $this->bookingsModel->createBookingJson($data, (int)($_SESSION['id'] ?? 0));
+            $this->logCarBookingAction('create', (int)$id, [
+                'purpose' => (string)($data['purpose'] ?? ''),
+                'vehicle_id' => (int)($data['vehicle_id'] ?? 0),
+                'driver_id' => (int)($data['driver_id'] ?? 0),
+                'date_trip' => (string)($data['date_trip'] ?? ''),
+            ]);
             echo json_encode(['success' => true, 'booking_id' => $id]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -215,6 +267,14 @@ class CarBookingsController extends Controller {
                 $this->validateMmdaBookingRestriction($merged);
             }
             $ok = $this->bookingsModel->updateBookingJson($id, $_POST, (int)($_SESSION['id'] ?? 0));
+            if ($ok) {
+                $this->logCarBookingAction('update', $id, [
+                    'purpose' => (string)($_POST['purpose'] ?? ''),
+                    'vehicle_id' => (int)($_POST['vehicle_id'] ?? 0),
+                    'driver_id' => (int)($_POST['driver_id'] ?? 0),
+                    'date_trip' => (string)($_POST['date_trip'] ?? ''),
+                ]);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -238,6 +298,9 @@ class CarBookingsController extends Controller {
             $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
             if ($id < 1) throw new Exception('Invalid id');
             $ok = $this->bookingsModel->deleteBookingJson($id, (int)($_SESSION['id'] ?? 0));
+            if ($ok) {
+                $this->logCarBookingAction('delete', $id, ['message' => 'Booking canceled from car booking module']);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -323,6 +386,15 @@ class CarBookingsController extends Controller {
                 }
                 $ok = $this->bookingsModel->updateBooking($id, $merged, (int)($_SESSION['id'] ?? 0));
 
+                if ($ok) {
+                    $this->logCarBookingAction('update', $id, [
+                        'purpose' => (string)($merged['purpose'] ?? ''),
+                        'vehicle_id' => (int)($merged['vehicle_id'] ?? 0),
+                        'driver_id' => (int)($merged['driver_id'] ?? 0),
+                        'date_trip' => (string)($merged['date_trip'] ?? ''),
+                    ]);
+                }
+
                 // log
                 require_once '../app/models/CarBookingLogs.php';
                 $logs = new CarBookingLogs();
@@ -358,6 +430,10 @@ class CarBookingsController extends Controller {
                 $ok = $this->bookingsModel->deleteBookingJson($id, (int)($_SESSION['id'] ?? 0));
             } else {
                 $ok = $this->bookingsModel->deleteBooking($id, (int)($_SESSION['id'] ?? 0));
+
+                if ($ok) {
+                    $this->logCarBookingAction('delete', $id, ['message' => 'Booking canceled from car booking module']);
+                }
 
                 require_once '../app/models/CarBookingLogs.php';
                 $logs = new CarBookingLogs();

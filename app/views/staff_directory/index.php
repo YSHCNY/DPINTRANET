@@ -1,4 +1,6 @@
 <?php
+$isViewerOnly = ((int)($_SESSION['user_level'] ?? 3) === 3);
+
 function escape($value) {
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
@@ -134,9 +136,11 @@ function staffStatusBadge($status) {
                         </div>
                     </div>
 
-                    <a href="index.php?controller=StaffDirectory&action=create" class="inline-flex h-9 items-center whitespace-nowrap rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
-                        Add new staff
-                    </a>
+                    <?php if (!$isViewerOnly): ?>
+                        <a href="index.php?controller=StaffDirectory&action=create" class="inline-flex h-9 items-center whitespace-nowrap rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
+                            Add new staff
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -181,15 +185,19 @@ function staffStatusBadge($status) {
                             <?php $fullName = trim(sprintf('%s, %s', $staff['lastName'] ?? '', $staff['firstName'] ?? '')); ?>
                             <tr class="hover:bg-slate-50 transition-colors" data-staff='<?= htmlspecialchars(json_encode([
                                 'id' => $staff['staff_id'],
+                                'firstName' => $staff['firstName'] ?? '',
+                                'lastName' => $staff['lastName'] ?? '',
                                 'name' => $fullName,
-                                'department' => $staff['department'],
-                                'position' => $staff['position'],
+                                'department' => $staff['department'] ?? '',
+                                'position' => $staff['position'] ?? '',
                                 'firm' => $staff['firm'] ?? '',
-                                'email' => $staff['email'],
-                                'contact' => $staff['contact_number'],
+                                'email' => $staff['email'] ?? '',
+                                'contact' => $staff['contact_number'] ?? '',
                                 'deployment' => !empty($staff['deployment_date']) ? date('M j, Y', strtotime($staff['deployment_date'])) : '—',
                                 'status' => $staff['status'] ?? 'active',
                                 'image' => staffImageUrl($staff['image'] ?? null),
+                                'createdAt' => !empty($staff['created_at']) ? date('M j, Y g:i A', strtotime($staff['created_at'])) : '—',
+                                'updatedAt' => !empty($staff['updated_at']) ? date('M j, Y g:i A', strtotime($staff['updated_at'])) : '—',
                             ]), ENT_QUOTES, 'UTF-8') ?>'>
                                 <td class="px-3 py-3 align-top">
                                     <div class="flex items-center gap-3">
@@ -296,8 +304,10 @@ function staffStatusBadge($status) {
                 </div>
                 <div class="grid gap-3">
                     <button id="previewViewButton" type="button" disabled class="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 opacity-50 cursor-not-allowed">View full details</button>
-                    <button id="previewEditButton" type="button" disabled class="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 opacity-50 cursor-not-allowed">Edit</button>
-                    <button id="previewDeleteButton" type="button" disabled class="h-9 rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 opacity-50 cursor-not-allowed">Delete</button>
+                    <?php if (!$isViewerOnly): ?>
+                        <button id="previewEditButton" type="button" disabled class="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 opacity-50 cursor-not-allowed">Edit</button>
+                        <button id="previewDeleteButton" type="button" disabled class="h-9 rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 opacity-50 cursor-not-allowed">Delete</button>
+                    <?php endif; ?>
                     <button id="clearSelection" type="button" class="h-9 rounded-lg bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800">Cancel selection</button>
                 </div>
             </div>
@@ -306,6 +316,81 @@ function staffStatusBadge($status) {
 </div>
 
 </div>
+</div>
+
+<div id="staffDetailModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" id="staffDetailModalBackdrop"></div>
+    <div class="relative mx-auto mt-10 w-[92vw] max-w-3xl rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+        <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+            <div>
+                <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Staff profile</p>
+                <h3 id="staffDetailModalTitle" class="mt-1 text-lg font-semibold text-slate-900">Staff details</h3>
+            </div>
+            <button type="button" id="staffDetailModalClose" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50">✕</button>
+        </div>
+
+        <div class="p-5">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <img id="staffDetailModalImage" src="<?= staffImageUrl(null) ?>" alt="Staff profile" class="h-28 w-28 rounded-2xl border border-slate-200 bg-slate-100 object-cover shadow-sm">
+                <div class="min-w-0 flex-1">
+                    <p id="staffDetailModalName" class="text-xl font-semibold text-slate-900"></p>
+                    <p id="staffDetailModalPosition" class="mt-1 text-sm text-slate-600"></p>
+                    <p id="staffDetailModalId" class="mt-2 text-xs uppercase tracking-[0.2em] text-slate-500"></p>
+                </div>
+            </div>
+
+            <div class="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">First name</p>
+                    <p id="staffDetailModalFirstName" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Last name</p>
+                    <p id="staffDetailModalLastName" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Position</p>
+                    <p id="staffDetailModalPositionField" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Department</p>
+                    <p id="staffDetailModalDepartment" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Firm</p>
+                    <p id="staffDetailModalFirm" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Status</p>
+                    <p id="staffDetailModalStatus" class="mt-1 inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Email</p>
+                    <p id="staffDetailModalEmail" class="mt-1 text-sm font-semibold text-slate-900 break-all"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Contact</p>
+                    <p id="staffDetailModalContact" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Deployment</p>
+                    <p id="staffDetailModalDeployment" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Created</p>
+                    <p id="staffDetailModalCreatedAt" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Updated</p>
+                    <p id="staffDetailModalUpdatedAt" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+                <div class="rounded-xl bg-slate-50 px-3 py-3">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Staff ID</p>
+                    <p id="staffDetailModalStaffId" class="mt-1 text-sm font-semibold text-slate-900"></p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -397,6 +482,7 @@ function staffStatusBadge($status) {
         }
 
         let selectedStaffId = null;
+        let selectedStaffData = null;
 
         function getStatusBadgeClasses(status) {
             const value = (status || 'active').toString().toLowerCase();
@@ -446,6 +532,7 @@ function staffStatusBadge($status) {
             }
 
             selectedStaffId = data.id;
+            selectedStaffData = data;
             $emptySnapshot.addClass('hidden');
             $staffPreview.removeClass('hidden');
             viewButton.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
@@ -485,13 +572,47 @@ function staffStatusBadge($status) {
         $('#clearSelection').on('click', function() {
             $('#staffDirectoryTable tbody tr').removeClass('selected-row');
             togglePreview(null);
+            selectedStaffData = null;
+        });
+
+        function openStaffDetailModal(data) {
+            if (!data) {
+                return;
+            }
+
+            const [pillClass, dotClass] = getStatusBadgeClasses(data.status);
+            $('#staffDetailModalImage').attr('src', data.image || '<?= staffImageUrl(null) ?>');
+            $('#staffDetailModalTitle').text(data.name || 'Staff details');
+            $('#staffDetailModalName').text(data.name || 'N / A');
+            $('#staffDetailModalPosition').text(data.position || 'No position');
+            $('#staffDetailModalPositionField').text(data.position || 'No position');
+            $('#staffDetailModalId').text(data.id || 'N / A');
+            $('#staffDetailModalStaffId').text(data.id || 'N / A');
+            $('#staffDetailModalFirstName').text(data.firstName || 'N / A');
+            $('#staffDetailModalLastName').text(data.lastName || 'N / A');
+            $('#staffDetailModalDepartment').text(data.department || 'No department');
+            $('#staffDetailModalFirm').text(data.firm || 'No firm');
+            $('#staffDetailModalEmail').text(data.email || 'No email');
+            $('#staffDetailModalContact').text(data.contact || 'No phone');
+            $('#staffDetailModalDeployment').text(data.deployment || 'No deployment date');
+            $('#staffDetailModalCreatedAt').text(data.createdAt || '—');
+            $('#staffDetailModalUpdatedAt').text(data.updatedAt || '—');
+            const $status = $('#staffDetailModalStatus');
+            $status.removeClass().addClass(`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold ${pillClass}`);
+            $status.html(`<span class="h-1.5 w-1.5 rounded-full ${dotClass}"></span><span>${(data.status || 'Active').toString()}</span>`);
+
+            $('#staffDetailModal').removeClass('hidden');
+        }
+
+        $('#staffDetailModalClose, #staffDetailModalBackdrop').on('click', function() {
+            $('#staffDetailModal').addClass('hidden');
         });
 
         $('#previewViewButton').on('click', function() {
-            if (!selectedStaffId) {
+            if (!selectedStaffId || !selectedStaffData) {
                 return;
             }
-            window.location.href = `index.php?controller=StaffDirectory&action=edit&id=${encodeURIComponent(selectedStaffId)}`;
+            openStaffDetailModal(selectedStaffData);
         });
 
         $('#previewEditButton').on('click', function() {

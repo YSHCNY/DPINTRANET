@@ -135,10 +135,12 @@
                 </label>
             </div>
 
-            <a href="index.php?controller=correspondence&action=newCirculation"
-                class="inline-flex h-8 items-center rounded-lg bg-blue-600 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700">
-                Create Correspondence
-            </a>
+            <?php if ((int)($_SESSION['user_level'] ?? 3) !== 3): ?>
+                <a href="index.php?controller=correspondence&action=newCirculation"
+                    class="inline-flex h-8 items-center rounded-lg bg-blue-600 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                    Create Correspondence
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 

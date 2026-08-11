@@ -29,6 +29,24 @@ class AuthController extends Controller {
         $this->trustedDeviceService = new \App\Services\TrustedDeviceService($pdo, $_ENV['TRUSTED_DEVICE_HMAC_KEY'] ?? 'replace_me_in_env');
     }
 
+    private function logAuthEvent(string $message, ?string $username = null, ?int $userId = null): void {
+        $actorName = trim((string)($username ?? ''));
+        if ($actorName === '' && $userId !== null && $userId > 0) {
+            $actorName = (string)$userId;
+        }
+        if ($actorName === '') {
+            $actorName = 'system';
+        }
+
+        try {
+            $db = Database::connect();
+            $stmt = $db->prepare("INSERT INTO systemLogs (userName, logDesc, module, logDate) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$actorName, $message, 'Authentication', date('Y-m-d H:i:s')]);
+        } catch (Throwable $e) {
+            // Keep auth flow intact even if logging fails.
+        }
+    }
+
     public function login() {
         error_log('[recover-debug] AuthController::login() entered');
         error_log('[recover-debug] GET recover=' . (isset($_GET['recover']) ? (string)$_GET['recover'] : 'absent'));
@@ -124,6 +142,8 @@ class AuthController extends Controller {
                 $remainingSeconds = $this->rateLimiter->remainingLockSeconds($username, $ipAddress, 'admin', null);
                 $this->rateLimiter->evaluateAttempt($username, $ipAddress, false, 'rate_limited', 'admin', null, $userAgent);
 
+                $this->logAuthEvent('Login temporarily blocked for ' . $username, $username, null);
+
                 if ($wantsJson) {
                     $this->sendJsonResponse([
                         'success' => false,
@@ -178,6 +198,8 @@ class AuthController extends Controller {
                         $_SESSION['id'] = $user['id'];
                         $_SESSION['last_activity'] = time();
                         session_regenerate_id(true);
+
+                        $this->logAuthEvent('Login successful via trusted browser for ' . $user['username'], $user['username'], $userId);
 
                         if ($wantsJson) {
                             $this->sendJsonResponse(['success' => true, 'message' => 'Trusted device recognized.', 'redirectUrl' => 'index.php?controller=Auth&action=dashboard&wc=welcome']);
@@ -237,6 +259,7 @@ class AuthController extends Controller {
             }
 
             if ($user) {
+                $this->logAuthEvent('Login failed for ' . $username, $username, (int)($user['id'] ?? 0));
                 error_log('[auth-debug] password verification failed for user id=' . ($user['id'] ?? 'n/a') . ' username=' . ($user['username'] ?? 'n/a'));
                 $stored = (string)($user['password'] ?? '');
                 error_log('[auth-debug] stored password length=' . strlen($stored) . ' prefix=' . substr($stored, 0, 8));
@@ -464,6 +487,8 @@ class AuthController extends Controller {
                     }
                 }
 
+                $this->logAuthEvent('2FA verification successful for ' . $user['username'], $user['username'], $userId);
+
                 if ($this->wantsJsonResponse()) {
                     $this->sendJsonResponse(['success' => true, 'message' => 'Verification successful', 'redirectUrl' => 'index.php?controller=Auth&action=dashboard&wc=welcome']);
                 }
@@ -486,6 +511,8 @@ class AuthController extends Controller {
             if (isset($result['remainingAttempts'])) {
                 $_SESSION['twofactor_remaining_attempts'] = (int)$result['remainingAttempts'];
             }
+
+            $this->logAuthEvent('2FA verification failed for ' . ($userId > 0 ? (string)$userId : 'unknown') . ' (' . $msg . ')', null, $userId);
 
             if ($this->wantsJsonResponse()) {
                 $this->sendJsonResponse(['success' => false, 'message' => $msg, 'remainingAttempts' => $_SESSION['twofactor_remaining_attempts'] ?? 0]);
@@ -958,12 +985,16 @@ class AuthController extends Controller {
             session_start();
         }
 
+        $userId = (int)($_SESSION['id'] ?? $_SESSION['user_id'] ?? 0);
+        $username = trim((string)($_SESSION['user'] ?? ''));
+
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
         }
         session_destroy();
+        $this->logAuthEvent('Logout successful' . ($username !== '' ? ' for ' . $username : ''), $username !== '' ? $username : null, $userId > 0 ? $userId : null);
         $this->redirect('index.php?controller=Auth&action=login');
     }
 

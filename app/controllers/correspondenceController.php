@@ -9,6 +9,7 @@ require_once '../app/Services/CorrespondenceEmailService.php';
 require_once '../app/Services/CorrespondenceService.php';
 require_once '../app/Services/EmailProgressService.php';
 require_once __DIR__ . '/../Services/StandardPortalNotificationService.php';
+require_once __DIR__ . '/../core/Database.php';
 
 use App\Services\CorrespondenceEmailService;
 use App\Services\CorrespondenceService;
@@ -27,6 +28,48 @@ class CorrespondenceController extends Controller {
         $this->model = new CorrespondenceModel();
         $this->correspondenceService = new CorrespondenceService();
         $this->emailProgressService = new EmailProgressService();
+    }
+
+    private function logCorrespondenceAction(string $action, int $documentId, array $context = []): void {
+        $actorId = (int)($_SESSION['id'] ?? $_SESSION['user_id'] ?? 0);
+        $actorName = trim((string)($_SESSION['user'] ?? ''));
+        if ($actorName === '' && $actorId > 0) {
+            $actorName = (string)$actorId;
+        }
+        if ($actorName === '') {
+            $actorName = 'system';
+        }
+
+        $details = [];
+        $targetRef = $documentId > 0 ? "#{$documentId}" : 'new correspondence';
+
+        if (!empty($context['title'])) {
+            $details[] = 'Title: ' . $context['title'];
+        }
+        if (!empty($context['tracking_id'])) {
+            $details[] = 'Tracking ID: ' . $context['tracking_id'];
+        }
+        if (!empty($context['message'])) {
+            $details[] = $context['message'];
+        }
+
+        $description = match ($action) {
+            'create' => 'Created correspondence ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'update' => 'Updated correspondence ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'delete' => 'Deleted correspondence ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'hard_delete' => 'Hard deleted correspondence ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'thread' => 'Added correspondence thread entry for ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'status_toggle' => 'Updated correspondence status for ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            default => 'Correspondence action ' . $action . ' for ' . $targetRef,
+        };
+
+        try {
+            $db = Database::connect();
+            $stmt = $db->prepare("INSERT INTO systemLogs (userName, logDesc, module, logDate) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$actorName, $description, 'Correspondence', date('Y-m-d H:i:s')]);
+        } catch (Throwable $e) {
+            // Keep correspondence flow intact even if logging fails.
+        }
     }
 
     /**
@@ -1050,6 +1093,9 @@ class CorrespondenceController extends Controller {
         }
 
         if ($entryId) {
+            $this->logCorrespondenceAction('thread', $documentId, [
+                'message' => 'Thread entry added',
+            ]);
             $_SESSION['message'] = 'Posted.';
             $_SESSION['msg_type'] = 'success';
         } else {
@@ -1097,6 +1143,12 @@ public function toggleOpenClose()
     }
 
     $result = $this->model->updateAllCirculationsStatus($documentId, $statusMap[$action]);
+
+    if ($result['success'] ?? false) {
+        $this->logCorrespondenceAction('status_toggle', $documentId, [
+            'message' => 'Status updated to ' . $statusMap[$action],
+        ]);
+    }
 
     $_SESSION['message']  = $result['message'];
     $_SESSION['msg_type'] = $result['success'] ? 'success' : 'error';
@@ -1673,6 +1725,11 @@ public function getDocumentData() {
                     error_log('Finalize email queue failed: ' . $e->getMessage());
                 }
 
+                $this->logCorrespondenceAction('update', $id, [
+                    'title' => trim((string)($data['title'] ?? '')),
+                    'tracking_id' => trim((string)($data['tracking_id'] ?? '')),
+                ]);
+
                 $_SESSION['message'] = 'Draft finalized and circulated.';
                 $_SESSION['msg_type'] = 'success';
                 $ajaxResponse = ['success' => true, 'message' => 'Draft finalized and circulated.', 'document_id' => $id];
@@ -1694,10 +1751,19 @@ public function getDocumentData() {
                     error_log('Draft notify (save_draft) failed: ' . $e->getMessage());
                 }
 
+                $this->logCorrespondenceAction('update', $id, [
+                    'title' => trim((string)($data['title'] ?? '')),
+                    'tracking_id' => trim((string)($data['tracking_id'] ?? '')),
+                ]);
+
                 $_SESSION['message'] = 'Draft saved.';
                 $_SESSION['msg_type'] = 'success';
                 $ajaxResponse = ['success' => true, 'message' => 'Draft saved.', 'document_id' => $id];
             } else {
+                $this->logCorrespondenceAction('update', $id, [
+                    'title' => trim((string)($data['title'] ?? '')),
+                    'tracking_id' => trim((string)($data['tracking_id'] ?? '')),
+                ]);
                 $_SESSION['message'] = 'Document updated successfully.';
                 $_SESSION['msg_type'] = 'success';
                 $ajaxResponse = ['success' => true, 'message' => 'Document updated successfully.', 'document_id' => $id];
@@ -1751,6 +1817,7 @@ public function getDocumentData() {
                 throw new Exception('Unable to delete the document.');
             }
 
+            $this->logCorrespondenceAction('delete', $id, ['message' => 'Soft deleted correspondence']);
             $_SESSION['message'] = 'Document deleted. It remains visible in the repository as an audit record.';
             $_SESSION['msg_type'] = 'success';
         } catch (Exception $e) {
@@ -1791,6 +1858,7 @@ public function getDocumentData() {
                 throw new Exception('Unable to permanently delete the document.');
             }
 
+            $this->logCorrespondenceAction('hard_delete', $id, ['message' => 'Permanently deleted correspondence']);
             $_SESSION['message'] = 'Document permanently deleted by Super Admin.';
             $_SESSION['msg_type'] = 'success';
         } catch (Exception $e) {
@@ -2012,6 +2080,13 @@ public function getDocumentData() {
 
         // commit DB transaction after all operations
         try { $this->model->commit(); } catch (Throwable $ex) { error_log('Commit failed: ' . $ex->getMessage()); }
+
+        if (!empty($documentId)) {
+            $this->logCorrespondenceAction('create', (int)$documentId, [
+                'title' => trim((string)($data['title'] ?? '')),
+                'tracking_id' => trim((string)($data['tracking_id'] ?? '')),
+            ]);
+        }
 
     } catch (Exception $e) {
         // rollback DB and remove any moved files

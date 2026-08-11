@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../app/core/Controller.php';
+require_once '../app/core/Database.php';
 require_once __DIR__ . '/../Services/EmployeeMobilizationService.php';
 
 use App\Services\EmployeeMobilizationService;
@@ -10,6 +11,44 @@ class EmployeeMobilizationController extends Controller {
 
     public function __construct() {
         $this->mobilizationService = new EmployeeMobilizationService();
+    }
+
+    private function logMobilizationAction(string $action, int $movementId, array $context = []): void {
+        $actorId = (int)($_SESSION['id'] ?? $_SESSION['user_id'] ?? 0);
+        $actorName = (string)($_SESSION['user'] ?? ($actorId > 0 ? $actorId : 'system'));
+
+        $details = [];
+        $targetRef = $movementId > 0 ? "#{$movementId}" : 'new movement';
+
+        if (!empty($context['employee_id'])) {
+            $details[] = 'Employee ID: ' . $context['employee_id'];
+        }
+        if (!empty($context['movement_date'])) {
+            $details[] = 'Date: ' . $context['movement_date'];
+        }
+        if (!empty($context['movement_type'])) {
+            $details[] = 'Type: ' . $context['movement_type'];
+        }
+        if (!empty($context['message'])) {
+            $details[] = $context['message'];
+        }
+
+        $description = match ($action) {
+            'create' => 'Created employee mobilization ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'update' => 'Updated employee mobilization ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'complete' => 'Completed employee mobilization ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'cancel' => 'Canceled employee mobilization ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'delete' => 'Deleted employee mobilization ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            default => 'Employee mobilization action ' . $action . ' for ' . $targetRef,
+        };
+
+        try {
+            $db = Database::connect();
+            $stmt = $db->prepare("INSERT INTO systemLogs (userName, logDesc, module, logDate) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$actorName, $description, 'Employee Mobilization', date('Y-m-d H:i:s')]);
+        } catch (Throwable $e) {
+            // Keep the flow intact even if logging fails.
+        }
     }
 
     public function calendar() {
@@ -143,6 +182,13 @@ class EmployeeMobilizationController extends Controller {
                     $data['remarks'],
                     (int)($_SESSION['id'] ?? 0)
                 );
+                if ($ok) {
+                    $this->logMobilizationAction('update', $movementIdParam, [
+                        'employee_id' => $data['employee_id'],
+                        'movement_date' => $data['movement_date'],
+                        'movement_type' => 'Mobilization',
+                    ]);
+                }
                 echo json_encode(['success' => (bool)$ok, 'movement_id' => $movementIdParam]);
             } else {
                 $movementId = $this->mobilizationService->scheduleMobilization(
@@ -151,6 +197,13 @@ class EmployeeMobilizationController extends Controller {
                     $data['remarks'],
                     $data['created_by']
                 );
+                if ($movementId) {
+                    $this->logMobilizationAction('create', (int)$movementId, [
+                        'employee_id' => $data['employee_id'],
+                        'movement_date' => $data['movement_date'],
+                        'movement_type' => 'Mobilization',
+                    ]);
+                }
                 echo json_encode(['success' => true, 'movement_id' => $movementId]);
             }
         } catch (Exception $e) {
@@ -183,6 +236,13 @@ class EmployeeMobilizationController extends Controller {
                     $data['remarks'],
                     (int)($_SESSION['id'] ?? 0)
                 );
+                if ($ok) {
+                    $this->logMobilizationAction('update', $movementIdParam, [
+                        'employee_id' => $data['employee_id'],
+                        'movement_date' => $data['movement_date'],
+                        'movement_type' => 'Demobilization',
+                    ]);
+                }
                 echo json_encode(['success' => (bool)$ok, 'movement_id' => $movementIdParam]);
             } else {
                 $movementId = $this->mobilizationService->scheduleDemobilization(
@@ -191,6 +251,13 @@ class EmployeeMobilizationController extends Controller {
                     $data['remarks'],
                     $data['created_by']
                 );
+                if ($movementId) {
+                    $this->logMobilizationAction('create', (int)$movementId, [
+                        'employee_id' => $data['employee_id'],
+                        'movement_date' => $data['movement_date'],
+                        'movement_type' => 'Demobilization',
+                    ]);
+                }
                 echo json_encode(['success' => true, 'movement_id' => $movementId]);
             }
         } catch (Exception $e) {
@@ -217,6 +284,9 @@ class EmployeeMobilizationController extends Controller {
             }
 
             $ok = $this->mobilizationService->completeMovement($movementId, (int)($_SESSION['id'] ?? 0));
+            if ($ok) {
+                $this->logMobilizationAction('complete', $movementId, ['message' => 'Movement completed']);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -242,6 +312,9 @@ class EmployeeMobilizationController extends Controller {
             }
 
             $ok = $this->mobilizationService->cancelMovement($movementId, (int)($_SESSION['id'] ?? 0));
+            if ($ok) {
+                $this->logMobilizationAction('cancel', $movementId, ['message' => 'Movement canceled']);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -267,6 +340,9 @@ class EmployeeMobilizationController extends Controller {
             }
 
             $ok = $this->mobilizationService->deleteMovement($movementId);
+            if ($ok) {
+                $this->logMobilizationAction('delete', $movementId, ['message' => 'Movement deleted']);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);

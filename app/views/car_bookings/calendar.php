@@ -1,6 +1,7 @@
 <?php
 // Car Bookings Calendar with Vehicle History Cards
 // Requires: CarBookingsController@calendar
+$isViewerOnly = ((int)($_SESSION['user_level'] ?? 3) === 3);
 $vehicleActiveCount = 0;
 $vehicleInactiveCount = 0;
 if (!empty($vehicles) && is_array($vehicles)) {
@@ -40,12 +41,14 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
               </svg>
               <span>Refresh</span>
             </button>
-            <button type="button" id="newBookingBtn" class="inline-flex h-8 items-center gap-2 rounded-lg bg-slate-900 px-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 lg:h-9">
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              <span>New Booking</span>
-            </button>
+            <?php if (!$isViewerOnly): ?>
+              <button type="button" id="newBookingBtn" class="inline-flex h-8 items-center gap-2 rounded-lg bg-slate-900 px-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 lg:h-9">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>New Booking</span>
+              </button>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -125,16 +128,18 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
                 <button id="fleetTabVehiclesBtn" type="button" class="px-4 text-sm font-semibold text-slate-900 bg-slate-100">Vehicles (0)</button>
                 <button id="fleetTabDriversBtn" type="button" class="border-l border-slate-200 px-4 text-sm font-semibold text-slate-600 hover:text-slate-900">Drivers (0)</button>
               </div>
-              <div class="relative">
-                <button id="fleetAddNewBtn" type="button" aria-expanded="false" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
-                  Add New
-                  <span class="text-xs">▾</span>
-                </button>
-                <div id="fleetAddNewMenu" class="absolute right-0 z-10 mt-2 hidden w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                  <button id="openVehicleModalBtn" type="button" class="w-full rounded-none border-b border-slate-200 px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Vehicle</button>
-                  <button id="openDriversModalBtn" type="button" class="w-full rounded-none px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Driver</button>
+              <?php if (!$isViewerOnly): ?>
+                <div class="relative">
+                  <button id="fleetAddNewBtn" type="button" aria-expanded="false" class="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
+                    Add New
+                    <span class="text-xs">▾</span>
+                  </button>
+                  <div id="fleetAddNewMenu" class="absolute right-0 z-10 mt-2 hidden w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <button id="openVehicleModalBtn" type="button" class="w-full rounded-none border-b border-slate-200 px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Vehicle</button>
+                    <button id="openDriversModalBtn" type="button" class="w-full rounded-none px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50">New Driver</button>
+                  </div>
                 </div>
-              </div>
+              <?php endif; ?>
             </div>
           </div>
 
@@ -1420,6 +1425,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
 
   const calendarEl = document.getElementById('carBookingCalendar');
   const hasCalendar = Boolean(calendarEl);
+  const isViewerOnly = <?= $isViewerOnly ? 'true' : 'false' ?>;
 
   // ==================== CONSTANTS ====================
   // Use the server-side BASE_URL if available, but fall back to client path detection when needed.
@@ -2185,7 +2191,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         <td class="px-5 py-3">${statusBadge}</td>
         <td class="px-5 py-3 text-right">
           <div class="inline-flex items-center gap-2">
-            <button type="button" class="vehicle-edit-btn btn-icon" data-id="${row.id}">Edit</button>
+            ${isViewerOnly ? '' : `<button type="button" class="vehicle-edit-btn btn-icon" data-id="${row.id}">Edit</button>`}
             <button type="button" class="vehicle-delete-btn ${actionClass}" data-id="${row.id}">${actionLabel}</button>
           </div>
         </td>
@@ -2457,7 +2463,7 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
         <td class="px-5 py-3">${statusBadge}</td>
         <td class="px-5 py-3 text-right">
           <div class="inline-flex items-center gap-2">
-            <button type="button" class="driver-edit-btn btn-icon" data-id="${row.id}">Edit</button>
+            ${isViewerOnly ? '' : `<button type="button" class="driver-edit-btn btn-icon" data-id="${row.id}">Edit</button>`}
             <button type="button" class="driver-delete-btn ${row.status === 'active' ? 'btn-icon btn-icon-danger' : 'btn-icon'}" data-id="${row.id}">${row.status === 'active' ? 'Disable' : 'Enable'}</button>
           </div>
         </td>
@@ -4241,6 +4247,10 @@ driverForm.addEventListener('submit', function (e) {
     },
 
     eventClick: function (info) {
+      if (isViewerOnly) {
+        return;
+      }
+
       const event = info.event;
       const id = event.id;
       if (!id) return;

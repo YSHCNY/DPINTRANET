@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../app/core/Controller.php';
+require_once '../app/core/Database.php';
 require_once '../app/models/RoomBookings.php';
 require_once '../app/models/Rooms.php';
 
@@ -19,6 +20,48 @@ class RoomBookingsController extends Controller {
         if (str_contains($message, '[PAST_DEPARTURE]')) return 'past_departure';
         if (str_contains($message, '[TIME_INVALID]')) return 'time_invalid';
         return 'unknown';
+    }
+
+    private function logRoomModuleAction(string $action, int $targetId, array $context = []): void {
+        $actorId = (int)($_SESSION['id'] ?? $_SESSION['user_id'] ?? 0);
+        $actorName = (string)($_SESSION['user'] ?? ($actorId > 0 ? $actorId : 'system'));
+
+        $details = [];
+        $targetRef = $targetId > 0 ? "#{$targetId}" : 'new entry';
+
+        if (!empty($context['room_id'])) {
+            $details[] = 'Room ID: ' . $context['room_id'];
+        }
+        if (!empty($context['room_name'])) {
+            $details[] = 'Room: ' . $context['room_name'];
+        }
+        if (!empty($context['purpose'])) {
+            $details[] = 'Purpose: ' . $context['purpose'];
+        }
+        if (!empty($context['date_trip'])) {
+            $details[] = 'Date: ' . $context['date_trip'];
+        }
+        if (!empty($context['message'])) {
+            $details[] = $context['message'];
+        }
+
+        $description = match ($action) {
+            'create_booking' => 'Created room booking ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'update_booking' => 'Updated room booking ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'delete_booking' => 'Deleted room booking ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'create_room' => 'Created room ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'update_room' => 'Updated room ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'delete_room' => 'Deleted room ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            default => 'Room booking action ' . $action . ' for ' . $targetRef,
+        };
+
+        try {
+            $db = Database::connect();
+            $stmt = $db->prepare("INSERT INTO systemLogs (userName, logDesc, module, logDate) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$actorName, $description, 'Room Bookings', date('Y-m-d H:i:s')]);
+        } catch (Throwable $e) {
+            // Keep the booking flow intact even if logging fails.
+        }
     }
 
     public function calendar() {
@@ -86,6 +129,12 @@ class RoomBookingsController extends Controller {
         try {
             $data = $this->getRoomCreatePostData();
             $id = $this->roomsModel->createRoom($data, (int)($_SESSION['id'] ?? 0));
+            if ($id) {
+                $this->logRoomModuleAction('create_room', (int)$id, [
+                    'room_name' => (string)($data['room_name'] ?? ''),
+                    'room_id' => (int)$id,
+                ]);
+            }
             echo json_encode(['success' => true, 'room_id' => $id]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -111,6 +160,12 @@ class RoomBookingsController extends Controller {
             }
             $data = $this->getRoomCreatePostData();
             $ok = $this->roomsModel->updateRoom($id, $data, (int)($_SESSION['id'] ?? 0));
+            if ($ok) {
+                $this->logRoomModuleAction('update_room', $id, [
+                    'room_name' => (string)($data['room_name'] ?? ''),
+                    'room_id' => $id,
+                ]);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -135,6 +190,9 @@ class RoomBookingsController extends Controller {
                 throw new Exception('Invalid room id.');
             }
             $ok = $this->roomsModel->deleteRoom($id, (int)($_SESSION['id'] ?? 0));
+            if ($ok) {
+                $this->logRoomModuleAction('delete_room', $id, ['message' => 'Room deleted from room bookings module']);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -198,6 +256,13 @@ class RoomBookingsController extends Controller {
         try {
             $data = $this->getBookingPostData();
             $id = $this->bookingsModel->createBooking($data, (int)($_SESSION['id'] ?? 0));
+            if ($id) {
+                $this->logRoomModuleAction('create_booking', (int)$id, [
+                    'room_id' => (int)($data['room_id'] ?? 0),
+                    'purpose' => (string)($data['purpose'] ?? ''),
+                    'date_trip' => (string)($data['date_trip'] ?? ''),
+                ]);
+            }
             echo json_encode(['success' => true, 'booking_id' => $id]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -232,6 +297,13 @@ class RoomBookingsController extends Controller {
                 $merged[$k] = $v;
             }
             $ok = $this->bookingsModel->updateBooking($id, $merged, (int)($_SESSION['id'] ?? 0));
+            if ($ok) {
+                $this->logRoomModuleAction('update_booking', $id, [
+                    'room_id' => (int)($merged['room_id'] ?? 0),
+                    'purpose' => (string)($merged['purpose'] ?? ''),
+                    'date_trip' => (string)($merged['date_trip'] ?? ''),
+                ]);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);
@@ -257,6 +329,9 @@ class RoomBookingsController extends Controller {
                 throw new Exception('Invalid id');
             }
             $ok = $this->bookingsModel->deleteBooking($id, (int)($_SESSION['id'] ?? 0));
+            if ($ok) {
+                $this->logRoomModuleAction('delete_booking', $id, ['message' => 'Booking canceled from room bookings module']);
+            }
             echo json_encode(['success' => $ok]);
         } catch (Exception $e) {
             http_response_code(400);

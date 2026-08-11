@@ -1,6 +1,7 @@
 <?php
 // Room Bookings Calendar
 // Requires: RoomBookingsController@calendar
+$isViewerOnly = ((int)($_SESSION['user_level'] ?? 0) === 3);
 $roomCount = is_array($rooms ?? []) ? count($rooms) : 0;
 $roomActiveCount = 0;
 $roomInactiveCount = 0;
@@ -32,14 +33,16 @@ if (!empty($rooms) && is_array($rooms)) {
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:gap-4">
      
           <div class="flex items-center gap-2">
-            <button type="button" id="openRoomBookingModalBtn" class="bg-slate-800 inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-50 shadow-sm transition hover:bg-slate-900">
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <span>New booking</span>
-            </button>
-            <button type="button" id="openRoomCreateModalBtn" class="inline-flex h-9 bg-slate-800  items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-50 shadow-sm transition hover:bg-slate-900">
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-              <span>New room</span>
-            </button>
+            <?php if (!$isViewerOnly): ?>
+              <button type="button" id="openRoomBookingModalBtn" class="bg-slate-800 inline-flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-50 shadow-sm transition hover:bg-slate-900">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>New booking</span>
+              </button>
+              <button type="button" id="openRoomCreateModalBtn" class="inline-flex h-9 bg-slate-800  items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-50 shadow-sm transition hover:bg-slate-900">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                <span>New room</span>
+              </button>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -269,8 +272,10 @@ if (!empty($rooms) && is_array($rooms)) {
               </div>
 
               <div class="mt-auto flex flex-col gap-2 border-t border-slate-200 pt-3 lg:pt-4">
-                <button type="button" id="roomEditorSaveBtn" class="inline-flex h-9 w-full items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 lg:px-4">Save Changes</button>
-                <button type="button" id="roomEditorDeleteBtn" class="inline-flex h-9 w-full items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 lg:px-4">Cancel Booking</button>
+                <?php if (!$isViewerOnly): ?>
+                  <button type="button" id="roomEditorSaveBtn" class="inline-flex h-9 w-full items-center justify-center rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 lg:px-4">Save Changes</button>
+                  <button type="button" id="roomEditorDeleteBtn" class="inline-flex h-9 w-full items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 lg:px-4">Cancel Booking</button>
+                <?php endif; ?>
                 <button type="button" id="roomEditorCloseBtn" class="inline-flex h-9 w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 lg:px-4">Close Preview</button>
               </div>
             </div>
@@ -409,9 +414,10 @@ if (!empty($rooms) && is_array($rooms)) {
           </div>
         </div>
         <div class="flex items-center gap-2 flex-shrink-0">
-          <button type="button" id="editRoomDetailsBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Edit</button>
-      
-          <button type="button" id="deleteRoomDetailsBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">Delete</button>
+          <?php if (!$isViewerOnly): ?>
+            <button type="button" id="editRoomDetailsBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Edit</button>
+            <button type="button" id="deleteRoomDetailsBtn" class="inline-flex h-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition hover:bg-rose-100">Delete</button>
+          <?php endif; ?>
           <button type="button" id="closeRoomHistoryModalBtn" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50">✕</button>
         </div>
       </div>
@@ -439,8 +445,10 @@ if (!empty($rooms) && is_array($rooms)) {
       <div id="roomBookingDetailContent" class="space-y-4"></div>
       <div class="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3 lg:mt-5 lg:pt-4">
         <button type="button" id="closeRoomBookingDetailActionBtn" class="btn-ghost">Close</button>
-        <button type="button" id="editRoomBookingDetailBtn" class="btn-primary">Edit</button>
-        <button type="button" id="deleteRoomBookingDetailBtn" class="btn-danger">Delete</button>
+        <?php if (!$isViewerOnly): ?>
+          <button type="button" id="editRoomBookingDetailBtn" class="btn-primary">Edit</button>
+          <button type="button" id="deleteRoomBookingDetailBtn" class="btn-danger">Delete</button>
+        <?php endif; ?>
       </div>
     </div>
   </div>
@@ -744,6 +752,7 @@ if (!empty($rooms) && is_array($rooms)) {
   const editRoomBookingDetailBtn = document.getElementById('editRoomBookingDetailBtn');
   const deleteRoomBookingDetailBtn = document.getElementById('deleteRoomBookingDetailBtn');
   const roomBookingDetailContent = document.getElementById('roomBookingDetailContent');
+  const isViewerOnly = <?= json_encode((bool)$isViewerOnly) ?>;
   const roomBookingDetailStatusWrap = document.getElementById('roomBookingDetailStatusWrap');
   const roomBookingDetailModalTitle = document.getElementById('roomBookingDetailModalTitle');
   const roomBookingDetailModalSubtitle = document.getElementById('roomBookingDetailModalSubtitle');
@@ -1241,6 +1250,7 @@ function formatBookingDateTime(value) {
         });
     },
     select(info) {
+      if (isViewerOnly) return;
       if (!info.start) return;
       const start = info.start;
       const end = info.end || new Date(start.getTime() + 60 * 60 * 1000);
@@ -2010,6 +2020,7 @@ function formatBookingDateTime(value) {
 
   if (openRoomBookingModalBtn) {
     openRoomBookingModalBtn.addEventListener('click', () => {
+      if (isViewerOnly) return;
       resetRoomBookingForm();
       openModal(roomBookingModal);
     });
@@ -2108,6 +2119,7 @@ function formatBookingDateTime(value) {
 
   if (roomEditorDeleteBtn) {
     roomEditorDeleteBtn.addEventListener('click', () => {
+      if (isViewerOnly) return;
       if (!activeBookingDetail || !activeBookingDetail.id) return;
       if (!window.confirm(`Delete this booking for ${activeBookingDetail.purpose || 'this event'}?`)) return;
       deleteBookingById(activeBookingDetail.id);
@@ -2119,6 +2131,7 @@ function formatBookingDateTime(value) {
 
   if (roomEditorSaveBtn) {
     roomEditorSaveBtn.addEventListener('click', () => {
+      if (isViewerOnly) return;
       if (!roomEditorForm) return;
       const formData = new FormData(roomEditorForm);
       const isUpdate = Boolean(roomEditorId.value);
@@ -2168,6 +2181,7 @@ function formatBookingDateTime(value) {
 
   if (openRoomCreateModalBtn) {
     openRoomCreateModalBtn.addEventListener('click', () => {
+      if (isViewerOnly) return;
       resetRoomCreateForm();
       openModal(roomCreateModal);
     });
@@ -2175,6 +2189,7 @@ function formatBookingDateTime(value) {
 
   if (editRoomDetailsBtn) {
     editRoomDetailsBtn.addEventListener('click', () => {
+      if (isViewerOnly) return;
       if (activeRoomSelection) {
         fillRoomCreateForm(activeRoomSelection);
         closeModal(roomHistoryModal);
@@ -2185,6 +2200,7 @@ function formatBookingDateTime(value) {
 
   if (deleteRoomDetailsBtn) {
     deleteRoomDetailsBtn.addEventListener('click', () => {
+      if (isViewerOnly) return;
       if (!activeRoomSelection || !activeRoomSelection.id) return;
       if (!window.confirm(`Delete room ${activeRoomSelection.room_name || 'this room'}?`)) return;
       const fd = new FormData();
@@ -2237,6 +2253,10 @@ function formatBookingDateTime(value) {
 
   if (roomCreateForm) {
     roomCreateForm.addEventListener('submit', function (event) {
+      if (isViewerOnly) {
+        event.preventDefault();
+        return;
+      }
       event.preventDefault();
       const formData = new FormData(roomCreateForm);
       const isEdit = Boolean(roomEditIdInput && roomEditIdInput.value);

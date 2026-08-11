@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../app/core/Controller.php';
+require_once '../app/core/Database.php';
 require_once '../app/models/StaffDirectoryModel.php';
 
 if (file_exists(__DIR__ . '/../config.php')) {
@@ -16,6 +17,49 @@ class StaffDirectoryController extends Controller {
 
     public function __construct() {
         $this->directoryModel = new StaffDirectoryModel();
+    }
+
+    private function logStaffDirectoryAction(string $action, string $staffId, array $context = []): void {
+        $actorId = (int)($_SESSION['id'] ?? $_SESSION['user_id'] ?? 0);
+        $actorName = (string)($_SESSION['user'] ?? ($actorId > 0 ? $actorId : 'system'));
+
+        $details = [];
+        $targetRef = $staffId !== '' ? $staffId : 'new staff entry';
+
+        if (!empty($context['first_name'])) {
+            $details[] = 'First name: ' . $context['first_name'];
+        }
+        if (!empty($context['last_name'])) {
+            $details[] = 'Last name: ' . $context['last_name'];
+        }
+        if (!empty($context['position'])) {
+            $details[] = 'Position: ' . $context['position'];
+        }
+        if (!empty($context['department'])) {
+            $details[] = 'Department: ' . $context['department'];
+        }
+        if (!empty($context['firm'])) {
+            $details[] = 'Firm: ' . $context['firm'];
+        }
+        if (!empty($context['message'])) {
+            $details[] = $context['message'];
+        }
+
+        $description = match ($action) {
+            'create' => 'Created staff directory entry ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'update' => 'Updated staff directory entry ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'delete' => 'Deleted staff directory entry ' . $targetRef . ($details ? ' • ' . implode(' • ', $details) : ''),
+            'import' => 'Imported staff directory entries' . ($details ? ' • ' . implode(' • ', $details) : ''),
+            default => 'Staff directory action ' . $action . ' for ' . $targetRef,
+        };
+
+        try {
+            $db = Database::connect();
+            $stmt = $db->prepare("INSERT INTO systemLogs (userName, logDesc, module, logDate) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$actorName, $description, 'Staff Directory', date('Y-m-d H:i:s')]);
+        } catch (Throwable $e) {
+            // Keep the flow intact even if logging fails.
+        }
     }
 
     public function index() {
@@ -120,6 +164,13 @@ class StaffDirectoryController extends Controller {
         }
 
         if ($success) {
+            $this->logStaffDirectoryAction('create', $staffId, [
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'position' => $position,
+                'department' => $department,
+                'firm' => $firm,
+            ]);
             $_SESSION['message'] = 'Staff profile created successfully.';
             $_SESSION['msg_type'] = 'success';
             header('Location: index.php?controller=StaffDirectory&action=index');
@@ -218,6 +269,13 @@ class StaffDirectoryController extends Controller {
         }
 
         if ($success) {
+            $this->logStaffDirectoryAction('update', $staffId, [
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'position' => $position,
+                'department' => $department,
+                'firm' => $firm,
+            ]);
             $_SESSION['message'] = 'Staff profile updated successfully.';
             $_SESSION['msg_type'] = 'success';
             header('Location: index.php?controller=StaffDirectory&action=index');
@@ -247,6 +305,7 @@ class StaffDirectoryController extends Controller {
         }
 
         if ($deleted) {
+            $this->logStaffDirectoryAction('delete', $staffId, ['message' => 'Staff profile deleted from staff directory']);
             $_SESSION['message'] = 'Staff profile deleted successfully.';
             $_SESSION['msg_type'] = 'success';
         } else {
@@ -457,6 +516,9 @@ class StaffDirectoryController extends Controller {
             $importResults['failedRows'] = $invalidRowNames;
 
             if (empty($importErrors) && $created > 0) {
+                $this->logStaffDirectoryAction('import', '', [
+                    'message' => sprintf('Imported %d staff profiles successfully.', $created),
+                ]);
                 $_SESSION['message'] = sprintf('Imported %d staff profiles successfully.', $created);
                 $_SESSION['msg_type'] = 'success';
                 header('Location: index.php?controller=StaffDirectory&action=index');

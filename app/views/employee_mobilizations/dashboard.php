@@ -138,8 +138,9 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-       
-        <button id="openMovementModalBtn" type="button" class="inline-flex h-7 items-center justify-center rounded-lg bg-slate-900 px-2.5 text-xs font-medium text-white transition hover:bg-slate-800">New Movement</button>
+        <?php if (!((int)($_SESSION['user_level'] ?? 0) === 3)): ?>
+          <button id="openMovementModalBtn" type="button" class="inline-flex h-7 items-center justify-center rounded-lg bg-slate-900 px-2.5 text-xs font-medium text-white transition hover:bg-slate-800">New Movement</button>
+        <?php endif; ?>
       </div>
     </div>
   </div>
@@ -459,6 +460,7 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     const activityHeading = document.getElementById('mobilizationActivityHeading');
     const activitySubtitle = document.getElementById('mobilizationActivitySubtitle');
     const createdBy = <?= (int)($_SESSION['id'] ?? 0) ?>;
+    const isViewerOnly = <?= json_encode((bool)((int)($_SESSION['user_level'] ?? 0) === 3)) ?>;
     let mobilizationCalendar = null;
     const employeeOptions = <?= $employeesJson ?>;
     const currentlyMobilizedEmployeeIds = <?= $currentMobilizedEmployeeIdsJson ?>;
@@ -579,6 +581,38 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       activeOptionIndex = -1;
     }
 
+    function setMovementFormReadOnly(readOnly) {
+      if (movementEmployeeToggle) {
+        movementEmployeeToggle.disabled = readOnly;
+        movementEmployeeToggle.classList.toggle('cursor-not-allowed', readOnly);
+        movementEmployeeToggle.classList.toggle('opacity-60', readOnly);
+        movementEmployeeToggle.setAttribute('aria-disabled', readOnly ? 'true' : 'false');
+      }
+
+      if (movementEmployeeSearchInput) {
+        movementEmployeeSearchInput.readOnly = readOnly;
+        movementEmployeeSearchInput.disabled = readOnly;
+      }
+
+      if (movementTypeInput) {
+        movementTypeInput.disabled = readOnly;
+      }
+
+      if (movementDateInput) {
+        movementDateInput.readOnly = readOnly;
+        movementDateInput.disabled = readOnly;
+      }
+
+      if (movementRemarksInput) {
+        movementRemarksInput.readOnly = readOnly;
+        movementRemarksInput.disabled = readOnly;
+      }
+
+      if (movementSaveBtn) {
+        movementSaveBtn.classList.toggle('hidden', readOnly);
+      }
+    }
+
     function openEmployeePicker() {
       movementEmployeeDropdown.classList.remove('hidden');
       movementEmployeeDropdown.setAttribute('aria-expanded', 'true');
@@ -673,11 +707,22 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       setSelectedEmployee(null);
       closeEmployeePicker();
 
+      const isViewerEditMode = isViewerOnly && mode === 'edit';
+      setMovementFormReadOnly(isViewerEditMode);
+
       if (deleteMovementBtn) {
-        if (mode === 'edit') {
+        if (mode === 'edit' && !isViewerEditMode) {
           deleteMovementBtn.classList.remove('hidden');
         } else {
           deleteMovementBtn.classList.add('hidden');
+        }
+      }
+
+      if (movementSaveBtn) {
+        if (mode === 'edit' && isViewerEditMode) {
+          movementSaveBtn.classList.add('hidden');
+        } else {
+          movementSaveBtn.classList.remove('hidden');
         }
       }
 
@@ -705,6 +750,7 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       movementEmployeeSearchInput.value = '';
       setSelectedEmployee(null);
       closeEmployeePicker();
+      setMovementFormReadOnly(false);
     }
 
     function getMovementBadgeClasses(movementType) {
@@ -935,6 +981,9 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     }
 
     movementEmployeeToggle.addEventListener('click', function () {
+      if (isViewerOnly && movementMode === 'edit') {
+        return;
+      }
       if (movementEmployeeDropdown.classList.contains('hidden')) {
         openEmployeePicker();
       } else {
@@ -943,10 +992,16 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
     });
 
     movementEmployeeSearchInput.addEventListener('focus', function () {
+      if (isViewerOnly && movementMode === 'edit') {
+        return;
+      }
       openEmployeePicker();
     });
 
     movementEmployeeSearchInput.addEventListener('input', function () {
+      if (isViewerOnly && movementMode === 'edit') {
+        return;
+      }
       renderEmployeeResults(this.value);
     });
 
@@ -998,6 +1053,11 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
 
     if (movementForm) {
       movementForm.addEventListener('submit', function (event) {
+        if (isViewerOnly && movementMode === 'edit') {
+          event.preventDefault();
+          return;
+        }
+
         event.preventDefault();
         clearFieldErrors();
 
