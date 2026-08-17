@@ -1,8 +1,8 @@
 <?php
 session_start();
-require_once '../app/core/Controller.php';
-require_once '../app/models/User.php';
-require_once '../app/Services/PasswordResetService.php';
+require_once  __DIR__ . '/../core/Controller.php';
+require_once  __DIR__ . '/../models/User.php';
+require_once  __DIR__ . '/../Services/PasswordResetService.php';
 require_once __DIR__ . '/../core/Database.php';
 require_once __DIR__ . '/../Services/OTPService.php';
 require_once __DIR__ . '/../Services/MailService.php';
