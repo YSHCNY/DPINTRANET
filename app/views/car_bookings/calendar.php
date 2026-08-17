@@ -435,6 +435,10 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
           <label class="text-sm font-semibold text-slate-700 block mb-2">Expected Return <span class="text-red-500">*</span></label>
           <input type="datetime-local" name="return_expected" id="returnExpected" class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none transition" required />
           <p class="text-xs text-slate-500 mt-1">Expected return date and time.</p>
+          <div class="mt-2 flex items-center gap-2">
+            <input type="checkbox" name="whole_day_booking" id="wholeDayBooking" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500" />
+            <label for="wholeDayBooking" class="text-sm font-medium text-slate-700">Whole day booking</label>
+          </div>
         </div>
 
         <!-- Vehicle Selection -->
@@ -1944,6 +1948,10 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
       if (el) el.value = '';
     });
 
+    // Reset checkbox
+    const wholeDayCheckbox = document.getElementById('wholeDayBooking');
+    if (wholeDayCheckbox) wholeDayCheckbox.checked = false;
+
     // Restore editable state + default button visibility
     restoreBookingModalEditable();
     updateBookingVehicleRestriction();
@@ -1996,6 +2004,8 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   const vehicleIdSelect = document.getElementById('vehicleId');
   const dateTripInput = document.getElementById('dateTrip');
   const departureExpectedInput = document.getElementById('departureExpected');
+  const returnExpectedInput = document.getElementById('returnExpected');
+  const wholeDayBookingCheckbox = document.getElementById('wholeDayBooking');
 
   if (vehicleIdSelect) {
     vehicleIdSelect.addEventListener('change', updateBookingVehicleRestriction);
@@ -2005,6 +2015,35 @@ $driverCount = is_array($drivers ?? []) ? count($drivers) : 0;
   }
   if (departureExpectedInput) {
     departureExpectedInput.addEventListener('change', updateBookingVehicleRestriction);
+  }
+
+  // Whole day booking checkbox handler
+  if (wholeDayBookingCheckbox && returnExpectedInput && departureExpectedInput && dateTripInput) {
+    const applyWholeDayBooking = function () {
+      if (!wholeDayBookingCheckbox.checked) {
+        returnExpectedInput.readOnly = false;
+        returnExpectedInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
+        returnExpectedInput.removeAttribute('aria-readonly');
+        return;
+      }
+
+      if (dateTripInput.value) {
+        const tripDate = dateTripInput.value;
+        departureExpectedInput.value = tripDate + 'T09:00';
+        returnExpectedInput.value = tripDate + 'T23:59';
+      }
+
+      returnExpectedInput.readOnly = true;
+      returnExpectedInput.classList.add('bg-slate-100', 'cursor-not-allowed');
+      returnExpectedInput.setAttribute('aria-readonly', 'true');
+    };
+
+    wholeDayBookingCheckbox.addEventListener('change', applyWholeDayBooking);
+    dateTripInput.addEventListener('change', function () {
+      if (wholeDayBookingCheckbox.checked) {
+        applyWholeDayBooking();
+      }
+    });
   }
 
   bookingForm.addEventListener('submit', function (e) {

@@ -23,11 +23,11 @@ $todayMovementsCount = count($todayMovements);
 $upcomingWeekMovementsCount = count($mobilizationService->getUpcomingThisWeek());
 $thisMonthScheduleCount = count($mobilizationService->getMobilizedThisMonth()) + count($mobilizationService->getDemobilizedThisMonth());
 $db = Database::connect();
-$limit = 10;
+$limit = 15;
 $latestMobilizations = [];
 $latestDemobilizations = [];
 
-$stmt = $db->prepare("SELECT id, employee_id, movement_type, movement_date FROM employee_mobilizations WHERE movement_type = :type ORDER BY movement_date DESC, id DESC LIMIT {$limit}");
+$stmt = $db->prepare("SELECT id, employee_id, movement_type, movement_date FROM employee_mobilizations WHERE movement_type = :type AND movement_date >= CURDATE() ORDER BY movement_date ASC, id ASC LIMIT {$limit}");
 $stmt->execute([':type' => 'Mobilization']);
 $latestMobilizations = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $stmt->execute([':type' => 'Demobilization']);
@@ -76,15 +76,15 @@ foreach ($latestDemobilizations as $movement) {
 
 $placeholderMovementCards = [
   [
-    'title' => 'Latest Mobilizations',
-    'subtitle' => 'Most recent entries',
+    'title' => 'Upcoming Mobilizations',
+    'subtitle' => 'Next scheduled entries',
     'accent' => 'emerald',
     'groupLabel' => 'Mobilization',
     'rows' => $mobilizationRows,
   ],
   [
-    'title' => 'Latest Demobilizations',
-    'subtitle' => 'Most recent entries',
+    'title' => 'Upcoming Demobilizations',
+    'subtitle' => 'Next scheduled entries',
     'accent' => 'rose',
     'groupLabel' => 'Demobilization',
     'rows' => $demobilizationRows,

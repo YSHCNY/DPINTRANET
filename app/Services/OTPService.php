@@ -14,9 +14,42 @@ final class OTPService
     private int $expiryMinutes = 5;
     private int $maxAttempts = 5;
 
-    public function __construct(PDO $pdo)
+    public function __construct(?PDO $pdo = null)
     {
-        $this->pdo = $pdo;
+        $this->pdo = $pdo ?? self::createDefaultConnection();
+    }
+
+    private static function createDefaultConnection(): PDO
+    {
+        return new PDO(
+            'mysql:host=localhost;dbname=daltondb',
+            'phpmyadmin',
+            'pkii@1111',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
+    }
+
+    /**
+     * Compatibility methods for the legacy password reset flow.
+     */
+    public function generateCode(): string
+    {
+        return str_pad((string) random_int(0, (int) pow(10, $this->otpLength) - 1), $this->otpLength, '0', STR_PAD_LEFT);
+    }
+
+    public function hashCode(string $code): string
+    {
+        return password_hash($code, PASSWORD_DEFAULT);
+    }
+
+    public function verifyCode(string $code, string $hash): bool
+    {
+        return password_verify($code, $hash);
+    }
+
+    public function isExpired(string $expiresAt): bool
+    {
+        return strtotime($expiresAt) <= time();
     }
 
     /**
