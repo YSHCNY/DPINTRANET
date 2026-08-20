@@ -1,5 +1,5 @@
 <?php
-require_once '../app/core/Model.php';
+require_once __DIR__ . '/../core/Model.php';
 
 class StaffDirectoryModel {
     private $conn;
@@ -80,6 +80,20 @@ class StaffDirectoryModel {
             ':deployment_date' => !empty($data['deployment_date']) ? $data['deployment_date'] : null,
             ':image' => $data['image'],
             ':status' => $data['status'],
+        ]);
+    }
+
+    public function updateStatusById(int $employeeId, string $status): bool {
+        $normalizedStatus = strtolower(trim($status));
+        if (!in_array($normalizedStatus, ['active', 'inactive'], true)) {
+            return false;
+        }
+
+        $sql = "UPDATE staff_directory SET status = :status WHERE id = :id";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([
+            ':status' => $normalizedStatus,
+            ':id' => $employeeId,
         ]);
     }
 

@@ -380,14 +380,35 @@
         </div>
 
         <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <a href="index.php?controller=StandardPortal&action=login"
+          <div class="space-y-3">
+            <a href="index.php?controller=StandardPortal&action=login"
             class="flex items-center justify-between gap-3 text-sm font-medium text-slate-700 transition hover:text-slate-900">
-            <span>
-              <span class="block">Standard User Portal</span>
-              <span class="mt-1 block text-xs font-normal text-slate-500">Receive assigned correspondence and updates.</span>
-            </span>
-            <span class="text-base leading-none">→</span>
-          </a>
+              <span>
+                <span class="block">Standard User Portal</span>
+                <span class="mt-1 block text-xs font-normal text-slate-500">Receive assigned correspondence and updates.</span>
+              </span>
+              <span class="text-base leading-none">→</span>
+            </a>
+           
+          </div>
+
+          
+        </div>
+
+
+         <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div class="space-y-3">
+            <a href="index.php?controller=DigitalMonitoring&action=index"
+              class="flex items-center justify-between gap-3 rounded-lg text-sm font-medium text-slate-700 transition hover:text-slate-900">
+              <span>
+                <span class="block">Digital Monitoring</span>
+                <span class="mt-1 block text-xs font-normal text-slate-500">View current vehicles, rooms, and workforce activity.</span>
+              </span>
+              <span class="text-base leading-none">→</span>
+            </a>
+      </div>
+
+          
         </div>
       </div>
 

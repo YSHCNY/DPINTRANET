@@ -634,16 +634,12 @@ foreach ($calendarEventsByDay as $dayKey => $events) {
       window.clearTimeout(searchTimer);
       searchTimer = window.setTimeout(function () {
         const filtered = employeeOptions.filter(function (employee) {
-          const employeeId = String(employee.id || employee.staff_id || '');
-          if (movementMode !== 'edit' && currentlyMobilizedEmployeeIds.map(String).includes(employeeId)) {
-            return false;
-          }
           if (!trimmedQuery) {
             return true;
           }
           const haystack = [employee.firstName, employee.lastName, employee.id, employee.staff_id, employee.position].join(' ').toLowerCase();
           return haystack.indexOf(trimmedQuery.toLowerCase()) !== -1;
-        }).slice(0, 20);
+        });
 
         if (!filtered.length) {
           movementEmployeeList.innerHTML = '<div class="px-3 py-3 text-sm text-slate-500"><p class="font-medium text-slate-700">No eligible employees found</p><p class="mt-1 text-xs text-slate-400">Try another employee name or employee ID.</p></div>';

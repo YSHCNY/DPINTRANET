@@ -64,6 +64,7 @@ class EmployeeMobilizationService
 
     public function getDashboardSummary(): array
     {
+        $this->syncDueMovementStatuses();
         $todayMovements = $this->getTodayMovements();
         $upcomingMovements = $this->getUpcomingMovements();
         $now = new DateTime();
@@ -95,6 +96,7 @@ class EmployeeMobilizationService
 
     public function getCalendarEvents(string $startDate, string $endDate): array
     {
+        $this->syncDueMovementStatuses();
         $startDate = $this->normalizeMovementDate($startDate);
         $endDate = $this->normalizeMovementDate($endDate);
 
@@ -255,6 +257,7 @@ class EmployeeMobilizationService
 
     public function getTodayMovements(): array
     {
+        $this->syncDueMovementStatuses();
         return $this->formatMovementsWithEmployeeDetails($this->mobilizationModel->getToday());
     }
 
@@ -315,6 +318,7 @@ class EmployeeMobilizationService
 
     public function getUpcomingMovements(): array
     {
+        $this->syncDueMovementStatuses();
         return $this->formatMovementsWithEmployeeDetails($this->mobilizationModel->getUpcoming());
     }
 
@@ -350,7 +354,7 @@ class EmployeeMobilizationService
         $movementType = $this->normalizeMovementType($movementType);
         $movementDate = $this->normalizeMovementDate($movementDate);
 
-        return $this->mobilizationModel->create([
+        $movementId = $this->mobilizationModel->create([
             'employee_id' => $employeeId,
             'movement_type' => $movementType,
             'movement_date' => $movementDate,
@@ -359,10 +363,39 @@ class EmployeeMobilizationService
             'created_by' => $createdBy,
             'updated_by' => $createdBy,
         ]);
+
+        $this->syncDueMovementStatuses();
+
+        return $movementId;
+    }
+
+    public function syncDueMovementStatuses(): void
+    {
+        $dueMovements = $this->mobilizationModel->getDueScheduledMovements();
+        foreach ($dueMovements as $movement) {
+            if (!isset($movement['employee_id'], $movement['movement_type'])) {
+                continue;
+            }
+
+            $employeeId = (int)$movement['employee_id'];
+            $movementType = (string)$movement['movement_type'];
+            $targetStatus = null;
+
+            if ($movementType === 'Mobilization') {
+                $targetStatus = 'active';
+            } elseif ($movementType === 'Demobilization') {
+                $targetStatus = 'inactive';
+            }
+
+            if ($targetStatus !== null && $employeeId > 0) {
+                $this->staffDirectoryModel->updateStatusById($employeeId, $targetStatus);
+            }
+        }
     }
 
     public function getCurrentlyMobilizedEmployeeIds(): array
     {
+        $this->syncDueMovementStatuses();
         $upcoming = $this->mobilizationModel->getUpcoming();
         $today = $this->mobilizationModel->getToday();
         $movements = array_merge($upcoming, $today);

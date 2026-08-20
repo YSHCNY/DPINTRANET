@@ -28,6 +28,8 @@
             $documentTitle = 'Car Bookings';
         } elseif ($currentController === 'RoomBookings' && $currentAction === 'calendar') {
             $documentTitle = 'Room Bookings';
+        } elseif ($currentController === 'DigitalMonitoring' && $currentAction === 'index') {
+            $documentTitle = 'Digital Monitoring';
         } else {
             $documentTitle = 'FMS Portal';
         }

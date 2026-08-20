@@ -1,5 +1,5 @@
 <?php
-require_once '../app/core/Model.php';
+require_once __DIR__ . '/../core/Model.php';
 
 class RoomBookings extends Model {
     private string $table = 'room_bookings';
@@ -34,6 +34,23 @@ class RoomBookings extends Model {
     public function countScheduledBookings(): int {
         $stmt = $this->db->query("SELECT COUNT(*) FROM {$this->table} WHERE status = 'scheduled'");
         return (int)$stmt->fetchColumn();
+    }
+
+    public function getMonitoringBookings(string $scope): array {
+        $condition = $scope === 'occupied'
+            ? 'b.start_at <= NOW() AND b.end_at > NOW()'
+            : 'b.start_at > NOW()';
+
+        $stmt = $this->db->query(
+            "SELECT b.id, b.room_id, r.room_name, r.room_code, r.capacity,
+                    b.purpose, b.start_at, b.end_at, b.status
+             FROM {$this->table} b
+             INNER JOIN rooms r ON r.id = b.room_id
+             WHERE b.status = 'scheduled' AND {$condition}
+             ORDER BY b.start_at ASC"
+        );
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getBookingStatus(string $startDate, string $endDate): string {

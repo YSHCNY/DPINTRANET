@@ -1,5 +1,5 @@
 <?php
-require_once '../app/core/Model.php';
+require_once __DIR__ . '/../core/Model.php';
 
 class CarBookings extends Model {
 
@@ -34,6 +34,25 @@ class CarBookings extends Model {
     public function countScheduledBookings(): int {
         $stmt = $this->db->query("SELECT COUNT(*) FROM {$this->table} WHERE status = 'scheduled'");
         return (int)$stmt->fetchColumn();
+    }
+
+    public function getMonitoringBookings(string $scope): array {
+        $condition = $scope === 'occupied'
+            ? 'b.start_at <= NOW() AND b.end_at > NOW()'
+            : 'b.start_at > NOW()';
+
+        $stmt = $this->db->query(
+                "SELECT b.id, b.vehicle_id, b.driver_id, d.driver_name,
+                    v.vehicle_name, v.plate_number, v.capacity,
+                    b.purpose, b.destinations, b.start_at, b.end_at, b.status
+             FROM {$this->table} b
+             INNER JOIN car_vehicles v ON v.id = b.vehicle_id
+                 LEFT JOIN car_drivers d ON d.id = b.driver_id
+             WHERE b.status = 'scheduled' AND {$condition}
+             ORDER BY b.start_at ASC"
+        );
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getBookingStatus(string $departureDate, string $returnDate): string {

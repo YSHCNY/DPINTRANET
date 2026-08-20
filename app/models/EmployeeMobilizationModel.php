@@ -1,5 +1,5 @@
 <?php
-require_once '../app/core/Model.php';
+require_once __DIR__ . '/../core/Model.php';
 
 class EmployeeMobilizationModel extends Model {
     private string $table = 'employee_mobilizations';
@@ -131,6 +131,17 @@ class EmployeeMobilizationModel extends Model {
 
     public function getToday(): array {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE movement_date = CURRENT_DATE ORDER BY id ASC");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getDueScheduledMovements(): array {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM {$this->table}
+             WHERE movement_date <= CURRENT_DATE
+               AND status = 'Scheduled'
+             ORDER BY movement_date ASC, id ASC"
+        );
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

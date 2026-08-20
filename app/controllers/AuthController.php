@@ -29,6 +29,17 @@ class AuthController extends Controller {
         $this->trustedDeviceService = new \App\Services\TrustedDeviceService($pdo, $_ENV['TRUSTED_DEVICE_HMAC_KEY'] ?? 'replace_me_in_env');
     }
 
+    private function getPostLoginRedirect(): string {
+        $redirect = (string)($_SESSION['post_login_redirect'] ?? '');
+        unset($_SESSION['post_login_redirect']);
+
+        if ($redirect === 'index.php?controller=DigitalMonitoring&action=index') {
+            return $redirect;
+        }
+
+        return 'index.php?controller=Auth&action=dashboard&wc=welcome';
+    }
+
     private function logAuthEvent(string $message, ?string $username = null, ?int $userId = null): void {
         $actorName = trim((string)($username ?? ''));
         if ($actorName === '' && $userId !== null && $userId > 0) {
@@ -122,8 +133,8 @@ class AuthController extends Controller {
                     error_log('[recover-debug] missing restored values=' . implode(', ', $missingValues));
                 }
 
-                error_log('[recover-debug] redirecting to dashboard');
-                $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
+                error_log('[recover-debug] redirecting after login');
+                $this->redirect($this->getPostLoginRedirect());
             }
 
             error_log('[recover-debug] recovery block completed without matching user');
@@ -201,11 +212,12 @@ class AuthController extends Controller {
 
                         $this->logAuthEvent('Login successful via trusted browser for ' . $user['username'], $user['username'], $userId);
 
+                        $redirectUrl = $this->getPostLoginRedirect();
                         if ($wantsJson) {
-                            $this->sendJsonResponse(['success' => true, 'message' => 'Trusted device recognized.', 'redirectUrl' => 'index.php?controller=Auth&action=dashboard&wc=welcome']);
+                            $this->sendJsonResponse(['success' => true, 'message' => 'Trusted device recognized.', 'redirectUrl' => $redirectUrl]);
                         }
 
-                        $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
+                        $this->redirect($redirectUrl);
                     }
                 }
 
@@ -489,11 +501,12 @@ class AuthController extends Controller {
 
                 $this->logAuthEvent('2FA verification successful for ' . $user['username'], $user['username'], $userId);
 
+                $redirectUrl = $this->getPostLoginRedirect();
                 if ($this->wantsJsonResponse()) {
-                    $this->sendJsonResponse(['success' => true, 'message' => 'Verification successful', 'redirectUrl' => 'index.php?controller=Auth&action=dashboard&wc=welcome']);
+                    $this->sendJsonResponse(['success' => true, 'message' => 'Verification successful', 'redirectUrl' => $redirectUrl]);
                 }
 
-                $this->redirect('index.php?controller=Auth&action=dashboard&wc=welcome');
+                $this->redirect($redirectUrl);
             }
 
             // failure - surface specific messages
