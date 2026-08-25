@@ -594,6 +594,12 @@ if (!empty($rooms) && is_array($rooms)) {
     letter-spacing: 0.01em;
   }
 
+  .fc .fc-event,
+  .fc .fc-event-main,
+  .fc .fc-event-title {
+    color: #0f172a !important;
+  }
+
   .fc .fc-more-link {
     color: #059669;
     font-size: 0.75rem;
@@ -1364,8 +1370,8 @@ function formatBookingDateTime(value) {
         const html = `
           <div class="rc-event-wrap" style="padding:2px 6px; min-width:0;">
             <div class="rc-event" style="display:flex; align-items:center; gap:0.35rem; min-width:0;">
-              <span class="rc-start text-[12px] font-medium">${startTime}</span>
-              <span class="rc-purpose text-[11px] font-semibold">${purpose}</span>
+              <span class="rc-start text-[12px] font-medium" style="color:#0f172a;">${startTime}</span>
+              <span class="rc-purpose text-[11px] font-semibold" style="color:#0f172a;">${purpose}</span>
             </div>
           </div>
         `;
