@@ -23,8 +23,8 @@ $roomStatusClasses = [
 $maxVisibleRecords = 5;
 $panels = ['vehicles' => 'Vehicles', 'rooms' => 'Rooms', 'workforce' => 'Workforce'];
 $panelData = [];
-$capacity = 6;
-$rotationFrameSizes = ['vehicles' => 5, 'rooms' => 5, 'workforce' => 6];
+$capacity = 7;
+$rotationFrameSizes = ['vehicles' => 7, 'rooms' => 7, 'workforce' => 6];
 foreach ($panels as $panelKey => $panelTitle) {
   $panelSection = is_array($snapshot[$panelKey] ?? null) ? $snapshot[$panelKey] : ['summary' => [], 'display' => []];
   $display = is_array($panelSection['display'] ?? null) ? $panelSection['display'] : [];
@@ -84,6 +84,9 @@ foreach ($panels as $panelKey => $panelTitle) {
   }
   $panelData[$panelKey] = [
     'summary' => is_array($panelSection['summary'] ?? null) ? $panelSection['summary'] : [],
+    'items' => is_array($panelSection['items'] ?? null) ? $panelSection['items'] : [],
+    'schedule' => in_array($panelKey, ['vehicles', 'rooms'], true) && is_array($panelSection['schedule'] ?? null) ? $panelSection['schedule'] : [],
+    'scheduleMonth' => in_array($panelKey, ['vehicles', 'rooms'], true) ? ($panelSection['scheduleMonth'] ?? date('Y-m')) : null,
     'priority' => $priority,
     'frames' => $frames,
     'hasOverflow' => $panelKey === 'workforce'
@@ -104,6 +107,58 @@ foreach ($panels as $panelKey => $panelTitle) {
     animation: monitoring-status-counter-clockwise 1.8s linear infinite;
   }
 
+  .monitoring-state-progress {
+    height: 3px;
+    overflow: hidden;
+    background: rgb(51 65 85 / 0.8);
+  }
+
+  .monitoring-state-progress-fill {
+    height: 100%;
+    width: 0;
+    background: rgb(45 212 191);
+    transition: width 100ms linear;
+  }
+
+  .monitoring-vehicle-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 1px;
+    background: rgb(51 65 85 / 0.8);
+  }
+
+  .monitoring-vehicle-calendar-cell {
+    min-height: 4.35rem;
+    background: #12232d;
+    padding: 0.45rem;
+  }
+
+  .monitoring-vehicle-calendar-cell.is-today {
+    background: rgb(13 148 136 / 0.2);
+    box-shadow: inset 0 0 0 2px rgb(45 212 191 / 0.8);
+  }
+
+  .monitoring-vehicle-calendar-event {
+    overflow: hidden;
+    margin-top: 0.3rem;
+    border-left: 3px solid rgb(45 212 191);
+    background: rgb(15 118 110 / 0.32);
+    padding: 0.25rem 0.35rem;
+    color: #f8fafc;
+    font-size: 0.65rem;
+    line-height: 1.2;
+  }
+
+  .monitoring-vehicle-calendar-event.is-continuation {
+    border-left-color: rgb(94 234 212 / 0.55);
+    background: rgb(15 118 110 / 0.2);
+  }
+
+  @media (max-width: 700px) {
+    .monitoring-vehicle-calendar-cell { min-height: 3.35rem; padding: 0.3rem; }
+    .monitoring-vehicle-calendar-event { font-size: 0.58rem; }
+  }
+
   .monitoring-workforce-timeline[data-density="compact"] .monitoring-workforce-event {
     padding-top: 0.55rem;
     padding-bottom: 0.55rem;
@@ -112,6 +167,14 @@ foreach ($panels as $panelKey => $panelTitle) {
   .monitoring-workforce-timeline[data-density="compact"] .monitoring-workforce-event-name {
     font-size: 1.25rem;
     line-height: 1.25;
+  }
+
+  .monitoring-workforce-timeline[data-workforce-state="upcoming"] .monitoring-workforce-event-name {
+    font-size: 1.4375rem !important;
+  }
+
+  .monitoring-workforce-timeline[data-workforce-state="upcoming"] .monitoring-workforce-event-detail {
+    font-size: 1.15rem;
   }
 
   .monitoring-workforce-timeline[data-density="compact"] .monitoring-workforce-section-title {
@@ -162,9 +225,10 @@ foreach ($panels as $panelKey => $panelTitle) {
       <?php foreach (['vehicles' => 'Vehicles', 'rooms' => 'Rooms', 'workforce' => 'Workforce'] as $key => $title): ?>
         <?php $section = is_array($snapshot[$key] ?? null) ? $snapshot[$key] : ['summary' => [], 'items' => []]; ?>
         <?php $availableMetric = array_values(array_filter($section['summary'], static fn (array $metric): bool => ($metric['label'] ?? '') === 'Available'))[0] ?? ['value' => 0]; ?>
-        <article class="monitoring-panel <?= $key === 'workforce' ? 'hidden' : '' ?> flex h-[calc(100vh-12rem)] min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-slate-700 bg-[#12232d] shadow-[0_14px_34px_-20px_rgba(0,0,0,0.8)]" data-monitoring-panel="<?= $key ?>" data-monitoring-state="<?= $key === 'workforce' ? 'workforce' : 'today' ?>" aria-labelledby="<?= $key ?>Heading">
+        <article class="monitoring-panel <?= $key !== 'vehicles' ? 'hidden' : '' ?> flex h-[calc(100vh-12rem)] min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-slate-700 bg-[#12232d] shadow-[0_14px_34px_-20px_rgba(0,0,0,0.8)]" data-monitoring-panel="<?= $key ?>" data-monitoring-state="<?= $key === 'workforce' ? 'workforce' : 'today' ?>" aria-labelledby="<?= $key ?>Heading">
           <div class="shrink-0 border-b border-slate-800 px-5 py-4">
-              <div class="flex min-w-0 items-center justify-between gap-4"><div class="min-w-0"><h2 id="<?= $key ?>Heading" class="truncate p-2 text-2xl font-semibold uppercase tracking-[0.08em] text-white"><?= $title ?></h2><?php if ($key === 'workforce'): ?><p class="monitoring-workforce-state-title mt-1 px-2 text-sm font-bold uppercase tracking-[0.14em] text-teal-300">Today's Workforce Movement</p><?php endif; ?></div><?php if ($key !== 'workforce'): ?><p class="monitoring-header-summary shrink-0 text-right text-sm font-semibold uppercase tracking-[0.08em] text-slate-400 sm:text-base"><?= htmlspecialchars((string)($availableMetric['value'] ?? 0)) ?> AVAILABLE</p><?php else: ?><p class="monitoring-workforce-header-summary shrink-0 text-right text-sm font-semibold uppercase tracking-[0.08em] text-slate-300 sm:text-base"></p><?php endif; ?></div>
+              <div class="flex min-w-0 items-center justify-between gap-4"><div class="min-w-0"><h2 id="<?= $key ?>Heading" class="truncate p-2 text-2xl font-semibold uppercase tracking-[0.08em] text-white"><?= $key === 'workforce' ? "Today's Workforce" : $title ?></h2></div><?php if ($key !== 'workforce'): ?><p class="monitoring-header-summary shrink-0 text-right text-sm font-semibold uppercase tracking-[0.08em] text-slate-400 sm:text-base"><?= htmlspecialchars((string)($availableMetric['value'] ?? 0)) ?> AVAILABLE</p><?php else: ?><p class="monitoring-workforce-header-summary shrink-0 text-right text-sm font-semibold uppercase tracking-[0.08em] text-slate-300 sm:text-base"></p><?php endif; ?></div>
+            <?php if (in_array($key, ['vehicles', 'rooms'], true)): ?><div class="monitoring-state-progress mt-4" role="progressbar" aria-label="Time until next state" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="monitoring-state-progress-fill"></div></div><?php endif; ?>
            <?php $summaryCount = count($section['summary']); ?>
 
 <?php if ($key === 'workforce'): ?><div class="monitoring-summary mt-5 grid w-full <?= 
@@ -270,6 +334,47 @@ foreach ($panels as $panelKey => $panelTitle) {
     const workforceStatusLabel = (status) => String(status || 'Mobilizing').replace('Upcoming ', '');
     const workforceDateLabel = (date) => String(date || 'Date unavailable').replace(/, [0-9]{4}$/, '');
     const availabilityMarkup = (summary) => `${escapeHtml(summary.find((metric) => metric.label === 'Available')?.value ?? 0)} AVAILABLE`;
+    const resourceScheduleMarkup = (panelData, items, resourceKey) => {
+      const isRoom = resourceKey === 'rooms';
+      const schedule = Array.isArray(panelData.schedule) ? panelData.schedule : [];
+      const monthValue = /^\d{4}-\d{2}$/.test(panelData.scheduleMonth || '') ? panelData.scheduleMonth : new Date().toISOString().slice(0, 7);
+      const [year, month] = monthValue.split('-').map(Number);
+      const monthStart = new Date(year, month - 1, 1);
+      const firstDay = monthStart.getDay();
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const eventsByDay = {};
+      schedule.forEach((event) => {
+        const start = new Date(String(event.start || '').replace(' ', 'T'));
+        const end = new Date(String(event.end || event.start || '').replace(' ', 'T'));
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return;
+        const rangeStart = new Date(Math.max(start.getTime(), monthStart.getTime()));
+        const monthEnd = new Date(year, month - 1, daysInMonth, 23, 59, 59);
+        const rangeEnd = new Date(Math.min(end.getTime(), monthEnd.getTime()));
+        for (const cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), rangeStart.getDate()); cursor <= rangeEnd; cursor.setDate(cursor.getDate() + 1)) {
+          if (cursor.getFullYear() !== year || cursor.getMonth() !== month - 1) continue;
+          const day = cursor.getDate();
+          (eventsByDay[day] ||= []).push({ event, continuation: cursor.getTime() !== new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime() });
+        }
+      });
+      const calendarCells = [];
+      for (let index = 0; index < firstDay; index += 1) calendarCells.push('<div class="monitoring-vehicle-calendar-cell opacity-30"></div>');
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const events = eventsByDay[day] || [];
+        const now = new Date();
+        const isToday = now.getFullYear() === year && now.getMonth() === month - 1 && now.getDate() === day;
+        const eventMarkup = events.map(({ event, continuation }) => {
+          const start = new Date(String(event.start || '').replace(' ', 'T'));
+          const time = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          const resource = event.extendedProps?.[isRoom ? 'room_name' : 'vehicle_name'] || (isRoom ? 'Room' : 'Vehicle');
+          return `<div class="monitoring-vehicle-calendar-event${continuation ? ' is-continuation' : ''}" title="${escapeHtml(`${resource} · ${time}`)}"><span class="block truncate font-bold">${escapeHtml(continuation ? resource : `${resource} · ${time}`)}</span></div>`;
+        }).join('');
+        calendarCells.push(`<div class="monitoring-vehicle-calendar-cell${isToday ? ' is-today' : ''}"><div class="text-xs font-bold ${isToday ? 'text-teal-200' : 'text-slate-400'}">${day}</div>${eventMarkup}</div>`);
+      }
+      while (calendarCells.length % 7 !== 0) calendarCells.push('<div class="monitoring-vehicle-calendar-cell opacity-30"></div>');
+      const dayLabels = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((label) => `<div class="bg-[#0b1720] px-2 py-2 text-center text-[10px] font-bold tracking-[0.12em] text-slate-500">${label}</div>`).join('');
+      const listMarkup = items.length ? items.map((item) => markup(resourceKey, item)).join('') : '<div class="px-5 py-10 text-center text-sm text-slate-500">No current records</div>';
+      return `<div class="grid flex-1 grid-cols-1 gap-3 p-3 xl:grid-cols-[minmax(0,1fr)_minmax(360px,1.05fr)]"><div class="min-w-0">${listMarkup}</div><div class="min-w-0 rounded-lg border border-slate-700 bg-[#0f1d25]"><div class="flex items-center justify-between gap-3 border-b border-slate-700 px-4 py-2.5"><h3 class="text-base font-semibold text-white">${monthStart.toLocaleDateString([], { month: 'long', year: 'numeric' })}</h3><span class="text-xs text-slate-400">Vehicle schedules</span></div><div class="monitoring-vehicle-calendar">${dayLabels}${calendarCells.join('')}</div></div></div>`;
+    };
     const markup = (key, item) => {
       if (key === 'vehicles') return `<div class="min-w-0 px-5 py-3.5"><div class="flex min-w-0 items-center justify-between gap-5"><div class="min-w-0"><p class="truncate text-2xl font-semibold leading-tight text-white sm:text-3xl">${escapeHtml(item.vehicle_name || 'Vehicle')}</p><p class="mt-1 truncate text-base text-slate-300 sm:text-lg">${escapeHtml(item.plate_number || 'Unassigned plate')} · ${escapeHtml(item.driver || 'Unassigned')}${item.status === 'Available' || !item.context ? '' : ` · ${escapeHtml(item.context)}`}</p></div><div class="flex shrink-0 flex-col items-end gap-1"><p class="text-xl font-bold leading-tight tabular-nums text-teal-200 sm:text-2xl">${item.status === 'Available' ? 'Ready now' : escapeHtml(item.time_range || 'No scheduled time')}</p><span class="flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-bold tracking-[0.08em] ${vehicleStatusClass(item.status)}"><span class="h-2.5 w-2.5 rounded-full ${statusIndicator(item.status)}" aria-hidden="true"></span>${compactStatus(item.status)}</span></div></div></div>`;
       if (key === 'rooms') return `<div class="min-w-0 px-5 py-3.5"><div class="flex min-w-0 items-center justify-between gap-5"><div class="min-w-0"><p class="truncate text-2xl font-semibold leading-tight text-white sm:text-3xl">${escapeHtml(item.room_name || 'Room')}</p><p class="mt-1 truncate text-base text-slate-300 sm:text-lg">${escapeHtml(item.room_code || 'Room')} · ${escapeHtml(item.capacity || '')}${item.status === 'Available' || !item.context ? '' : ` · ${escapeHtml(item.context)}`}</p></div><div class="flex shrink-0 flex-col items-end gap-1"><p class="text-xl font-bold leading-tight tabular-nums text-teal-200 sm:text-2xl">${item.status === 'Available' ? 'Ready now' : escapeHtml(item.time_range || 'No scheduled time')}</p><span class="flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-bold tracking-[0.08em] ${roomStatusClass(item.status)}"><span class="h-2.5 w-2.5 rounded-full ${statusIndicator(item.status)}" aria-hidden="true"></span>${compactStatus(item.status)}</span></div></div></div>`;
@@ -282,7 +387,7 @@ foreach ($panels as $panelKey => $panelTitle) {
         const display = section.display || {};
         const priority = Array.isArray(display.priority) ? display.priority : [];
         const secondary = [...(Array.isArray(display.secondary) ? display.secondary : []), ...(Array.isArray(display.overflow) ? display.overflow : [])];
-        const frameCapacity = 5;
+        const frameCapacity = ['vehicles', 'rooms'].includes(key) ? 7 : 5;
         let frames = [];
         let frameSummaries = [];
         let pageGroups = [];
@@ -327,7 +432,17 @@ foreach ($panels as $panelKey => $panelTitle) {
         const hasOverflow = key === 'workforce' && pageGroups.length
           ? pageGroups.reduce((total, group) => total + (group.frames?.length || 0), 0) > 1
           : frames.length > 1;
-        result[key] = { summary: Array.isArray(section.summary) ? section.summary : [], priority, frames, frameSummaries, pageGroups, hasOverflow };
+        result[key] = {
+          summary: Array.isArray(section.summary) ? section.summary : [],
+          items: Array.isArray(section.items) ? section.items : [],
+          priority,
+          frames,
+          frameSummaries,
+          pageGroups,
+          hasOverflow,
+          schedule: ['vehicles', 'rooms'].includes(key) && Array.isArray(section.schedule) ? section.schedule : [],
+          scheduleMonth: ['vehicles', 'rooms'].includes(key) ? section.scheduleMonth : null,
+        };
       });
       return result;
     };
@@ -388,7 +503,9 @@ foreach ($panels as $panelKey => $panelTitle) {
           const headerSummary = panel.querySelector('.monitoring-header-summary');
           if (headerSummary) headerSummary.innerHTML = availabilityMarkup(frameSummary);
         }
-        if (key === 'workforce' && Array.isArray(panelData.pageGroups) && panelData.pageGroups.length) {
+        if (key === 'vehicles' || key === 'rooms') {
+          records.innerHTML = resourceScheduleMarkup(panelData, items, key);
+        } else if (key === 'workforce' && Array.isArray(panelData.pageGroups) && panelData.pageGroups.length) {
           const groupColumnItems = (group, column, page) => {
             const columnPages = group.columns?.[column];
             if (Array.isArray(columnPages)) {
@@ -408,11 +525,11 @@ foreach ($panels as $panelKey => $panelTitle) {
           const mobilizing = groupColumnItems(activeGroup, 'Mobilizing', workforcePage.page);
           const demobilizing = groupColumnItems(activeGroup, 'Demobilizing', workforcePage.page);
           const upcoming = workforcePage.groupIndex > 0;
-          const stateTitle = panel.querySelector('.monitoring-workforce-state-title');
-          if (stateTitle) stateTitle.textContent = upcoming ? 'Upcoming Workforce Movements' : "Today's Workforce Movement";
-          const eventMarkup = (item) => `<div class="monitoring-workforce-event px-5 py-4"><div class="flex min-w-0 items-start justify-between gap-4"><div class="min-w-0"><p class="monitoring-workforce-event-name truncate text-xl font-semibold text-white">${escapeHtml(item.employee_name || 'Employee')}</p><p class="mt-1 truncate text-base text-slate-300">${escapeHtml(item.staff_identifier || 'Unassigned ID')} · ${escapeHtml(item.department || 'Unassigned department')}${upcoming ? ` · ${escapeHtml(workforceDateLabel(item.date))}` : ''}</p></div><span class="shrink-0 rounded-full border px-3 py-1 text-[10px] font-bold tracking-[0.08em] ${statusClass(item.status)}">${workforceStatusLabel(item.status).toUpperCase() === 'MOBILIZING' ? 'MOBILIZE' : 'DEMOBILIZE'}</span></div></div>`;
+          const workforceHeading = panel.querySelector('#workforceHeading');
+          if (workforceHeading) workforceHeading.textContent = upcoming ? 'Upcoming Deployments' : "Today's Workforce";
+          const eventMarkup = (item) => `<div class="monitoring-workforce-event px-5 py-4"><div class="flex min-w-0 items-start justify-between gap-4"><div class="min-w-0"><p class="monitoring-workforce-event-name truncate text-xl font-semibold text-white">${escapeHtml(item.employee_name || 'Employee')}${upcoming ? ` · ${escapeHtml(workforceDateLabel(item.date))}` : ''}</p><p class="monitoring-workforce-event-detail mt-1 truncate text-base text-slate-300">${escapeHtml(item.staff_identifier || 'Unassigned ID')} · ${escapeHtml(item.department || 'Unassigned department')}</p></div><span class="shrink-0 rounded-full border px-3 py-1 text-[10px] font-bold tracking-[0.08em] ${statusClass(item.status)}">${workforceStatusLabel(item.status).toUpperCase() === 'MOBILIZING' ? 'MOBILIZE' : 'DEMOBILIZE'}</span></div></div>`;
           const column = (title, items, tone) => `<div class="min-w-0 overflow-hidden"><h4 class="border-b-2 ${tone === 'amber' ? 'border-amber-400 text-amber-300' : 'border-teal-400 text-teal-300'} px-5 py-3 text-base font-bold uppercase tracking-[0.14em]">${title}</h4><div class="divide-y divide-slate-700/80 overflow-y-auto">${items.length ? items.map(eventMarkup).join('') : '<div class="px-5 py-8 text-center text-base text-slate-400">No records</div>'}</div></div>`;
-          records.innerHTML = `<div class="monitoring-workforce-timeline min-h-full w-full overflow-hidden" data-density="comfortable"><div class="grid h-full grid-cols-2 gap-6">${column('MOBILIZING', mobilizing, 'teal')}${column('DEMOBILIZING', demobilizing, 'amber')}</div></div>`;
+          records.innerHTML = `<div class="monitoring-workforce-timeline min-h-full w-full overflow-hidden" data-density="comfortable" data-workforce-state="${upcoming ? 'upcoming' : 'today'}"><div class="grid h-full grid-cols-2 gap-6">${column('MOBILIZING', mobilizing, 'teal')}${column('DEMOBILIZING', demobilizing, 'amber')}</div></div>`;
           const timeline = records.querySelector('.monitoring-workforce-timeline');
           if (timeline) {
             const eventCount = mobilizing.length + demobilizing.length;
@@ -465,11 +582,18 @@ foreach ($panels as $panelKey => $panelTitle) {
 
     const stateGrid = document.getElementById('monitoringStateGrid');
     const stateLabel = document.getElementById('monitoringStateLabel');
-    let currentState = 'today';
+    const stateProgress = {
+      vehicles: document.querySelector('[data-monitoring-panel="vehicles"] .monitoring-state-progress'),
+      rooms: document.querySelector('[data-monitoring-panel="rooms"] .monitoring-state-progress'),
+    };
+    let currentState = 'vehicles';
     let currentPage = 0;
     let masterTimer = null;
+    let stateProgressStartedAt = 0;
+    let stateProgressDuration = 30000;
     const statePanels = {
-      today: ['vehicles', 'rooms'],
+      vehicles: ['vehicles'],
+      rooms: ['rooms'],
       workforce: ['workforce'],
     };
     const pageCountForPanel = (key) => {
@@ -479,31 +603,48 @@ foreach ($panels as $panelKey => $panelTitle) {
       }
       return window.digitalMonitoringRotation.panels[key]?.pageCount() || 1;
     };
-    const pageCountForState = (state) => Math.max(...(statePanels[state] || statePanels.today).map(pageCountForPanel));
+    const pageCountForState = (state) => Math.max(...(statePanels[state] || statePanels.vehicles).map(pageCountForPanel));
+    const stateDurationFor = (state, pageCount) => pageCount === 1
+      ? (state === 'vehicles' || state === 'rooms' ? 30000 : 20000)
+      : pageCount * config.defaultDurationMs;
+    const updateVehicleStateProgress = () => {
+      const progressElement = stateProgress[currentState];
+      const progressFill = progressElement?.querySelector('.monitoring-state-progress-fill');
+      if (!progressElement || !progressFill || !stateProgressStartedAt) return;
+      const elapsed = Math.max(0, performance.now() - stateProgressStartedAt);
+      const progress = Math.min(100, (elapsed / stateProgressDuration) * 100);
+      progressFill.style.width = `${progress}%`;
+      progressElement.setAttribute('aria-valuenow', String(Math.round(progress)));
+    };
     const renderMasterPage = () => {
-      (statePanels[currentState] || statePanels.today).forEach((key) => {
+      (statePanels[currentState] || statePanels.vehicles).forEach((key) => {
         window.digitalMonitoringRotation.panels[key]?.renderPage(currentPage);
       });
     };
     const applyMonitoringState = (nextState) => {
       currentState = nextState;
       currentPage = 0;
-      const visiblePanels = statePanels[nextState] || statePanels.today;
+      stateProgressStartedAt = performance.now();
+      stateProgressDuration = stateDurationFor(currentState, pageCountForState(currentState));
+      const visiblePanels = statePanels[nextState] || statePanels.vehicles;
       Object.keys(statePanels).flatMap((state) => statePanels[state]).forEach((key) => {
         const panel = document.querySelector(`[data-monitoring-panel="${key}"]`);
         panel?.classList.toggle('hidden', !visiblePanels.includes(key));
       });
       stateGrid?.classList.toggle('grid-cols-1', nextState === 'workforce');
-      if (stateGrid) stateGrid.style.gridTemplateColumns = nextState === 'workforce' ? 'minmax(0, 1fr)' : '';
-      if (stateLabel) stateLabel.textContent = nextState === 'workforce' ? 'Workforce Movement' : "Today's Operations";
+      if (stateGrid) stateGrid.style.gridTemplateColumns = 'minmax(0, 1fr)';
+      if (stateLabel) stateLabel.textContent = nextState === 'workforce'
+        ? 'Workforce Movement'
+        : nextState === 'rooms' ? 'Room Operations' : 'Vehicle Operations';
       renderMasterPage();
     };
     const scheduleMasterTick = () => {
       window.clearTimeout(masterTimer);
       const maxPages = pageCountForState(currentState);
       const dwellMs = maxPages === 1
-        ? (currentState === 'today' ? 30000 : 20000)
+        ? (currentState === 'vehicles' || currentState === 'rooms' ? 30000 : 20000)
         : config.defaultDurationMs;
+      stateProgressDuration = stateDurationFor(currentState, maxPages);
       masterTimer = window.setTimeout(() => {
         if (maxPages > 1 && currentPage + 1 < maxPages) {
           currentPage += 1;
@@ -511,12 +652,16 @@ foreach ($panels as $panelKey => $panelTitle) {
           scheduleMasterTick();
           return;
         }
-        applyMonitoringState(currentState === 'today' ? 'workforce' : 'today');
+        const nextState = currentState === 'vehicles'
+          ? 'rooms'
+          : currentState === 'rooms' ? 'workforce' : 'vehicles';
+        applyMonitoringState(nextState);
         scheduleMasterTick();
       }, dwellMs);
     };
     applyMonitoringState(currentState);
     scheduleMasterTick();
+    window.setInterval(updateVehicleStateProgress, 100);
 
     const panelSignature = (panel) => JSON.stringify(panel);
     const refresh = async () => {

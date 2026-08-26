@@ -10,6 +10,8 @@ require_once __DIR__ . '/../Services/EmployeeMobilizationService.php';
 class DigitalMonitoringService
 {
     private const DISPLAY_CAPACITY = 6;
+    private const VEHICLE_DISPLAY_CAPACITY = 7;
+    private const ROOM_DISPLAY_CAPACITY = 7;
 
     private CarVehicles $vehiclesModel;
     private CarBookings $carBookingsModel;
@@ -44,6 +46,9 @@ class DigitalMonitoringService
         $occupied = $this->indexBy($this->carBookingsModel->getMonitoringBookings('occupied'), 'vehicle_id');
         $upcoming = $this->indexBy($this->carBookingsModel->getMonitoringBookings('upcoming'), 'vehicle_id');
         $drivers = $this->indexBy($this->driversModel->getActiveDrivers(), 'id');
+        $monthStart = date('Y-m-01 00:00:00');
+        $monthEnd = date('Y-m-t 23:59:59');
+        $monthSchedule = $this->carBookingsModel->getCalendarEvents($monthStart, $monthEnd);
 
         $items = [];
         foreach ($vehicles as $vehicle) {
@@ -56,6 +61,7 @@ class DigitalMonitoringService
                 ?: ($drivers[$driverId]['driver_name'] ?? 'Unassigned');
 
             $items[] = [
+                'vehicle_id' => $vehicleId,
                 'vehicle_name' => (string)($vehicle['vehicle_name'] ?? 'Vehicle'),
                 'plate_number' => trim((string)($vehicle['plate_number'] ?? '')) ?: 'Unassigned plate',
                 'driver' => $driver,
@@ -66,7 +72,7 @@ class DigitalMonitoringService
         }
         $items = $this->prioritizeStatuses($items, ['On trip', 'Upcoming', 'Available']);
 
-        $display = $this->buildDisplayBuckets($items, ['On trip', 'In use', 'Mobilizing', 'Demobilizing']);
+        $display = $this->buildDisplayBuckets($items, ['On trip', 'In use', 'Mobilizing', 'Demobilizing'], self::VEHICLE_DISPLAY_CAPACITY);
 
         return [
             'summary' => $this->summarize($items, [
@@ -76,6 +82,8 @@ class DigitalMonitoringService
             ]),
             'items' => $items,
             'display' => $display,
+            'schedule' => $monthSchedule,
+            'scheduleMonth' => date('Y-m'),
         ];
     }
 
@@ -84,6 +92,9 @@ class DigitalMonitoringService
         $rooms = $this->roomsModel->getActiveRooms();
         $occupied = $this->indexBy($this->roomBookingsModel->getMonitoringBookings('occupied'), 'room_id');
         $upcoming = $this->indexBy($this->roomBookingsModel->getMonitoringBookings('upcoming'), 'room_id');
+        $monthStart = date('Y-m-01 00:00:00');
+        $monthEnd = date('Y-m-t 23:59:59');
+        $monthSchedule = $this->roomBookingsModel->getCalendarEvents($monthStart, $monthEnd);
         $items = [];
 
         foreach ($rooms as $room) {
@@ -94,6 +105,7 @@ class DigitalMonitoringService
             $next = $isOccupied ? 'Currently in use' : (isset($upcoming[$roomId]) ? 'Reserved' : 'Available now');
 
             $items[] = [
+                'room_id' => $roomId,
                 'room_name' => (string)($room['room_name'] ?? 'Meeting room'),
                 'room_code' => (string)($room['room_code'] ?? 'Room'),
                 'capacity' => ((int)($room['capacity'] ?? 0)) . ' seats',
@@ -104,7 +116,7 @@ class DigitalMonitoringService
         }
         $items = $this->prioritizeStatuses($items, ['In use', 'Upcoming', 'Available']);
 
-        $display = $this->buildDisplayBuckets($items, ['In use']);
+        $display = $this->buildDisplayBuckets($items, ['In use'], self::ROOM_DISPLAY_CAPACITY);
 
         return [
             'summary' => $this->summarize($items, [
@@ -114,6 +126,8 @@ class DigitalMonitoringService
             ]),
             'items' => $items,
             'display' => $display,
+            'schedule' => $monthSchedule,
+            'scheduleMonth' => date('Y-m'),
         ];
     }
 
@@ -124,7 +138,7 @@ class DigitalMonitoringService
         $todayCounts = ['Mobilizing' => 0, 'Demobilizing' => 0];
         $upcomingCounts = ['Mobilizing' => 0, 'Demobilizing' => 0];
         $todayItems = [];
-        $upcomingByType = ['Mobilizing' => [], 'Demobilizing' => []];
+        $upcomingItems = [];
 
         foreach ($todayMovements as $movement) {
             $type = $this->movementLabel($movement);
@@ -138,19 +152,25 @@ class DigitalMonitoringService
                 continue;
             }
             $type = $this->movementLabel($movement);
-            if (count($upcomingByType[$type]) < 15) {
-                $upcomingByType[$type][] = $this->formatWorkforceMovement($movement, 'Upcoming ' . $type, true);
-                $upcomingCounts[$type]++;
-            }
+            $upcomingItems[] = $this->formatWorkforceMovement($movement, 'Upcoming ' . $type, true);
         }
 
         usort($todayItems, static function (array $left, array $right): int {
-            return strcmp((string)($left['date'] ?? ''), (string)($right['date'] ?? ''));
+            return strcmp((string)($left['movement_date'] ?? ''), (string)($right['movement_date'] ?? ''));
         });
-        $upcomingItems = array_merge($upcomingByType['Mobilizing'], $upcomingByType['Demobilizing']);
         usort($upcomingItems, static function (array $left, array $right): int {
-            return strcmp((string)($left['date'] ?? ''), (string)($right['date'] ?? ''));
+            return strcmp((string)($left['movement_date'] ?? ''), (string)($right['movement_date'] ?? ''));
         });
+        $upcomingItems = array_slice($upcomingItems, 0, 15);
+        foreach ($upcomingItems as $item) {
+            $type = str_contains((string)($item['status'] ?? ''), 'Demobilizing') ? 'Demobilizing' : 'Mobilizing';
+            $upcomingCounts[$type]++;
+        }
+
+        $upcomingByType = [
+            'Mobilizing' => array_values(array_filter($upcomingItems, static fn (array $item): bool => !str_contains((string)($item['status'] ?? ''), 'Demobilizing'))),
+            'Demobilizing' => array_values(array_filter($upcomingItems, static fn (array $item): bool => str_contains((string)($item['status'] ?? ''), 'Demobilizing'))),
+        ];
 
         $items = array_merge($todayItems, $upcomingItems);
         $display = $this->buildDisplayBuckets($items, ['Mobilizing', 'Demobilizing']);
@@ -205,6 +225,7 @@ class DigitalMonitoringService
             'employee_name' => (string)($movement['employee_name'] ?? 'Unknown employee'),
             'staff_identifier' => (string)($movement['employee_staff_id'] ?? $movement['employee_id'] ?? 'Unassigned ID'),
             'department' => $department,
+            'movement_date' => $timestamp === false ? '' : date('Y-m-d', $timestamp),
             'date' => $timestamp === false ? 'Date unavailable' : date('M j, Y', $timestamp),
             'status' => $status,
             'count' => 1,
@@ -258,7 +279,7 @@ class DigitalMonitoringService
         return $items;
     }
 
-    private function buildDisplayBuckets(array $items, array $currentStatuses): array
+    private function buildDisplayBuckets(array $items, array $currentStatuses, ?int $capacity = null): array
     {
         $priority = [];
         $secondaryCandidates = [];
@@ -271,7 +292,7 @@ class DigitalMonitoringService
             }
         }
 
-        $availableSlots = max(0, self::DISPLAY_CAPACITY - count($priority));
+        $availableSlots = max(0, ($capacity ?? self::DISPLAY_CAPACITY) - count($priority));
 
         return [
             'priority' => $priority,

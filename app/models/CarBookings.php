@@ -162,6 +162,7 @@ class CarBookings extends Model {
                     'vehicle_name' => $r['vehicle_name'],
                     'plate_number' => $r['plate_number'],
                     'driver_name' => $r['driver_name'],
+                    'purpose' => $r['purpose'],
                     'passengers' => (int)$r['passengers'],
                     'remarks' => $r['remarks'],
 
