@@ -156,15 +156,20 @@ class CorrespondenceEmailService
         $organizationName = $this->escape($payload['organization_name'] ?? 'DPEARP');
         $brandName = $this->escape($payload['brand_name'] ?? 'DPEARP Correspondence Management System');
         $year = (string)date('Y');
+        $isDraftReview = $recipientType === 'draft_reviewer';
         $subject = $trackingId !== ''
-            ? sprintf('[%s] Correspondence Notification: %s', $trackingId, $title)
-            : sprintf('Correspondence Notification: %s', $title);
-        $heading = $recipientType === 'cc'
+            ? sprintf('[%s] %s: %s', $trackingId, $isDraftReview ? 'Draft Correspondence Ready for Review' : 'Correspondence Notification', $title)
+            : sprintf('%s: %s', $isDraftReview ? 'Draft Correspondence Ready for Review' : 'Correspondence Notification', $title);
+        $heading = $isDraftReview
+            ? 'New Correspondence Drafted'
+            : ($recipientType === 'cc'
             ? 'Correspondence Notification'
-            : 'New Correspondence Assigned';
-        $intro = $recipientType === 'cc'
+            : 'New Correspondence Assigned');
+        $intro = $isDraftReview
+            ? 'A new correspondence has been drafted and is ready for you to check and finalize.'
+            : ($recipientType === 'cc'
             ? 'A correspondence update has been shared with you for review.'
-            : 'You have been assigned a correspondence item that requires your attention.';
+            : 'You have been assigned a correspondence item that requires your attention.');
 
         $html = $this->renderHtmlTemplate(
             $subject,
@@ -181,7 +186,8 @@ class CorrespondenceEmailService
             $portalAccessNote,
             $portalUrl,
             $organizationName,
-            $year
+            $year,
+            $isDraftReview
         );
 
         $text = $this->renderTextTemplate(
@@ -199,7 +205,8 @@ class CorrespondenceEmailService
             $portalAccessNote,
             $portalUrl,
             $organizationName,
-            $year
+            $year,
+            $isDraftReview
         );
 
         return [
@@ -224,7 +231,8 @@ class CorrespondenceEmailService
         bool $portalAccessNote,
         string $portalUrl,
         string $organizationName,
-        string $year
+        string $year,
+        bool $isDraftReview = false
     ): string {
         $detailRows = [];
         $detailRows[] = $this->renderInfoRow('Tracking ID', $trackingId !== '' ? $trackingId : 'Not available');
@@ -237,7 +245,7 @@ class CorrespondenceEmailService
         $detailRows[] = $this->renderInfoRow('Sender', $senderDisplay);
         $detailRows[] = $this->renderInfoRow('Circulated By', $circulatedBy !== '' ? $circulatedBy : 'Not available');
 
-        return <<<HTML
+        $html = <<<HTML
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -253,9 +261,9 @@ class CorrespondenceEmailService
       <td align="center">
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:640px; background-color:#ffffff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">
           <tr>
-            <td style="padding:24px 24px 18px 24px; border-bottom:1px solid #e5e7eb; background-color:#f8fafc;">
-              <div style="font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#64748b; margin-bottom:8px;">{$brandName}</div>
-              <div style="font-size:22px; font-weight:700; color:#0f172a;">{$heading}</div>
+                        <td style="padding:24px 24px 18px 24px; border-bottom:1px solid #065f46; background-color:#047857;">
+                            <div style="font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#d1fae5; margin-bottom:8px;">{$brandName}</div>
+                            <div style="font-size:22px; font-weight:700; color:#ffffff;">{$heading}</div>
             </td>
           </tr>
           <tr>
@@ -269,12 +277,19 @@ class CorrespondenceEmailService
                   {$this->implodeRows($detailRows)}
                 </table>
               </div>
-              <div style="background:linear-gradient(90deg, #eff6ff 0%, #f8fbff 100%); border:1px solid #bfdbfe; border-left:4px solid #2563eb; border-radius:10px; padding:16px 18px; margin:0 0 16px 0;">
+HTML;
+
+        if (!$isDraftReview) {
+            $html .= <<<HTML
+                            <div style="background:linear-gradient(90deg, #eff6ff 0%, #f8fbff 100%); border:1px solid #bfdbfe; border-left:4px solid #2563eb; border-radius:10px; padding:16px 18px; margin:0 0 16px 0;">
                 <p style="margin:0 0 6px 0; font-size:15px; font-weight:700; color:#0f172a;">Access Your Correspondence to see file</p>
                 <p style="margin:0 0 10px 0; font-size:14px; line-height:22px; color:#334155;">If you have an account on the organization's Intranet or Correspondence Management System, you can log in to view the correspondence, track its status, and access all associated documents and updates.</p>
                 <div style="display:inline-block; padding:8px 12px; border:1px solid #93c5fd; border-radius:999px; background-color:#ffffff; font-size:13px; font-weight:600; color:#1d4ed8;">Log In to the Intranet</div>
               </div>
-              <p style="margin:0; font-size:13px; line-height:21px; color:#64748b;">Please review the correspondence at your earliest convenience.</p>
+HTML;
+            }
+
+            $html .= <<<HTML
             </td>
           </tr>
           <tr>
@@ -293,6 +308,8 @@ class CorrespondenceEmailService
 </body>
 </html>
 HTML;
+
+    return $html;
     }
 
     private function renderTextTemplate(
@@ -310,7 +327,8 @@ HTML;
         bool $portalAccessNote,
         string $portalUrl,
         string $organizationName,
-        string $year
+        string $year,
+        bool $isDraftReview = false
     ): string {
         $lines = [];
         $lines[] = $brandName;
@@ -325,14 +343,16 @@ HTML;
         $lines[] = 'Due Date: ' . ($dueDate !== '' ? $dueDate : 'Not specified');
         $lines[] = 'Sender: ' . ($senderName !== '' ? $senderName : ($senderEmail !== '' ? $senderEmail : 'Not available'));
         $lines[] = 'Circulated By: ' . ($circulatedBy !== '' ? $circulatedBy : 'Not available');
-        $lines[] = '';
-        $lines[] = 'Access Your Correspondence';
-        $lines[] = 'If you have an account on the organization\'s Intranet or Correspondence Management System, you can log in to view the correspondence, track its status, and access all associated documents and updates.';
-        if ($portalAccessNote) {
-            $lines[] = 'If you are an internal recipient, please sign in to the intranet to review the record.';
-        }
-        if ($portalUrl !== '') {
-            $lines[] = 'Portal: ' . $portalUrl;
+        if (!$isDraftReview) {
+            $lines[] = '';
+            $lines[] = 'Access Your Correspondence';
+            $lines[] = 'If you have an account on the organization\'s Intranet or Correspondence Management System, you can log in to view the correspondence, track its status, and access all associated documents and updates.';
+            if ($portalAccessNote) {
+                $lines[] = 'If you are an internal recipient, please sign in to the intranet to review the record.';
+            }
+            if ($portalUrl !== '') {
+                $lines[] = 'Portal: ' . $portalUrl;
+            }
         }
         $lines[] = '';
         $lines[] = 'This is an automated notification from ' . $organizationName . '.';
@@ -390,15 +410,17 @@ HTML;
                 continue;
             }
 
-            $email = trim((string)($row['email'] ?? $row['recipient_email'] ?? ''));
-            if ($email === '') {
+            $emailList = trim((string)($row['email'] ?? $row['recipient_email'] ?? ''));
+            if ($emailList === '') {
                 continue;
             }
 
-            $normalized[] = [
-                'email' => $email,
-                'type' => ((int)($row['cc'] ?? 0) === 1) ? 'cc' : 'recipient',
-            ];
+            foreach (preg_split('/\s*,\s*/', $emailList, -1, PREG_SPLIT_NO_EMPTY) as $email) {
+                $normalized[] = [
+                    'email' => strtolower(trim($email)),
+                    'type' => ((int)($row['cc'] ?? 0) === 1) ? 'cc' : 'recipient',
+                ];
+            }
         }
 
         return $normalized;

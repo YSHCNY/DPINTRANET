@@ -28,7 +28,11 @@ class PasswordResetService
         $user = $this->resolveUser($identifier);
         $normalizedEmail = strtolower(trim($email));
 
-        if (!$user || strtolower((string)($user['email'] ?? '')) !== $normalizedEmail) {
+        $userEmails = array_map(
+            static fn ($value): string => strtolower(trim((string)$value)),
+            preg_split('/\s*,\s*/', (string)($user['email'] ?? ''), -1, PREG_SPLIT_NO_EMPTY)
+        );
+        if (!$user || !in_array($normalizedEmail, $userEmails, true)) {
             $this->logAttempt($identifier, 'invalid_request');
             return ['success' => true, 'message' => 'If the account details are valid, a verification code has been sent.'];
         }
@@ -44,11 +48,19 @@ class PasswordResetService
 
         $this->otpModel->createForUser((int)$user['id'], $hash, $expiresAt);
 
-        $this->mailService->send(
-            $user['email'],
-            'Your verification code',
-            $this->buildEmailBody($code)
-        );
+        $sent = false;
+        foreach (array_unique($userEmails) as $userEmail) {
+            if (filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
+                $sent = $this->mailService->send(
+                    $userEmail,
+                    'Your verification code',
+                    $this->buildEmailBody($code)
+                ) || $sent;
+            }
+        }
+        if (!$sent) {
+            throw new RuntimeException('Unable to send verification code.');
+        }
 
         $this->logAttempt($identifier, 'otp_sent');
 

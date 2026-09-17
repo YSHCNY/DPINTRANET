@@ -34,15 +34,17 @@ class CorrespondenceService
                 continue;
             }
 
-            $email = trim((string)($row['email'] ?? $row['recipient_email'] ?? ''));
-            if ($email === '') {
+            $emailList = trim((string)($row['email'] ?? $row['recipient_email'] ?? ''));
+            if ($emailList === '') {
                 continue;
             }
 
-            $recipients[] = [
-                'email' => strtolower($email),
-                'recipient_type' => ((int)($row['cc'] ?? 0) === 1) ? 'cc' : 'recipient',
-            ];
+            foreach (preg_split('/\s*,\s*/', $emailList, -1, PREG_SPLIT_NO_EMPTY) as $email) {
+                $recipients[] = [
+                    'email' => strtolower(trim($email)),
+                    'recipient_type' => ((int)($row['cc'] ?? 0) === 1) ? 'cc' : 'recipient',
+                ];
+            }
         }
 
         $subject = $this->buildSubject($document);

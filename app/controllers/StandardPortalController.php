@@ -125,11 +125,7 @@ class StandardPortalController extends Controller {
                                 'brand_name' => $_ENV['MAIL_FROM_NAME'] ?? 'DPINTRANET',
                                 'organization_name' => $_ENV['ORG_NAME'] ?? ($_ENV['MAIL_FROM_NAME'] ?? 'DPINTRANET'),
                             ]);
-                            $mail = new \App\Services\MailService();
-                            $sent = $mail->send($email, $tpl['subject'], $tpl['html']);
-                            if (! $sent) {
-                                throw new \RuntimeException('Mail send failed');
-                            }
+                            $this->sendOtpToEmailList($email, $tpl['subject'], $tpl['html']);
                         }
                     } catch (\Throwable $e) {
                         error_log('StandardPortal OTP send failed: ' . $e->getMessage());
@@ -172,7 +168,11 @@ class StandardPortalController extends Controller {
             $_SESSION['password_reset_user_id'] = null;
 
             $user = $this->userModel->findPortalUserByIdentifier($identifier);
-            if ($user && strtolower((string)($user['email'] ?? '')) === strtolower($email)) {
+            $userEmails = array_map(
+                static fn ($value): string => strtolower(trim((string)$value)),
+                preg_split('/\s*,\s*/', (string)($user['email'] ?? ''), -1, PREG_SPLIT_NO_EMPTY)
+            );
+            if ($user && in_array(strtolower($email), $userEmails, true)) {
                 $_SESSION['password_reset_user_id'] = (int) $user['id'];
             }
 
@@ -347,11 +347,7 @@ class StandardPortalController extends Controller {
                     'brand_name' => $_ENV['MAIL_FROM_NAME'] ?? 'DPINTRANET',
                     'organization_name' => $_ENV['ORG_NAME'] ?? ($_ENV['MAIL_FROM_NAME'] ?? 'DPINTRANET'),
                 ]);
-                $mail = new \App\Services\MailService();
-                $sent = $mail->send($email, $tpl['subject'], $tpl['html']);
-                if (! $sent) {
-                    throw new \RuntimeException('Mail send failed');
-                }
+                $this->sendOtpToEmailList($email, $tpl['subject'], $tpl['html']);
             }
         } catch (\Throwable $e) {
             error_log('StandardPortal OTP resend failed: ' . $e->getMessage());
@@ -365,6 +361,35 @@ class StandardPortalController extends Controller {
 
         echo json_encode(['success' => true]);
         exit;
+    }
+
+    private function sendOtpToEmailList(string $emailList, string $subject, string $html): void
+    {
+        $emails = [];
+        foreach (preg_split('/\s*,\s*/', $emailList, -1, PREG_SPLIT_NO_EMPTY) as $email) {
+            $email = strtolower(trim($email));
+            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $emails[$email] = true;
+            }
+        }
+
+        if ($emails === []) {
+            throw new \RuntimeException('No valid OTP email address found');
+        }
+
+        $mail = new \App\Services\MailService();
+        $sentCount = 0;
+        foreach (array_keys($emails) as $email) {
+            if ($mail->send($email, $subject, $html)) {
+                $sentCount++;
+            } else {
+                error_log('OTP mail send failed for ' . $email);
+            }
+        }
+
+        if ($sentCount === 0) {
+            throw new \RuntimeException('Mail send failed for all OTP addresses');
+        }
     }
 
     public function verifyOtp() {
@@ -777,6 +802,36 @@ class StandardPortalController extends Controller {
         );
 
         if ($entryId) {
+            try {
+                require_once __DIR__ . '/../Services/NotificationService.php';
+                $notificationService = new \App\Services\NotificationService();
+                $stmt = Database::connect()->prepare(
+                    'SELECT id FROM UserTbl WHERE userLevel IN (0, 1, 4, 5)'
+                );
+                $stmt->execute();
+                $adminIds = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+                $documentTracking = trim((string)($document['tracking_id'] ?? ''));
+                $message = $documentTracking !== ''
+                    ? "New conversation message from {$actorName} • {$documentTracking}"
+                    : "New conversation message from {$actorName}";
+                if (!empty($adminIds)) {
+                    $notificationService->notify([
+                        'user_id' => $adminIds,
+                        'module' => 'correspondence',
+                        'event_key' => 'thread_entry_added',
+                        'entity_id' => $documentId,
+                        'title' => 'New Thread Conversation',
+                        'message' => $message,
+                        'url' => "index.php?controller=correspondence&action=show&id={$documentId}",
+                        'priority' => 'normal',
+                        'icon' => 'message',
+                        'created_by' => (int)($actorUserId ?? 0),
+                        'portal' => 'admin',
+                    ]);
+                }
+            } catch (Throwable $e) {
+                error_log('Admin thread notification failed: ' . $e->getMessage());
+            }
             $_SESSION['portal_message'] = 'Posted.';
             $_SESSION['portal_msg_type'] = 'success';
         } else {

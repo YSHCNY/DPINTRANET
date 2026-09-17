@@ -176,6 +176,10 @@ function notificationStatusBadgeText(array $notification): string {
         return 'RECEIVED';
     }
 
+    if (str_contains($text, 'thread_entry_added') || str_contains($text, 'thread conversation')) {
+        return 'NEW THREAD CONVERSATION';
+    }
+
     if (str_contains($text, 'circulated') || str_contains($text, 'finalized')) {
         return 'Finalized & Circulated';
     }
@@ -358,7 +362,7 @@ function portalHeader($title) {
         <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
             <div class="max-w-6xl mx-auto px-4 py-3 grid gap-3 md:grid-cols-[1fr_auto] items-center">
                 <div class="space-y-1">
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-700">Reciever user Portal</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-700">Receiver user Portal</p>
                     <h1 class="text-xl font-semibold text-slate-900"><?= htmlspecialchars($title) ?></h1>
                 </div>
 

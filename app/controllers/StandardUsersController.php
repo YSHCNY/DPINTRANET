@@ -50,7 +50,7 @@ class StandardUsersController extends Controller {
                 throw new Exception('Username already exists.');
             }
 
-            if ($this->userModel->findByEmail($data['email'])) {
+            if ($this->userModel->findByAnyEmail($data['email'])) {
                 throw new Exception('Email already exists.');
             }
 
@@ -118,7 +118,7 @@ class StandardUsersController extends Controller {
                 throw new Exception('Username already exists.');
             }
 
-            if ($this->userModel->findByEmail($data['email'], $id)) {
+            if ($this->userModel->findByAnyEmail($data['email'], $id)) {
                 throw new Exception('Email already exists.');
             }
 
@@ -159,7 +159,7 @@ class StandardUsersController extends Controller {
             'firstName' => trim($_POST['firstName'] ?? ''),
             'lastName' => trim($_POST['lastName'] ?? ''),
             'middleName' => trim($_POST['middleName'] ?? ''),
-            'email' => trim($_POST['email'] ?? ''),
+            'email' => $this->normalizeEmailList($_POST['email'] ?? ''),
             'phone' => trim($_POST['phone'] ?? ''),
             'position' => trim($_POST['position'] ?? ''),
             'department' => trim($_POST['department'] ?? ''),
@@ -178,13 +178,29 @@ class StandardUsersController extends Controller {
             throw new Exception('Password is required.');
         }
 
-        if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            throw new Exception('Enter a valid email address.');
+        if ($data['email'] !== '') {
+            foreach (explode(',', $data['email']) as $email) {
+                if (!filter_var(trim($email), FILTER_VALIDATE_EMAIL)) {
+                    throw new Exception('Enter only valid email addresses separated by commas.');
+                }
+            }
         }
 
         $data['status'] = $this->normalizeOption('status', $data['status']);
 
         return $data;
+    }
+
+    private function normalizeEmailList($value): string {
+        $emails = [];
+        foreach (preg_split('/\s*,\s*/', trim((string)$value), -1, PREG_SPLIT_NO_EMPTY) as $email) {
+            $email = strtolower(trim($email));
+            if ($email !== '' && !in_array($email, $emails, true)) {
+                $emails[] = $email;
+            }
+        }
+
+        return implode(',', $emails);
     }
 
     private function viewData($editingUser = null) {

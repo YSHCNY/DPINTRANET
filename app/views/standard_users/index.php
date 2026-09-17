@@ -107,7 +107,7 @@ function avatarUrl($avatar) {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 mb-1.5">Email</label>
-                                    <input type="email" name="email" value="<?= fieldValue($editingUser, 'email') ?>"
+                                     <input type="text" name="email" placeholder="someone@email.com, something@hotmail.com" value="<?= fieldValue($editingUser, 'email') ?>"
                                            class="w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
                                 </div>
                                 <div>

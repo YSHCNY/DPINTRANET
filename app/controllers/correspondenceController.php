@@ -134,6 +134,9 @@ class CorrespondenceController extends Controller {
             $doc = $this->model->getById($draftId);
             if ($doc) {
                 $draftDocument = $doc;
+                if (!empty($doc['is_draft']) || strtolower(trim((string)($doc['status'] ?? ''))) === 'draft') {
+                    $this->model->notifyAdminsOfDraft($draftId);
+                }
                 try {
                     require_once __DIR__ . '/../models/UserModel.php';
                     $userModel = new UserModel();
@@ -1096,6 +1099,20 @@ class CorrespondenceController extends Controller {
             $this->logCorrespondenceAction('thread', $documentId, [
                 'message' => 'Thread entry added',
             ]);
+            try {
+                $doc = $this->model->getById($documentId);
+                $circulations = $this->model->getCirculationDetails($documentId);
+                $portalNotificationService = new StandardPortalNotificationService();
+                $portalNotificationService->notifyThreadEntry(
+                    $documentId,
+                    $circulations,
+                    $doc ?: [],
+                    (int)($actorUserId ?? 0),
+                    $actorName
+                );
+            } catch (Throwable $e) {
+                error_log('Receiver thread notification failed: ' . $e->getMessage());
+            }
             $_SESSION['message'] = 'Posted.';
             $_SESSION['msg_type'] = 'success';
         } else {
@@ -1177,6 +1194,10 @@ public function getDocumentData() {
         if (!$doc) {
             echo json_encode(['success' => false, 'message' => 'Document not found']);
             exit;
+        }
+
+        if (!empty($doc['is_draft']) || strtolower(trim((string)($doc['status'] ?? ''))) === 'draft') {
+            $this->model->notifyAdminsOfDraft($id);
         }
 
         $circulations = $this->model->getCirculationDetails($id);

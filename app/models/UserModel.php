@@ -8,6 +8,19 @@ class UserModel {
 
     public function __construct() {
         $this->conn = Database::connect();
+        $this->ensureEmailColumnCapacity();
+    }
+
+    private function ensureEmailColumnCapacity(): void {
+        try {
+            $stmt = $this->conn->query("SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$this->table}' AND COLUMN_NAME = 'email'");
+            $length = (int)$stmt->fetchColumn();
+            if ($length > 0 && $length < 1000) {
+                $this->conn->exec("ALTER TABLE {$this->table} MODIFY email VARCHAR(1000) NOT NULL");
+            }
+        } catch (Throwable $e) {
+            error_log('Standard user email column capacity check failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -148,6 +161,37 @@ class UserModel {
         $stmt = $this->conn->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function findByAnyEmail(string $emailList, $excludeId = null) {
+        $emails = array_values(array_filter(array_map(
+            static fn ($email): string => strtolower(trim((string)$email)),
+            preg_split('/\s*,\s*/', $emailList, -1, PREG_SPLIT_NO_EMPTY)
+        )));
+        if ($emails === []) {
+            return false;
+        }
+
+        $sql = "SELECT id, email FROM {$this->table}";
+        $params = [];
+        if ($excludeId) {
+            $sql .= " WHERE id != ?";
+            $params[] = $excludeId;
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $user) {
+            $existingEmails = array_map(
+                static fn ($value): string => strtolower(trim((string)$value)),
+                preg_split('/\s*,\s*/', (string)($user['email'] ?? ''), -1, PREG_SPLIT_NO_EMPTY)
+            );
+            if (array_intersect($emails, $existingEmails) !== []) {
+                return $user;
+            }
+        }
+
+        return false;
     }
 
     public function getProfileById(int $id): ?array {

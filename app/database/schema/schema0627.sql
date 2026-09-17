@@ -432,7 +432,7 @@ CREATE TABLE IF NOT EXISTS `standardUsers` (
   `firstName` varchar(100) NOT NULL,
   `lastName` varchar(100) NOT NULL,
   `middleName` varchar(100) DEFAULT NULL,
-  `email` varchar(150) NOT NULL,
+  `email` varchar(1000) NOT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `position` varchar(100) NOT NULL,
   `department` varchar(100) DEFAULT NULL,

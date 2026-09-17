@@ -204,6 +204,10 @@ function notificationStatusBadgeText(array $notification): string {
     return 'RECEIVED';
   }
 
+  if (str_contains($text, 'thread_entry_added') || str_contains($text, 'thread conversation')) {
+    return 'NEW THREAD CONVERSATION';
+  }
+
   if (str_contains($text, 'circulated') || str_contains($text, 'finalized')) {
     return 'Finalized & Circulated';
   }

@@ -45,6 +45,38 @@ class StandardPortalNotificationService
         );
     }
 
+    public function notifyThreadEntry(int $documentId, array $circulations, array $document, int $createdBy, string $actorName): bool
+    {
+        $recipientIds = $this->getStandardPortalRecipientIds($circulations);
+        if (empty($recipientIds)) {
+            return true;
+        }
+
+        $tracking = trim((string)($document['tracking_id'] ?? ''));
+        $message = $tracking !== ''
+            ? "New conversation message from {$actorName} • {$tracking}"
+            : "New conversation message from {$actorName}";
+
+        try {
+            return $this->notificationService->notify([
+                'user_id' => $recipientIds,
+                'module' => 'standard_portal',
+                'event_key' => 'thread_entry_added',
+                'entity_id' => $documentId,
+                'title' => 'New Thread Conversation',
+                'message' => $message,
+                'url' => "index.php?controller=StandardPortal&action=viewDocument&id={$documentId}",
+                'priority' => 'normal',
+                'icon' => 'message',
+                'created_by' => $createdBy,
+                'portal' => 'standard',
+            ]);
+        } catch (Throwable $e) {
+            error_log('Standard portal thread notification failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     private function notifyStandardUsers(
         int $documentId,
         array $circulations,

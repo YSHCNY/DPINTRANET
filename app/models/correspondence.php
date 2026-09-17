@@ -1,6 +1,8 @@
 
 <?php
 require_once __DIR__ . '/../core/Model.php';
+require_once __DIR__ . '/../Services/CorrespondenceEmailService.php';
+require_once __DIR__ . '/../Services/EmailQueueService.php';
 
 class CorrespondenceModel {
 
@@ -650,18 +652,67 @@ class CorrespondenceModel {
      * Mark draft as notified to admin-level users and create logs
      */
     public function notifyAdminsOfDraft($documentId) {
-        // Find PM/DPM/Superadmin users and create notifications for draft documents produced by encoders or GRP heads.
+        // Notify privileged reviewers once when a draft is created or first opened.
         try {
-            $stmt = $this->conn->prepare("SELECT id, firstName, lastName, userLevel FROM UserTbl WHERE userLevel IN (0,4,5)");
+            $doc = $this->getById($documentId);
+            if (!$doc || !empty($doc['draft_notified'])) {
+                return true;
+            }
+
+            $stmt = $this->conn->prepare("SELECT id, firstName, lastName, email, userLevel FROM UserTbl WHERE userLevel IN (0,1,4,5)");
             $stmt->execute();
             $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $excludedUserIds = [];
+            $excludedEmails = [];
+            $drafterId = (int)($doc['created_by'] ?? 0);
+            if ($drafterId > 0) {
+                $excludedUserIds[$drafterId] = true;
+            }
+
+            $draftRecipientValues = array_merge(
+                preg_split('/\s*,\s*/', trim((string)($doc['draft_recipients'] ?? '')), -1, PREG_SPLIT_NO_EMPTY),
+                preg_split('/\s*,\s*/', trim((string)($doc['draft_cc'] ?? '')), -1, PREG_SPLIT_NO_EMPTY)
+            );
+            foreach ($draftRecipientValues as $value) {
+                $value = trim((string)$value);
+                if (preg_match('/^\d+$/', $value)) {
+                    $excludedUserIds[(int)$value] = true;
+                    continue;
+                }
+
+                $email = preg_replace('/^email:/i', '', $value);
+                $email = strtolower(trim((string)$email));
+                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $excludedEmails[$email] = true;
+                }
+            }
+
+            try {
+                $circulationStmt = $this->conn->prepare(
+                    "SELECT recipient_id, recipient_email FROM document_circulations WHERE document_id = ?"
+                );
+                $circulationStmt->execute([$documentId]);
+                foreach ($circulationStmt->fetchAll(PDO::FETCH_ASSOC) as $circulation) {
+                    $recipientId = (int)($circulation['recipient_id'] ?? 0);
+                    if ($recipientId > 0) {
+                        $excludedUserIds[$recipientId] = true;
+                    }
+
+                    $email = strtolower(trim((string)($circulation['recipient_email'] ?? '')));
+                    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $excludedEmails[$email] = true;
+                    }
+                }
+            } catch (Throwable $e) {
+                error_log('Draft circulation exclusion lookup failed: ' . $e->getMessage());
+            }
 
             // Update document to mark draft notified
             $update = $this->conn->prepare("UPDATE documents SET draft_notified = 1, draft_notified_at = NOW(), draft_notified_by = ? WHERE id = ?");
             $update->execute([$this->getActorName(), $documentId]);
 
             // Build URL to document (opens correspondence list with doc_id)
-            $doc = $this->getById($documentId);
             $tracking = $doc['tracking_id'] ?? '';
             $url = "index.php?controller=correspondence&action=correspondence&doc_id={$documentId}";
 
@@ -683,6 +734,39 @@ class CorrespondenceModel {
                     'icon' => 'document',
                     'created_by' => (int)($_SESSION['id'] ?? 0),
                 ]);
+            }
+
+            $emailRecipients = [];
+            foreach ($admins as $admin) {
+                $adminId = (int)($admin['id'] ?? 0);
+                $email = strtolower(trim((string)($admin['email'] ?? '')));
+                if (($adminId > 0 && isset($excludedUserIds[$adminId])) || isset($excludedEmails[$email])) {
+                    continue;
+                }
+                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $emailRecipients[] = [
+                        'email' => $email,
+                        'recipient_type' => 'draft_reviewer',
+                    ];
+                }
+            }
+            if (!empty($emailRecipients)) {
+                $emailService = new \App\Services\CorrespondenceEmailService();
+                $emailPayload = $emailService->renderEmail($doc, [
+                    'recipient_type' => 'draft_reviewer',
+                ]);
+                $emailQueue = new \App\Services\EmailQueueService();
+                $emailResult = $emailQueue->queueJobs(
+                    (int)$documentId,
+                    $emailRecipients,
+                    $emailPayload['subject'],
+                    $emailPayload['html'],
+                    [],
+                    'draft_ready'
+                );
+                if (($emailResult['queued'] ?? 0) > 0) {
+                    $emailQueue->startWorkerProcess();
+                }
             }
 
             // Also log for audit
