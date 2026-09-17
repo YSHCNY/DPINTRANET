@@ -639,7 +639,6 @@ ALTER TABLE `staff_directory`
 ALTER TABLE `standardUsers`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `username` (`username`),
-  ADD UNIQUE KEY `email` (`email`),
   ADD KEY `idx_department` (`department`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_portal` (`is_portal_user`);

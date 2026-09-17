@@ -72,8 +72,6 @@ class StandardUserImportService
         $rowRecords = [];
         $totalRows = 0;
         $seenUsernames = [];
-        $seenEmails = [];
-
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 2;
             $row = array_map('trim', $row);
@@ -129,13 +127,6 @@ class StandardUserImportService
                 $seenUsernames[$normalizedUsername] = true;
             }
 
-            if ($normalizedEmail !== '') {
-                if (isset($seenEmails[$normalizedEmail])) {
-                    $rowErrors[] = 'Duplicate email found in file.';
-                }
-                $seenEmails[$normalizedEmail] = true;
-            }
-
             $rowRecords[] = [
                 'row_number' => $rowNumber,
                 'username' => $username,
@@ -151,8 +142,6 @@ class StandardUserImportService
         }
 
         $existingUsernames = $this->userModel->findExistingUsernames(array_filter(array_map('strtolower', array_column($rowRecords, 'username'))));
-        $existingEmails = $this->userModel->findExistingEmails(array_filter(array_map('strtolower', array_column($rowRecords, 'email'))));
-
         $validRows = [];
         $failedRows = [];
 
@@ -160,10 +149,6 @@ class StandardUserImportService
             if ($record['username'] !== '' && in_array(strtolower($record['username']), $existingUsernames, true)) {
                 $record['errors'][] = 'Username already exists in the system.';
             }
-            if ($record['email'] !== '' && in_array(strtolower($record['email']), $existingEmails, true)) {
-                $record['errors'][] = 'Email already exists in the system.';
-            }
-
             if (!empty($record['errors'])) {
                 $failedRows[] = [
                     'row_number' => $record['row_number'],

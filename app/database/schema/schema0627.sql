@@ -445,7 +445,6 @@ CREATE TABLE IF NOT EXISTS `standardUsers` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
-  UNIQUE KEY `email` (`email`),
   KEY `idx_department` (`department`),
   KEY `idx_status` (`status`),
   KEY `idx_portal` (`is_portal_user`)

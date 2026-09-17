@@ -15,6 +15,11 @@ class UserModel {
         try {
             $stmt = $this->conn->query("SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$this->table}' AND COLUMN_NAME = 'email'");
             $length = (int)$stmt->fetchColumn();
+            $indexStmt = $this->conn->query("SELECT DISTINCT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$this->table}' AND COLUMN_NAME = 'email' AND INDEX_NAME <> 'PRIMARY' AND NON_UNIQUE = 0");
+            foreach ($indexStmt->fetchAll(PDO::FETCH_COLUMN) as $indexName) {
+                $this->conn->exec("ALTER TABLE {$this->table} DROP INDEX `" . str_replace('`', '``', $indexName) . "`");
+            }
+
             if ($length > 0 && $length < 1000) {
                 $this->conn->exec("ALTER TABLE {$this->table} MODIFY email VARCHAR(1000) NOT NULL");
             }
