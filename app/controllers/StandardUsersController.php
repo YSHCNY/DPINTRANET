@@ -50,10 +50,6 @@ class StandardUsersController extends Controller {
                 throw new Exception('Username already exists.');
             }
 
-            if ($this->userModel->findByAnyEmail($data['email'])) {
-                throw new Exception('Email already exists.');
-            }
-
             $data['avatar'] = $this->uploadAvatar();
             $this->userModel->createStandardUser($data);
 
@@ -116,10 +112,6 @@ class StandardUsersController extends Controller {
 
             if ($this->userModel->findByUsername($data['username'], $id)) {
                 throw new Exception('Username already exists.');
-            }
-
-            if ($this->userModel->findByAnyEmail($data['email'], $id)) {
-                throw new Exception('Email already exists.');
             }
 
             $uploadedAvatar = $this->uploadAvatar();
