@@ -287,7 +287,7 @@ class EmailQueueService
 
     public function markSent(int $jobId): void
     {
-        $stmt = $this->conn->prepare(
+        $stmt = $this->getConnection()->prepare(
             'UPDATE email_queue SET status = "Sent", completed_at = NOW(), updated_at = NOW(), error_message = NULL WHERE id = ?'
         );
         $stmt->execute([$jobId]);
@@ -295,21 +295,22 @@ class EmailQueueService
 
     public function markFailed(int $jobId, string $message = '', bool $retryable = false): void
     {
-        $stmt = $this->conn->prepare(
+        $conn = $this->getConnection();
+        $stmt = $conn->prepare(
             'SELECT attempts FROM email_queue WHERE id = ? LIMIT 1'
         );
         $stmt->execute([$jobId]);
         $attempts = (int)$stmt->fetchColumn();
 
         if ($retryable && $attempts < $this->maxRetries) {
-            $stmt = $this->conn->prepare(
+            $stmt = $conn->prepare(
                 'UPDATE email_queue SET status = "Pending", completed_at = NULL, updated_at = NOW(), error_message = ? WHERE id = ?'
             );
             $stmt->execute([$message, $jobId]);
             return;
         }
 
-        $stmt = $this->conn->prepare(
+        $stmt = $conn->prepare(
             'UPDATE email_queue SET status = "Failed", completed_at = NOW(), updated_at = NOW(), error_message = ? WHERE id = ?'
         );
         $stmt->execute([$message, $jobId]);

@@ -985,9 +985,9 @@ class CorrespondenceModel {
     {
         $stmt = $this->conn->prepare("SELECT
                 COUNT(*) AS total_recipients,
-                SUM(CASE WHEN recipient_id IS NOT NULL AND recipient_id > 0 AND LOWER(status) = 'received' THEN 1 ELSE 0 END) AS received_recipients
+                SUM(CASE WHEN LOWER(status) = 'received' THEN 1 ELSE 0 END) AS received_recipients
             FROM document_circulations
-            WHERE document_id = ? AND recipient_id IS NOT NULL AND recipient_id > 0");
+            WHERE document_id = ?");
         $stmt->execute([$documentId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 

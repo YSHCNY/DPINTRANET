@@ -110,13 +110,16 @@ function notificationContextText(array $notification): string {
 }
 
 function notificationTimeLabel(string $createdAt): string {
-  $timestamp = strtotime($createdAt);
-  if ($timestamp === false) {
+  try {
+    $notificationTime = new DateTimeImmutable($createdAt, new DateTimeZone('UTC'));
+  } catch (Throwable $e) {
     return '';
   }
 
-  $now = time();
-  $diff = $now - $timestamp;
+  $timezone = new DateTimeZone(date_default_timezone_get());
+  $notificationTime = $notificationTime->setTimezone($timezone);
+  $now = new DateTimeImmutable('now', $timezone);
+  $diff = $now->getTimestamp() - $notificationTime->getTimestamp();
 
   if ($diff < 60) {
     return 'Just now';
@@ -124,30 +127,33 @@ function notificationTimeLabel(string $createdAt): string {
   if ($diff < 3600) {
     return floor($diff / 60) . ' min ago';
   }
-  if (date('Y-m-d', $timestamp) === date('Y-m-d', $now)) {
+  if ($notificationTime->format('Y-m-d') === $now->format('Y-m-d')) {
     return floor($diff / 3600) . ' hr ago';
   }
-  if (date('Y-m-d', $timestamp) === date('Y-m-d', strtotime('-1 day', $now))) {
+  if ($notificationTime->format('Y-m-d') === $now->modify('-1 day')->format('Y-m-d')) {
     return 'Yesterday';
   }
 
-  return date('M j', $timestamp);
+  return $notificationTime->format('M j');
 }
 
 function notificationGroupLabel(string $createdAt): string {
-  $timestamp = strtotime($createdAt);
-  if ($timestamp === false) {
+  try {
+    $notificationTime = new DateTimeImmutable($createdAt, new DateTimeZone('UTC'));
+  } catch (Throwable $e) {
     return 'Earlier';
   }
 
-  $today = date('Y-m-d');
-  $yesterday = date('Y-m-d', strtotime('-1 day'));
-  $date = date('Y-m-d', $timestamp);
+  $timezone = new DateTimeZone(date_default_timezone_get());
+  $notificationDate = $notificationTime->setTimezone($timezone)->format('Y-m-d');
+  $now = new DateTimeImmutable('now', $timezone);
+  $today = $now->format('Y-m-d');
+  $yesterday = $now->modify('-1 day')->format('Y-m-d');
 
-  if ($date === $today) {
+  if ($notificationDate === $today) {
     return 'Today';
   }
-  if ($date === $yesterday) {
+  if ($notificationDate === $yesterday) {
     return 'Yesterday';
   }
   return 'Earlier';
@@ -435,7 +441,7 @@ if ($currentController == 'Auth' && $currentAction == 'dashboard') {
                         <?php endif; ?>
                         <?php if ($progress !== null): ?>
                           <div class="flex flex-col gap-1">
-                            <?php if ((int)$progress['total'] === 1): ?>
+                            <?php if ((int)$progress['total'] === 1 && (int)$progress['received'] >= 1): ?>
                               <p class="text-xs font-medium text-emerald-600">Recipient acknowledged</p>
                             <?php else: ?>
                               <p class="text-xs font-medium text-slate-600">
