@@ -27,14 +27,14 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
                                 <input type="email" id="recipients-email-input" data-custom-email-input="recipients" placeholder="name@example.com" class="w-36 border-0 bg-transparent px-1 py-0 text-xs text-slate-700 outline-none placeholder:text-slate-400">
-                                <button type="button" onclick="addCustomEmailRecipient('recipients')" class="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-amber-700">Add Email</button>
+                                <!-- <button type="button" onclick="addCustomEmailRecipient('recipients')" class="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-amber-700">Add Email</button> -->
                             </div>
                             <button type="button" onclick="openRecipientDrawer('recipients')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
                                 Select
                             </button>
                         </div>
                     </div>
-                    <p id="recipients-email-feedback" class="mt-2 text-xs text-slate-500">Use the email button for external recipients and the selector for staff directory users.</p>
+                    <!-- <p id="recipients-email-feedback" class="mt-2 text-xs text-slate-500">Use the email button for external recipients and the selector for staff directory users.</p> -->
 
                     <div id="hidden-recipient-inputs" class="hidden">
                         <?php if (!empty($draftRecipients)): ?>
@@ -73,14 +73,14 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
                                 <input type="email" id="cc-email-input" data-custom-email-input="cc" placeholder="name@example.com" class="w-36 border-0 bg-transparent px-1 py-0 text-xs text-slate-700 outline-none placeholder:text-slate-400">
-                                <button type="button" onclick="addCustomEmailRecipient('cc')" class="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-amber-700">Add Email</button>
+                                <!-- <button type="button" onclick="addCustomEmailRecipient('cc')" class="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-amber-700">Add Email</button> -->
                             </div>
                             <button type="button" onclick="openRecipientDrawer('cc')" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
                                 Select
                             </button>
                         </div>
                     </div>
-                    <p id="cc-email-feedback" class="mt-2 text-xs text-slate-500">Use the email button for external recipients and the selector for staff directory users.</p>
+                    <!-- <p id="cc-email-feedback" class="mt-2 text-xs text-slate-500">Use the email button for external recipients and the selector for staff directory users.</p> -->
 
                     <div id="hidden-cc-inputs" class="hidden">
                         <?php if (!empty($draftCc)): ?>
